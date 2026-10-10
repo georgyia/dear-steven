@@ -15,6 +15,7 @@ GitHub number is written back into the `github` field.
 | `phase-3.md` | M1 Grounded answers | done except P3-08 (live eval, needs H-03/H-07) |
 | `phase-4.md` | M2 Voice | done |
 | `phase-5.md` | M3 Depth and polish | open |
+| `phase-6.md` | M4 Reach and trust | open — languages, setup, answers, security, policies, YouTube |
 
 Issues built in the first implementation pass (phases 0–4) are recorded briefly: what was in
 scope, how each criterion was verified, and where the work lives. Open issues are fully specified.
