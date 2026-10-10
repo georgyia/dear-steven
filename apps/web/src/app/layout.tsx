@@ -19,6 +19,10 @@ const geistMono = Geist_Mono({
   display: 'swap',
 });
 
+// Every page, the 404 included, is rendered per request: its scripts need that response's CSP
+// nonce (src/proxy.ts, P6-09). A prerendered page would carry none and its scripts would be refused.
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: brand.name,
   description: brand.description,
