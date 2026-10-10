@@ -36,7 +36,7 @@ product (vs. decoration)?
 ## Decision
 
 Option 2. Local changes (each recorded in the file header): PromptBar (menus/attachments/sparks
-removed; controlled value; trailing slot), BlurText (`as`, reduced-motion gate, single accessible
+removed; controlled value; trailing slot), BlurText (`as`, reduced-motion gate — in CSS since P5-12, a render-time gate broke hydration —, single accessible
 label), WarmTooltip (opt-in wrapping), VoicePill (imperative handle; CSS variables initialised).
 Deliberately not used: CometDial, DodgeField, JellyRadio, ScrubField, SlingButton, FolderFloat,
 SpringCheck, GlassSurface, and the WebGL-heavy Orb / LightRays / Aurora / Silk. Later candidates:

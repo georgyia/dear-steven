@@ -192,14 +192,39 @@ test.describe('evidence inspector', () => {
   });
 });
 
+/** Loads the home page and waits for hydration (the mic only appears once client effects ran). */
+async function loadHydrated(page: Page): Promise<string[]> {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await expect(
+    page.getByRole('button', { name: /Talk to Steven|Voice isn’t available/ }),
+  ).toBeVisible();
+  return errors;
+}
+
+test('hydrates without errors', async ({ page }) => {
+  const errors = await loadHydrated(page);
+  expect(errors).toEqual([]);
+});
+
 test.describe('reduced motion', () => {
   test.use({ reducedMotion: 'reduce' });
 
   test('renders the wordmark statically and still completes an answer', async ({ page }) => {
-    await page.goto('/');
+    const errors = await loadHydrated(page);
     const h1 = page.getByRole('heading', { level: 1, name: 'Dear Steven' });
     await expect(h1).toBeVisible();
-    await expect(h1.locator('span')).toHaveCount(0);
+    // Every word is fully drawn at once: no fade, no blur, no drop. Same markup as the server's.
+    const looks = await h1.locator('span').evaluateAll((spans) =>
+      spans.map((el) => {
+        const c = getComputedStyle(el);
+        return `${c.opacity} ${c.filter} ${c.transform}`;
+      }),
+    );
+    expect(looks.length).toBeGreaterThan(0);
+    expect(new Set(looks)).toEqual(new Set(['1 none none']));
+    expect(errors).toEqual([]); // no hydration mismatch (P5-12)
     await ask(page, 'Should I start a business?');
     await answered(page);
     await expect(page.locator('[data-citation]').first()).toBeVisible();

@@ -3,9 +3,11 @@
  * Component: BlurText (TS + Tailwind variant), fetched 2026-10-10 from the @react-bits registry.
  * Copyright (c) 2026 David Haz. MIT + Commons Clause License Condition v1.0 — see ./LICENSE.md.
  * Used as part of this application only; these components are not redistributed on their own.
- * Local changes: `as` prop (render a heading, not always a <p>); reduced-motion gate (renders the
- * text statically); the whole string is exposed once via aria-label while the animated word spans
- * are aria-hidden, so screen readers do not read it word-by-word.
+ * Local changes: `as` prop (render a heading, not always a <p>); reduced motion — the same markup
+ * renders on server and client (no hydration mismatch), the word spans are forced fully drawn by
+ * `motion-reduce:` CSS, and the animation never starts; the whole string is exposed once via
+ * aria-label while the animated word spans are aria-hidden, so screen readers do not read it
+ * word-by-word.
  */
 'use client';
 
@@ -94,14 +96,6 @@ const BlurText: React.FC<BlurTextProps> = ({
     [direction]
   );
 
-  if (reduce) {
-    return (
-      <Tag ref={ref} className={`blur-text ${className}`}>
-        {text}
-      </Tag>
-    );
-  }
-
   const fromSnapshot = animationFrom ?? defaultFrom;
   const toSnapshots = animationTo ?? defaultTo;
 
@@ -129,6 +123,8 @@ const BlurText: React.FC<BlurTextProps> = ({
             animate={inView ? animateKeyframes : fromSnapshot}
             transition={spanTransition}
             onAnimationComplete={index === elements.length - 1 ? onAnimationComplete : undefined}
+            // Reduced motion: drawn as-is from the first paint, before hydration, without a JS branch.
+            className="motion-reduce:opacity-100! motion-reduce:[filter:none]! motion-reduce:[transform:none]!"
             style={{
               display: 'inline-block',
               willChange: 'transform, filter, opacity'

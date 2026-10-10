@@ -407,8 +407,9 @@ The wordmark hydrates cleanly for everyone; reduced-motion users still get no bl
 choice after mount (or purely through CSS). **Out** — other animation changes.
 
 #### Acceptance criteria
-- [ ] No `pageerror` on load with reduced motion on or off (e2e listens for it).
-- [ ] The wordmark still renders statically under reduced motion.
+- [x] No `pageerror` on load with reduced motion on or off (e2e listens for it).
+- [x] The wordmark still renders statically under reduced motion (every word span computes to
+  opacity 1, no filter, no transform).
 
 #### Tests required
 e2e: load `/` with `reducedMotion: 'reduce'` and `'no-preference'`, assert no page errors.

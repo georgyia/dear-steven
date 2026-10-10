@@ -84,7 +84,8 @@ use inside the app only.
 
 ## 7. Motion and accessibility
 
-- Reduced motion: Threads renders one still frame, Noise stops, BlurText renders text statically,
+- Reduced motion: Threads renders one still frame, Noise stops, BlurText's words are drawn statically by CSS
+  (`motion-reduce:`, identical server and client markup, so no hydration mismatch),
   reveals fade only, layout springs are disabled via `MotionConfig reducedMotion="user"`.
 - Mobile (< 1024px): Threads is a still frame.
 - Focus rings: 2px ember, 2px offset. Chips are buttons with full accessible names
