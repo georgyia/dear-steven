@@ -44,6 +44,7 @@ export const brand = {
         'My side of the conversation dropped out. Nothing was made up — try again in a moment.',
       generic: 'Something went wrong on my end. Try again?',
       notConfigured: 'I’m not set up to answer properly yet.',
+      locked: 'This copy of me is private. Reload the page and enter the passcode again.',
       passage: 'I couldn’t load that passage just now.',
       micDenied:
         'I can’t hear you — microphone access is blocked. You can type instead, or allow the mic in your browser settings.',

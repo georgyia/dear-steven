@@ -11,7 +11,11 @@ export interface Embedder {
 /** OpenAI's limits: 2,048 inputs and ~300k tokens per request; we stay well under both. */
 const MAX_INPUTS = 256;
 
-export function openAIEmbedder(client: OpenAI, model: string = MODELS.embedding): Embedder {
+export function openAIEmbedder(
+  client: OpenAI,
+  model: string = MODELS.embedding,
+  hooks: { onTokens?: (tokens: number) => void } = {},
+): Embedder {
   return {
     model,
     dimensions: EMBEDDING_DIMENSIONS,
@@ -23,6 +27,7 @@ export function openAIEmbedder(client: OpenAI, model: string = MODELS.embedding)
           { model, input: batch, dimensions: EMBEDDING_DIMENSIONS, encoding_format: 'float' },
           { signal },
         );
+        hooks.onTokens?.(res.usage?.total_tokens ?? 0);
         const sorted = [...res.data].sort((a, b) => a.index - b.index);
         for (const d of sorted) out.push(Float32Array.from(d.embedding));
       }

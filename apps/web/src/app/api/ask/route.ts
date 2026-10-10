@@ -1,9 +1,10 @@
-import { composeAnswer, emptyKnowledgeAnswer } from '@dear-steven/core/answer';
+import { composeAnswer, emptyKnowledgeAnswer, restingAnswer } from '@dear-steven/core/answer';
 import { readConfig } from '@dear-steven/core/config';
 import { AskRequestSchema } from '@dear-steven/core/schema';
 import { streamDemoAnswer } from '@/server/demo';
 import { answerLogger, getAnswerModel, getEmbedder, getStore } from '@/server/knowledge';
 import { clientKey, takeToken } from '@/server/rate-limit';
+import { overBudget } from '@/server/spend';
 import { jsonError, sseResponse } from '@/server/sse';
 
 export const dynamic = 'force-dynamic';
@@ -38,6 +39,13 @@ export async function POST(req: Request) {
     return jsonError(429, 'rate_limited', 'Too many questions at once.', {
       'Retry-After': String(limit.retryAfter),
     });
+  }
+
+  // Past today's cap: an in-persona reply, and no OpenAI call at all (P6-08).
+  if (overBudget(config)) {
+    return sseResponse(async function* () {
+      yield* restingAnswer();
+    }, req.signal);
   }
 
   const model = getAnswerModel(config);

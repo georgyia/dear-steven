@@ -1,8 +1,10 @@
 import { readConfig } from '@dear-steven/core/config';
+import { transcriptionCostUsd } from '@dear-steven/core/models';
 import { transcribeSpeech } from '@dear-steven/core/openai';
 import { describeFailure } from '@/server/errors';
 import { getOpenAI } from '@/server/knowledge';
 import { clientKey, takeToken } from '@/server/rate-limit';
+import { overBudget, spendLedger } from '@/server/spend';
 import { jsonError } from '@/server/sse';
 
 export const dynamic = 'force-dynamic';
@@ -31,6 +33,14 @@ export async function POST(req: Request) {
       'Retry-After': String(limit.retryAfter),
     });
 
+  if (overBudget(config)) {
+    return jsonError(
+      503,
+      'not_configured',
+      'I’ve reached today’s limit for server transcription. Typing still works.',
+    );
+  }
+
   const length = Number(req.headers.get('content-length') ?? 0);
   if (length > MAX_AUDIO_BYTES + 64 * 1024)
     return jsonError(413, 'bad_request', 'Recording too long.');
@@ -57,6 +67,7 @@ export async function POST(req: Request) {
         type: audio.type,
       },
       req.signal,
+      (usage) => spendLedger(config).record(transcriptionCostUsd(usage)),
     );
     return Response.json(
       { text: text.slice(0, 2000) },

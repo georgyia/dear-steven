@@ -1,5 +1,5 @@
 import type { Embedder } from '../openai/embedder.ts';
-import { EMPTY_KNOWLEDGE_REPLY, THINKING_COPY } from '../persona/copy.ts';
+import { EMPTY_KNOWLEDGE_REPLY, RESTING_REPLY, THINKING_COPY } from '../persona/copy.ts';
 import { hybridSearch } from '../retrieval/index.ts';
 import type {
   AskEvent,
@@ -214,6 +214,31 @@ export async function* composeAnswer(
     repaired,
     final,
   });
+}
+
+/** The reply once the daily spend cap is reached (P6-08). No model call, no sources. */
+export function* restingAnswer(
+  started: number = Date.now(),
+  now: () => number = Date.now,
+): Generator<AskEvent> {
+  const block: ResolvedBlock = {
+    kind: 'paragraph',
+    segments: [{ text: RESTING_REPLY.text, attribution: 'synthesis', citationIds: [] }],
+  };
+  yield { type: 'block.done', index: 0, block, citations: [] };
+  yield {
+    type: 'final',
+    answer: {
+      mode: 'conversational',
+      blocks: [block],
+      citations: [],
+      episodes: [],
+      spoken: RESTING_REPLY.spoken,
+      caveats: [],
+      demo: false,
+      elapsedMs: Math.max(0, Math.round(now() - started)),
+    },
+  };
 }
 
 /** The honest reply when nothing has been ingested yet. No model call. */

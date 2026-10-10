@@ -27,6 +27,20 @@ describe('readConfig', () => {
     expect(c.youtubeApiKey).toBe(null);
   });
 
+  it('reads the daily budget, and fails closed when it is unreadable', () => {
+    expect(readConfig({}).dailyBudgetUsd).toBeNull();
+    expect(readConfig({ DEAR_STEVEN_DAILY_BUDGET_USD: ' 2.5 ' }).dailyBudgetUsd).toBe(2.5);
+    expect(readConfig({ DEAR_STEVEN_DAILY_BUDGET_USD: '0' }).dailyBudgetUsd).toBe(0);
+    expect(readConfig({ DEAR_STEVEN_DAILY_BUDGET_USD: '5$' }).dailyBudgetUsd).toBe(0);
+    expect(readConfig({ DEAR_STEVEN_DAILY_BUDGET_USD: '-1' }).dailyBudgetUsd).toBe(0);
+  });
+
+  it('reads the access code, ignoring placeholders', () => {
+    expect(readConfig({ DEAR_STEVEN_ACCESS_CODE: ' open sesame ' }).accessCode).toBe('open sesame');
+    expect(readConfig({ DEAR_STEVEN_ACCESS_CODE: 'changeme' }).accessCode).toBeNull();
+    expect(readConfig({}).accessCode).toBeNull();
+  });
+
   it('goes live with a key, unless demo is forced', () => {
     expect(readConfig({ OPENAI_API_KEY: 'sk-test' }).mode).toBe('live');
     const forced = readConfig({ OPENAI_API_KEY: 'sk-test', DEAR_STEVEN_DEMO: '1' });

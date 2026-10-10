@@ -12,6 +12,13 @@ export interface AppConfig {
   mode: 'live' | 'demo';
   demoReason: 'no_openai_key' | 'forced' | null;
   logAnswers: boolean;
+  /**
+   * `DEAR_STEVEN_DAILY_BUDGET_USD`: paid calls stop for the rest of the UTC day once the estimated
+   * spend reaches it (P6-08). `null` = no cap. Set but unreadable (`5$`, `-1`) fails closed: 0.
+   */
+  dailyBudgetUsd: number | null;
+  /** `DEAR_STEVEN_ACCESS_CODE`: when set, only browsers that entered it can use the API. */
+  accessCode: string | null;
 }
 
 type Env = Record<string, string | undefined>;
@@ -54,7 +61,21 @@ export function readConfig(env: Env = process.env, cwd: string = process.cwd()):
     mode: demoReason ? 'demo' : 'live',
     demoReason,
     logAnswers: flag(env.DEAR_STEVEN_LOG_ANSWERS),
+    dailyBudgetUsd: budget(env.DEAR_STEVEN_DAILY_BUDGET_USD),
+    accessCode: accessCodeFrom(env),
   };
+}
+
+function budget(value: string | undefined): number | null {
+  const v = value?.trim();
+  if (!v) return null;
+  const usd = Number(v);
+  return Number.isFinite(usd) && usd >= 0 ? usd : 0;
+}
+
+/** Read alone by the request proxy, which must not touch the filesystem on every request. */
+export function accessCodeFrom(env: Env = process.env): string | null {
+  return clean(env.DEAR_STEVEN_ACCESS_CODE);
 }
 
 /** Throws a readable error for CLI commands that cannot run without a key. */
