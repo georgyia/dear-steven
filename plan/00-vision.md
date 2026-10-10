@@ -29,8 +29,8 @@ interface; the interviews are the evidence base; a deterministic validator stand
    clean; every unanswerable question comes back `insufficient` with no citations; time to first
    block p50 < 3 s. ⏳ **needs H-07** (pipeline verified with scripted models; not yet with OpenAI)
 5. Lighthouse accessibility ≥ 95 at 375 and 1280; works at 375 / 768 / 1280; reduced motion
-   verified. ✅ for the home page (100 / 100) and the responsive + reduced-motion e2e suite;
-   ⏳ an automated audit of the interactive states is P1-08.
+   verified. ✅ Lighthouse 100 / 100 on home; axe WCAG 2.1 A/AA clean on every interactive state at
+   375 and 1280 (P1-08).
 6. `pnpm check` and CI green; architecture rules enforced.
 
 ### M2 — voice (Phase 4)

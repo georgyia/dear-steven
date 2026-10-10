@@ -89,6 +89,8 @@ use inside the app only.
   ("Dana White · 32:14. Real passage, speaker not verified…"). Dialogs use native `<dialog>`.
   "Answer complete." is announced in a live region. Thought line announces its steps.
 - Not colour-only: speaker states also differ in shape (initial disc, dashed border) and text.
+- Audited: Lighthouse 100 on home; axe-core WCAG 2.1 A/AA in every interactive state, in the e2e
+  suite (`e2e/a11y.spec.ts`). Scrollable regions without focusable content are themselves focusable.
 
 ## 8. Copy
 

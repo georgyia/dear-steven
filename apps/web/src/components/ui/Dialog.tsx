@@ -64,7 +64,15 @@ export function Dialog({ open, onClose, title, eyebrow, children, width = 'md' }
             <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={2} />
           </button>
         </header>
-        <div className="overflow-y-auto px-6 py-5">{children}</div>
+        <section
+          aria-labelledby={titleId}
+          // Focusable so keyboard users can scroll long content (WCAG 2.1.1, axe scrollable-region-focusable).
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable region must be keyboard-reachable
+          tabIndex={0}
+          className="overflow-y-auto px-6 py-5"
+        >
+          {children}
+        </section>
       </div>
     </dialog>
   );

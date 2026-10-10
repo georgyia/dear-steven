@@ -10,8 +10,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 
 - **Phase:** 0–4 built in the first implementation pass; Phase 5 open.
 - **Done:** M0 (except GitHub publishing and third-party skills), M1 in code, M2.
-- **Next to pick:** P1-08 (automated a11y audit of interactive states) — no human needed.
-  Then P5-03 / P5-04 / P5-07, which don't depend on live results.
+- **Next to pick:** P5-03, P5-04, P5-05, P5-07 — none depends on live results.
 - **Critical path:** H-03 → `pnpm ingest index` → H-07 / P3-08 → P5-01.
 
 ## Verified in the first pass (2026-10-10)
@@ -19,13 +18,14 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | Check | Result |
 |-------|--------|
 | `pnpm check` (Biome, tsc ×4, Vitest, dependency-cruiser) | green — 179 unit/integration tests in 23 files; 0 dependency violations |
-| `pnpm e2e` (production build, demo mode, desktop + mobile) | 30 passed, 2 layout-specific skips |
+| `pnpm e2e` (production build, demo mode, desktop + mobile) | 36 passed, 2 layout-specific skips |
 | Architecture rules | fire on a planted `react` import in core and a client import of core `store` |
 | `pnpm ingest all --limit 20` (real RSS feed, no keys) | 739 episodes discovered, 20 transcripts, 1,621 passages, ~10 s |
 | `pnpm eval` (retrieval, keyword-only) | recall@10 100% (20/20) |
 | Live mode with an invalid key | real status + passages; 12 passages from 8 episodes retrieved; clear "key rejected" message |
 | Standalone server (`output: 'standalone'`) against the real DB | sqlite-vec loads; `/api/status` correct |
 | Lighthouse 13.5 accessibility, home | 100 (375 px) · 100 (desktop) |
+| axe-core WCAG 2.1 A/AA, interactive states (e2e) | clean at 375 and 1280 after one fix (P1-08) |
 | `docker build` | not run locally (Docker daemon not running); runs in CI (`docker` job) |
 | Answers from the real model | **not yet run** — P3-08 / H-07 |
 
@@ -69,7 +69,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | P1-05 | — | feat(web): evidence inspector — panel and sheet | P0 | low | done | P1-04 | — |
 | P1-06 | — | feat(web): demo mode | P0 | low | done | P1-04 | — |
 | P1-07 | — | test(web): e2e, responsive, reduced motion, accessibility | P0 | low | done | P1-05, P1-06 | — |
-| P1-08 | — | test(web): automated a11y audit of the interactive states | P1 | low | **open** | P1-07 | — |
+| P1-08 | — | test(web): automated a11y audit of the interactive states | P1 | low | done | P1-07 | — |
 | P2-01 | — | feat(core): SQLite knowledge store | P0 | medium | done | P0-02 | — |
 | P2-02 | — | feat(core): VTT, segments, guest names, chunker | P0 | low | done | P0-02 | — |
 | P2-03 | — | feat(core): hybrid retrieval | P0 | low | done | P2-01 | — |

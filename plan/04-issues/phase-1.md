@@ -86,7 +86,7 @@ context. Tests prove the fixtures are valid, labelled and quote verbatim. **Stat
 **Result:** `e2e/stage.spec.ts` (desktop + mobile): demo notice, setup panel, about panel, `/`
 focus, no horizontal scroll, streamed answer, honest insufficient answer, stop mid-answer, chip
 tooltip, inspector cycling with `[`/`]`, Esc, panel beside (not over) the column, bottom sheet on
-mobile, reduced motion. Lighthouse 13.5 accessibility on the home page: **100** at 375 px and **100** at desktop. The interactive states (answer, inspector, sheet, dialogs) are covered by e2e but have not had an automated a11y audit yet — follow-up P1-08.
+mobile, reduced motion. Lighthouse 13.5 accessibility on the home page: **100** at 375 px and **100** at desktop. The interactive states are audited by P1-08.
 **State:** done.
 
 ---
@@ -126,4 +126,11 @@ None — a test-only dependency.
 None.
 
 #### Dependencies
-P1-07. **Size:** S. **State:** open.
+P1-07. **Size:** S. **State:** done.
+
+**Result:** `e2e/a11y.spec.ts` (axe-core via `@axe-core/playwright` 4.13.0, WCAG 2.1 A/AA) on home,
+answer, inspector (quote and context tabs; panel on desktop, sheet on mobile), spoken view, setup
+and about dialogs — desktop and mobile. It found one real issue, fixed: the dialog body was a
+scrollable region with no focusable content, so keyboard users couldn't scroll it; it is now a
+focusable, labelled `<section>`. Interactive states are audited under reduced motion (identical
+settled colours; no mid-fade contrast readings); home is audited with full motion.

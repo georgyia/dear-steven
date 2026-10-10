@@ -16,6 +16,7 @@ answer, so usefulness, retrieval, citations and persona are measured **separatel
 | Pipeline | Retrieve → stream → validate → repair → downgrade → final, with a scripted model: event order, stable citation ids, stored quote spans, honest modes, empty KB, malformed output | `packages/core/src/answer/compose.test.ts` |
 | Fixture integrity | Demo answers are valid, labelled, never use the host chip or video links, quotes are verbatim | `apps/web/src/lib/demo-fixtures.test.ts` |
 | E2E | A person can do what the product promises, with no keys, on desktop and mobile, with reduced motion, by voice, with a blocked mic | `apps/web/e2e/*.spec.ts` |
+| Accessibility | WCAG 2.1 A/AA holds in every interactive state, at 375 and 1280 | `apps/web/e2e/a11y.spec.ts` (axe-core); Lighthouse on home |
 | Architecture fitness | Core stays framework-free; client never imports server core; no cycles | `pnpm arch` |
 | Retrieval eval | Relevant episodes are found (recall@10 ≥ 0.8) | `pnpm eval` |
 | Answer eval | With the real model: citations resolve, quotes byte-match, no attribution violations, persona lint clean, unanswerable → insufficient, first block p50 < 3 s | `pnpm eval --answers` (H-07) |
