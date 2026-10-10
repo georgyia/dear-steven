@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { embeddingInput } from '../openai/embedder.ts';
 import { type Episode, RelatedMomentsSchema, type Segment } from '../schema/index.ts';
 import { fakeEmbedder, seedEpisode, tempStore, unknownSegments } from '../test/fixtures.ts';
-import { buildRelatedMoments, episodeSummary } from './citations.ts';
+import { buildRelatedMoments, episodeRef, episodeSummary } from './citations.ts';
 
 const episode = (over: Partial<Episode> = {}): Episode & { passages: number } => ({
   id: 'ep_1',
@@ -92,5 +92,15 @@ describe('buildRelatedMoments', () => {
     const rss = related.passages.find((p) => p.episode.guestNames[0] !== 'Grace Hopper');
     expect(rss).toMatchObject({ speaker: 'unverified', speakerName: null, quality: 'asr' });
     expect(related.passages.every((p) => p.passageId !== source)).toBe(true);
+  });
+});
+
+describe('episodeRef', () => {
+  it('passes on the podcast audio only when it is https', () => {
+    expect(episodeRef(episode({ audioUrl: 'https://cdn.example.test/1.mp3' })).audioUrl).toBe(
+      'https://cdn.example.test/1.mp3',
+    );
+    expect(episodeRef(episode({ audioUrl: 'http://cdn.example.test/1.mp3' })).audioUrl).toBe(null);
+    expect(episodeRef(episode()).audioUrl).toBe(null);
   });
 });

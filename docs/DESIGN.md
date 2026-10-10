@@ -61,7 +61,8 @@ Shape: chips 999px, composer 22px, cards 18px, panels 24px. Layout: column `44re
 - **Conversation**: fixed top bar (compact wordmark = new conversation; About; status pill), a
   44rem column of turns, the composer docked at the bottom under a scroll-edge blur, disclosure
   under it. The composer glides from home to dock (shared layout animation).
-- **Evidence inspector**: ≥ 1024px a 420px right panel; the column and composer shift left, never
+- **Evidence inspector** (tabs Quote · Context · Video; Video holds the click-to-load player and
+  the podcast audio): ≥ 1024px a 420px right panel; the column and composer shift left, never
   covered. < 1024px a bottom sheet (85dvh, drag handle, native modal dialog).
 - Breakpoints verified at 375 / 768 / 1280. No horizontal scroll (tested).
 

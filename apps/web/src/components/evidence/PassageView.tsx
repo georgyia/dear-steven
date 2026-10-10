@@ -1,13 +1,12 @@
 'use client';
 
-import { formatDate, formatMoment, formatTimestamp } from '@dear-steven/core/format';
+import { formatDate, formatTimestamp } from '@dear-steven/core/format';
 import type { Citation, PassageContext } from '@dear-steven/core/schema';
 import {
   ArrowLeft01Icon,
   ArrowRight01Icon,
   Cancel01Icon,
   Copy01Icon,
-  LinkSquare02Icon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useState } from 'react';
@@ -17,6 +16,7 @@ import { useToast } from '@/components/ui/Toasts';
 import RubberSegment from '@/components/vendor/react-bits/RubberSegment';
 import { fetchPassage } from '@/lib/api';
 import { RelatedMoments } from './RelatedMoments';
+import { VideoTab } from './VideoTab';
 
 type Tab = 'quote' | 'context' | 'video';
 
@@ -156,7 +156,7 @@ export function PassageView({
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
         {tab === 'quote' ? <QuoteTab citation={citation} onCopy={copy} /> : null}
         {tab === 'context' ? <ContextTab citation={citation} context={context} /> : null}
-        {tab === 'video' ? <VideoTab citation={citation} /> : null}
+        {tab === 'video' ? <VideoTab key={citation.id} citation={citation} /> : null}
       </div>
     </div>
   );
@@ -318,39 +318,6 @@ function ContextTab({
           <span>{a.text}</span>
         </p>
       ))}
-    </div>
-  );
-}
-
-function VideoTab({ citation }: { citation: Citation }) {
-  const moment = formatMoment(citation.timestamp.ms, citation.timestamp.state);
-  if (!citation.youtubeUrl) {
-    return (
-      <p className="text-[14.5px] leading-relaxed text-ivory-1">
-        {citation.episode.demo
-          ? 'Video links are switched off in demo mode — demo episodes are fixtures, not real recordings.'
-          : 'This episode isn’t linked to its YouTube video yet. Run the match-youtube ingest step to add it.'}
-      </p>
-    );
-  }
-  return (
-    <div className="flex flex-col gap-4">
-      <a
-        href={citation.youtubeUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex w-fit items-center gap-2 rounded-full bg-ember-0 px-4 py-2.5 text-[14px] font-medium text-ink-0 transition-colors hover:bg-ember-1 focus-ring-ivory"
-      >
-        <HugeiconsIcon icon={LinkSquare02Icon} size={16} strokeWidth={2} />
-        {moment ? `Open on YouTube at ${moment}` : 'Open the episode on YouTube'}
-      </a>
-      <p className="text-[13.5px] leading-relaxed text-ivory-2">
-        {citation.timestamp.state === 'exact'
-          ? 'The video and the podcast are aligned for this episode.'
-          : citation.timestamp.state === 'estimated'
-            ? 'Approximate — the video can run slightly ahead of or behind the podcast audio.'
-            : `The exact moment isn’t aligned yet, so this opens the episode from the start. In the podcast it’s at ${formatTimestamp(citation.startMs)}.`}
-      </p>
     </div>
   );
 }

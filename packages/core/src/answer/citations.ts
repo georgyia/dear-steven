@@ -10,7 +10,7 @@ import type {
   SpeakerState,
 } from '../schema/index.ts';
 import type { KnowledgeStore, StoredPassage } from '../store/index.ts';
-import { resolveMoment } from '../youtube/links.ts';
+import { httpsUrl, resolveMoment } from '../youtube/links.ts';
 
 export const isVerified = (s: Segment) =>
   (s.attributionMethod === 'diarization' || s.attributionMethod === 'manual') &&
@@ -23,6 +23,7 @@ export function episodeRef(e: Episode): EpisodeRef {
     guestNames: e.guestNames,
     publishedAt: e.publishedAt,
     youtubeVideoId: e.youtubeVideoId,
+    audioUrl: httpsUrl(e.audioUrl),
     demo: false,
   };
 }
@@ -73,7 +74,7 @@ export function momentOf(episode: Episode, startMs: number) {
     offsetMs: episode.youtubeOffsetMs,
     alignment: episode.youtubeAlignment,
   });
-  return { timestamp: { ms: m.ms, state: m.state }, youtubeUrl: m.url };
+  return { timestamp: { ms: m.ms, state: m.state }, youtubeUrl: m.url, embedUrl: m.embedUrl };
 }
 
 /** Everything about a cited passage except what depends on the claim citing it. */

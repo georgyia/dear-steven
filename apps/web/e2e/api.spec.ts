@@ -65,3 +65,13 @@ test.describe('GET /api/passages/:id/related', () => {
     expect((await request.get('/api/passages/ps_real_1/related')).status()).toBe(404);
   });
 });
+
+test.describe('response headers', () => {
+  test('frames and media are fenced to what the inspector needs', async ({ request }) => {
+    const csp = (await request.get('/')).headers()['content-security-policy'] ?? '';
+    expect(csp).toContain('frame-src https://www.youtube-nocookie.com');
+    expect(csp).toContain("media-src 'self' https:");
+    expect(csp).toContain("object-src 'none'");
+    expect(csp).toContain("frame-ancestors 'none'");
+  });
+});

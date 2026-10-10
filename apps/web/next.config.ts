@@ -30,6 +30,21 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           // Microphone is requested only from this origin, only on a user gesture.
           { key: 'Permissions-Policy', value: 'microphone=(self), camera=(), geolocation=()' },
+          // Frames and media are the only third-party loads, and only after a click (P5-05): the
+          // privacy-enhanced YouTube player, and the podcast audio from whichever https CDN the
+          // RSS enclosure points at. script-src is not restricted yet — Next's inline bootstrap
+          // scripts would need per-request nonces (threat model, SR-12).
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              'frame-src https://www.youtube-nocookie.com',
+              "media-src 'self' https:",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'none'",
+            ].join('; '),
+          },
         ],
       },
     ];

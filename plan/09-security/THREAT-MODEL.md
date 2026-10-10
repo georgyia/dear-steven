@@ -26,7 +26,8 @@ anyone's mouth), the **operator's keys**, and the **user's voice and questions**
 | SR-12 | YouTube links | Link injection via a malformed video id | 11-char id allow-list; otherwise no link | `links.test.ts` |
 | SR-13 | Ingest CLI | Unbounded spend | Paid stages need `--budget`; stop before exceeding; dry-run for embeddings | `transcribe.ts`, `index.ts` |
 | SR-14 | Repository | Committed secrets or podcast data | `.gitignore` (`.env*`, `data/`); gitleaks in CI | CI `gitleaks` |
-| SR-15 | Response headers | Clickjacking, MIME sniffing | `X-Frame-Options: DENY`, `nosniff`, strict referrer | `next.config.ts` |
+| SR-15 | Response headers | Clickjacking, MIME sniffing, injected frames or plugins | `X-Frame-Options: DENY`, `nosniff`, strict referrer; CSP `frame-src` youtube-nocookie only, `media-src 'self' https:`, `object-src 'none'`, `base-uri`/`form-action 'self'`, `frame-ancestors 'none'`. `script-src` not yet restricted (needs per-request nonces for Next's inline scripts) | `next.config.ts`; `e2e/api.spec.ts` |
+| SR-16 | In-drawer player and podcast audio | The user's IP and referrer reach Google and the audio host (and any tracking redirect in the enclosure URL) without consent; mixed or odd-scheme media | Nothing requested before a click; privacy-enhanced youtube-nocookie embed; enclosures used only when https; disclosed in "How this works" | `e2e/media.spec.ts` (request log); `links.test.ts`; `citations.test.ts` |
 
 ## Out of scope
 

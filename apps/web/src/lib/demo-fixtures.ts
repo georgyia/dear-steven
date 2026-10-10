@@ -34,6 +34,7 @@ const episodes = {
     guestNames: ['Demo Guest · Behavioural Scientist'],
     publishedAt: '2026-03-12T05:00:00Z',
     youtubeVideoId: null,
+    audioUrl: null,
     demo: true,
   },
   founder: {
@@ -42,6 +43,7 @@ const episodes = {
     guestNames: ['Demo Guest · Founder'],
     publishedAt: '2026-05-04T05:00:00Z',
     youtubeVideoId: null,
+    audioUrl: null,
     demo: true,
   },
   coach: {
@@ -50,6 +52,7 @@ const episodes = {
     guestNames: ['Demo Guest · Performance Coach'],
     publishedAt: '2026-07-21T05:00:00Z',
     youtubeVideoId: null,
+    audioUrl: null,
     demo: true,
   },
 } satisfies Record<string, EpisodeRef>;
@@ -155,6 +158,7 @@ const toCitation = (id: string, key: PassageKey, relevance: string): Citation =>
     endMs: p.endMs,
     timestamp: { ms: p.startMs, state: 'unknown' },
     youtubeUrl: null,
+    embedUrl: null,
     excerpt: p.text,
     quoteSpan: null,
     relevance,
@@ -412,6 +416,7 @@ const passageCitation = (
   endMs: p.endMs,
   timestamp: { ms: p.startMs, state: 'unknown' },
   youtubeUrl: null,
+  embedUrl: null,
   excerpt:
     p.text.length > excerptChars ? `${p.text.slice(0, excerptChars - 1).trimEnd()}…` : p.text,
   quality: 'reviewed',

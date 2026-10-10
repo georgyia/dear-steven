@@ -99,6 +99,7 @@ one by its stored embedding (`buildRelatedMoments`, no model call; empty until e
 | Server → OpenAI | Key only in server memory (`readConfig`); provider error text never logged or shown (`server/errors.ts`). |
 | Transcript text → model | Untrusted data: wrapped in `<sources>`, `<`/`>` neutralised, instructions say to ignore commands inside. |
 | Model → browser | Nothing passes without `validateBlock`; citation ids must be retrieved ids; quotes are re-derived from storage. |
+| Browser → YouTube / podcast host | Only after the user presses play: the youtube-nocookie player and the https RSS enclosure. CSP `frame-src` / `media-src` fence everything else. |
 | CLI → network | Polite UA, timeouts, retries with backoff; RSS + VTT + YouTube Data API + OpenAI only. Paid stages require `--budget`. |
 
 ## 6. Storage (SQLite, `data/dear-steven.db`)

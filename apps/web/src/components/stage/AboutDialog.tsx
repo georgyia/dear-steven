@@ -85,7 +85,9 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
           <p>
             Questions are sent to the server and to OpenAI to compose an answer, and are not stored.
             The microphone is only used while you hold or toggle it. Short, attributed quotations
-            link back to the original episodes; full transcripts are never published.
+            link back to the original episodes; full transcripts are never published. The video
+            player and the podcast audio load from YouTube and the podcast’s host only when you
+            press play.
           </p>
         </section>
       </div>

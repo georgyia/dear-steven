@@ -24,6 +24,28 @@ export interface ResolvedMoment {
 }
 
 /**
+ * The podcast enclosure at a moment, as a media fragment (`#t=<seconds>`). https only — anything
+ * else (or a malformed URL) gives `null`, so the page never loads mixed or odd-scheme media.
+ */
+export function podcastAudioAt(audioUrl: string | null, startMs: number): string | null {
+  const safe = httpsUrl(audioUrl);
+  if (!safe) return null;
+  const url = new URL(safe);
+  url.hash = `t=${Math.floor(Math.max(0, startMs) / 1000)}`;
+  return url.toString();
+}
+
+/** The URL itself when it parses as https, else `null`. */
+export function httpsUrl(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    return new URL(value).protocol === 'https:' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Turns a podcast-relative moment into a YouTube deep link.
  *
  * - No (or malformed) video id → no link at all; we never invent one.

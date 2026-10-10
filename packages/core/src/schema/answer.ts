@@ -80,6 +80,8 @@ export const EpisodeRefSchema = z.object({
   guestNames: z.array(z.string()),
   publishedAt: z.string(),
   youtubeVideoId: z.string().nullable(),
+  /** The RSS enclosure (https only). The browser fetches it only after the user presses play. */
+  audioUrl: z.string().nullable(),
   demo: z.boolean(),
 });
 export type EpisodeRef = z.infer<typeof EpisodeRefSchema>;
@@ -94,6 +96,8 @@ export const CitationSchema = z.object({
   endMs: z.number().int().nonnegative(),
   timestamp: z.object({ ms: z.number().int().nonnegative(), state: TimestampStateSchema }),
   youtubeUrl: z.string().nullable(),
+  /** youtube-nocookie embed at the same moment; loaded only when the user asks for the player. */
+  embedUrl: z.string().nullable(),
   /** Verbatim stored text: the located quote span when there is one, else the passage text. */
   excerpt: z.string(),
   quoteSpan: z.object({ start: z.number().int(), end: z.number().int() }).nullable(),

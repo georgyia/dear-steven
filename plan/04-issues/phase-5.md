@@ -183,11 +183,19 @@ here" option that streams the RSS enclosure from the exact podcast timestamp.
 thumbnail frame, HTML audio with a `#t=` fragment on the enclosure URL, CSP `frame-src` for
 `www.youtube-nocookie.com`.
 **Out** — downloading or proxying audio.
+**As built** — no RefineFrame and no thumbnail: a YouTube thumbnail is itself a request to Google
+before the click. The placeholder is a plain 16:9 frame. There was no CSP yet, so P5-05 adds one
+scoped to what it needs (`frame-src` youtube-nocookie, `media-src 'self' https:`, plus
+`object-src`/`base-uri`/`form-action`/`frame-ancestors`); `script-src` stays open until Next's
+inline scripts get nonces. Enclosures are passed through only when https (`httpsUrl`), as
+`#t=<seconds>` media fragments with an explicit seek fallback. The copy warns that inserted ads
+can shift the podcast moment by a few seconds.
 
 #### Acceptance criteria
-- [ ] No request to YouTube or the audio host until the user clicks.
-- [ ] Estimated alignment is labelled `≈` in the player UI.
-- [ ] Works on iOS Safari (gesture-started playback).
+- [x] No request to YouTube or the audio host until the user clicks (`e2e/media.spec.ts`).
+- [x] Estimated alignment is labelled `≈` in the player UI.
+- [ ] Works on iOS Safari (gesture-started playback) — `play()` runs synchronously in the click
+  handler; **not yet checked on a real iPhone** (no device in CI).
 
 #### Tests required
 e2e: no third-party requests before click (request log); player appears after click.
