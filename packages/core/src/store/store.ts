@@ -273,6 +273,36 @@ export class KnowledgeStore {
       .map(toEpisode);
   }
 
+  /**
+   * Indexed episodes for the episode explorer, newest first, optionally filtered by a title or
+   * guest-name fragment. Metadata only — never transcript text.
+   */
+  browseIndexed(options: { search?: string; limit: number; offset: number }): {
+    total: number;
+    episodes: (Episode & { passages: number })[];
+  } {
+    const term = options.search?.trim();
+    // LIKE wildcards in user input are escaped so a search for "100%" means exactly that.
+    const like = term ? `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%` : null;
+    const where = `WHERE e.indexed_at IS NOT NULL${like ? " AND (e.title LIKE ? ESCAPE '\\' OR e.guest_names LIKE ? ESCAPE '\\')" : ''}`;
+    const params = like ? [like, like] : [];
+    const total =
+      this.db
+        .prepare<unknown[], { n: number }>(`SELECT COUNT(*) AS n FROM episodes e ${where}`)
+        .get(...params)?.n ?? 0;
+    const rows = this.db
+      .prepare<unknown[], EpisodeRow & { passages: number }>(
+        `SELECT e.*, (SELECT COUNT(*) FROM passages p WHERE p.episode_id = e.id) AS passages
+         FROM episodes e ${where} ORDER BY e.published_at DESC LIMIT ? OFFSET ?`,
+      )
+      .all(
+        ...params,
+        Math.max(1, Math.floor(options.limit)),
+        Math.max(0, Math.floor(options.offset)),
+      );
+    return { total, episodes: rows.map((r) => ({ ...toEpisode(r), passages: r.passages })) };
+  }
+
   setGuestNames(episodeId: string, names: string[], source: 'title' | 'llm' | 'manual') {
     this.db
       .prepare('UPDATE episodes SET guest_names = ?, guest_source = ?, updated_at = ? WHERE id = ?')

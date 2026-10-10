@@ -3,6 +3,7 @@ export {
   buildPassageContext,
   citationBase,
   episodeRef,
+  episodeSummary,
   isVerified,
   momentOf,
   speakerOf,

@@ -1,6 +1,11 @@
 import { CitationSchema, ResolvedBlockSchema } from '@dear-steven/core/schema';
 import { describe, expect, it } from 'vitest';
-import { DEMO_ANSWERS, demoPassageContext, pickDemoAnswer } from './demo-fixtures.ts';
+import {
+  DEMO_ANSWERS,
+  demoEpisodePage,
+  demoPassageContext,
+  pickDemoAnswer,
+} from './demo-fixtures.ts';
 
 describe('demo fixtures', () => {
   it.each(DEMO_ANSWERS.map((a) => [a.key, a] as const))(
@@ -61,5 +66,20 @@ describe('demo fixtures', () => {
     for (const a of DEMO_ANSWERS)
       for (const c of a.citations) expect(demoPassageContext(c.passageId)).not.toBe(null);
     expect(demoPassageContext('ps_real_1')).toBe(null);
+  });
+});
+
+describe('demoEpisodePage', () => {
+  it('lists the fixture episodes newest first, labelled demo, searchable by guest', () => {
+    const all = demoEpisodePage('', 0);
+    expect(all.total).toBe(3);
+    expect(all.episodes.every((e) => e.demo && e.youtubeUrl === null)).toBe(true);
+    expect(all.episodes.map((e) => e.publishedAt)).toEqual(
+      [...all.episodes.map((e) => e.publishedAt)].sort().reverse(),
+    );
+    expect(demoEpisodePage('founder', 0).episodes.map((e) => e.guestNames[0])).toEqual([
+      'Demo Guest · Founder',
+    ]);
+    expect(demoEpisodePage('nobody', 0).total).toBe(0);
   });
 });

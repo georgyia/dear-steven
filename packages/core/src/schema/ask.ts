@@ -97,3 +97,31 @@ export type KnowledgeStatus = z.infer<typeof KnowledgeStatusSchema>;
 export const SpeechRequestSchema = z.strictObject({
   text: z.string().trim().min(1).max(LIMITS.speechChars),
 });
+
+/** One row of the episode explorer: metadata only, never transcript text. */
+export const EpisodeSummarySchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  guestNames: z.array(z.string()),
+  publishedAt: z.string(),
+  passages: z.number().int().nonnegative(),
+  speakers: z.enum(['verified', 'unverified']),
+  video: z.enum(['exact', 'estimated', 'unknown', 'none']),
+  youtubeUrl: z.string().nullable(),
+  demo: z.boolean(),
+});
+export type EpisodeSummary = z.infer<typeof EpisodeSummarySchema>;
+
+export const EPISODE_PAGE_SIZE = 30;
+
+export const EpisodeQuerySchema = z.object({
+  q: z.string().trim().max(100).default(''),
+  offset: z.coerce.number().int().min(0).max(100_000).default(0),
+});
+
+export const EpisodePageSchema = z.object({
+  total: z.number().int().nonnegative(),
+  offset: z.number().int().nonnegative(),
+  episodes: z.array(EpisodeSummarySchema),
+});
+export type EpisodePage = z.infer<typeof EpisodePageSchema>;

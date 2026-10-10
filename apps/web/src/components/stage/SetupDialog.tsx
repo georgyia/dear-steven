@@ -9,6 +9,8 @@ interface SetupDialogProps {
   open: boolean;
   onClose: () => void;
   status: KnowledgeStatus;
+  /** Opens the episode explorer. */
+  onBrowse: () => void;
 }
 
 interface Item {
@@ -110,7 +112,7 @@ function items(s: KnowledgeStatus): Item[] {
 }
 
 /** "What's set up, and what to run next" — the helpful alternative to crashing on missing config. */
-export function SetupDialog({ open, onClose, status }: SetupDialogProps) {
+export function SetupDialog({ open, onClose, status, onBrowse }: SetupDialogProps) {
   return (
     <Dialog open={open} onClose={onClose} eyebrow="Setup" title="What I have to work with">
       <ul className="flex flex-col gap-4">
@@ -137,6 +139,16 @@ export function SetupDialog({ open, onClose, status }: SetupDialogProps) {
           </li>
         ))}
       </ul>
+      {status.episodes > 0 ? (
+        <button
+          type="button"
+          onClick={onBrowse}
+          className="mt-5 inline-flex items-center gap-2 rounded-full border border-ink-3 px-4 py-2 text-[13.5px] text-ivory-0 transition-colors hover:border-ember-0/60 hover:text-ember-1"
+        >
+          Browse the {status.episodes.toLocaleString('en-GB')} conversation
+          {status.episodes === 1 ? '' : 's'}
+        </button>
+      ) : null}
       <p className="mt-6 border-t border-ink-3 pt-4 text-[13px] leading-relaxed text-ivory-2">
         Full instructions: <Code>README.md</Code> and <Code>docs/INGESTION.md</Code>. Nothing you
         ask is stored.

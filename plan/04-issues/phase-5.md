@@ -95,17 +95,22 @@ link state), searchable by guest or title, opened from the status pill or the se
 
 #### Scope
 **In** — `GET /api/episodes` (paginated, ≤ 50 per page, no transcript text) via a new
-`KnowledgeStore.listIndexedEpisodes`; a sheet/panel UI using AnimatedList (vendor, R-01 "later")
-and GlideSelect for the guest filter; empty state copy.
+`KnowledgeStore.browseIndexed`; a dialog with one search field over title and guest names, and
+empty-state copy.
+**Changed while building** — the plan named AnimatedList + GlideSelect. A guest *select* does not
+scale to ~700 named guests and hides the title search, so it is one search field (debounced,
+`LIKE` with escaped wildcards) instead; no new vendor component. It is a modal dialog opened from
+the setup panel ("Browse the N conversations"), not the evidence drawer: the drawer belongs to one
+answer's sources, and the explorer is reached from the setup panel, which is itself a dialog.
 **Out** — per-episode chat, episode pages, editing metadata.
 
 #### Acceptance criteria
-- [ ] Lists exactly the indexed episodes, newest first; filter by guest works.
-- [ ] Demo mode lists the three fixture episodes, labelled.
-- [ ] Keyboard and screen-reader usable; 375 / 1280 screenshots.
+- [x] Lists exactly the indexed episodes, newest first; filter by guest works.
+- [x] Demo mode lists the three fixture episodes, labelled.
+- [x] Keyboard and screen-reader usable (labelled search, live count, axe-clean); 375 / 1280 checked.
 
 #### Tests required
-Store unit test; route test; e2e (open, filter, close).
+Store unit test; route test (`e2e/api.spec.ts`, over HTTP); e2e (open, filter, close).
 
 #### Security notes
 Read-only; returns metadata only (SR-07).

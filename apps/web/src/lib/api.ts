@@ -2,6 +2,7 @@ import type {
   AskErrorCode,
   AskEvent,
   AskRequest,
+  EpisodePage,
   KnowledgeStatus,
   PassageContext,
 } from '@dear-steven/core/schema';
@@ -61,4 +62,15 @@ export async function fetchStatus(signal?: AbortSignal): Promise<KnowledgeStatus
   const res = await fetch('/api/status', { signal, cache: 'no-store' });
   if (!res.ok) throw new Error(`status ${res.status}`);
   return (await res.json()) as KnowledgeStatus;
+}
+
+export async function fetchEpisodes(
+  query: string,
+  offset: number,
+  signal?: AbortSignal,
+): Promise<EpisodePage> {
+  const qs = new URLSearchParams({ q: query, offset: String(offset) });
+  const res = await fetch(`/api/episodes?${qs}`, { signal });
+  if (!res.ok) throw new Error(`episodes ${res.status}`);
+  return (await res.json()) as EpisodePage;
 }

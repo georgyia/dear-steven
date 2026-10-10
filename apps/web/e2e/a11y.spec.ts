@@ -67,5 +67,12 @@ test.describe('interactive states', () => {
     await page.getByRole('button', { name: /How this works|About/ }).click();
     await expect(page.getByRole('dialog', { name: 'An AI persona with receipts' })).toBeVisible();
     await audit(page, 'about dialog');
+    await page.keyboard.press('Escape');
+    await page.getByTestId('status-pill').click();
+    await page.getByRole('button', { name: /Browse the 3 conversations/ }).click();
+    await expect(
+      page.getByRole('dialog', { name: 'The conversations I know' }).getByRole('listitem'),
+    ).toHaveCount(3);
+    await audit(page, 'episode explorer');
   });
 });

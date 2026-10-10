@@ -85,11 +85,15 @@ SSE events: `status` · `sources` · `block.start` · `block.done` · `final` ·
 (`packages/core/src/schema/ask.ts`). The plan's `block.delta` became `block.start`: no partial,
 unvalidated text is ever streamed.
 
+Outside the question flow, the episode explorer ("Browse the N conversations" in the setup panel)
+reads `GET /api/episodes?q=&offset=`: metadata only (title, guests, date, passage count, speaker
+and video states), 30 per page, searched by title or guest (`KnowledgeStore.browseIndexed`).
+
 ## 5. Trust boundaries
 
 | Boundary | Rule |
 |----------|------|
-| Browser → server | Every body validated with zod; size caps; per-IP token buckets (live answers, transcribe, speech, passages). |
+| Browser → server | Every body validated with zod; size caps; per-IP token buckets (live answers, transcribe, speech, passages + episode list). |
 | Server → OpenAI | Key only in server memory (`readConfig`); provider error text never logged or shown (`server/errors.ts`). |
 | Transcript text → model | Untrusted data: wrapped in `<sources>`, `<`/`>` neutralised, instructions say to ignore commands inside. |
 | Model → browser | Nothing passes without `validateBlock`; citation ids must be retrieved ids; quotes are re-derived from storage. |

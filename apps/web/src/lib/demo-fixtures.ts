@@ -1,6 +1,7 @@
 import type {
   AnswerMode,
   Citation,
+  EpisodePage,
   EpisodeRef,
   PassageContext,
   ResolvedBlock,
@@ -425,3 +426,28 @@ export function demoPassageContext(passageId: string): PassageContext | null {
 }
 
 export const DEMO_EPISODE_COUNT = Object.keys(episodes).length;
+
+/** The episode explorer in demo mode: the three fixture episodes, searchable like the real list. */
+export function demoEpisodePage(query: string, offset: number): EpisodePage {
+  const q = query.trim().toLowerCase();
+  const all = Object.values(episodes)
+    .filter(
+      (e) =>
+        !q ||
+        e.title.toLowerCase().includes(q) ||
+        e.guestNames.some((g) => g.toLowerCase().includes(q)),
+    )
+    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+    .map((e) => ({
+      id: e.id,
+      title: e.title,
+      guestNames: e.guestNames,
+      publishedAt: e.publishedAt,
+      passages: Object.values(passages).filter((p) => p.episode.id === e.id).length,
+      speakers: 'unverified' as const,
+      video: 'none' as const,
+      youtubeUrl: null,
+      demo: true,
+    }));
+  return { total: all.length, offset, episodes: all.slice(offset) };
+}

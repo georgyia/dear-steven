@@ -172,3 +172,30 @@ test.describe('reduced motion', () => {
     await expect(page.locator('[data-citation]').first()).toBeVisible();
   });
 });
+
+test.describe('episode explorer', () => {
+  test('lists what is indexed and searches by guest', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTestId('status-pill').click();
+    await page.getByRole('button', { name: /Browse the 3 conversations/ }).click();
+    const explorer = page.getByRole('dialog', { name: 'The conversations I know' });
+    await expect(explorer).toBeVisible();
+    await expect(explorer.getByText('3 conversations indexed')).toBeVisible();
+    await expect(explorer.getByRole('listitem')).toHaveCount(3);
+    await explorer.getByRole('searchbox', { name: 'Search by guest or title' }).fill('coach');
+    await expect(explorer.getByText('1 match')).toBeVisible();
+    await expect(explorer.getByRole('listitem')).toHaveCount(1);
+    await explorer.getByRole('button', { name: 'Clear search' }).click();
+    await expect(explorer.getByRole('listitem')).toHaveCount(3);
+    await expect(explorer.getByRole('button', { name: 'Clear search' })).toHaveCount(0);
+    await expect(explorer.getByRole('searchbox')).toBeFocused();
+    await explorer.getByRole('searchbox', { name: 'Search by guest or title' }).fill('zzz');
+    await expect(explorer.getByText('No conversation matches “zzz”.')).toBeVisible();
+    // Native search-field behaviour: the first Esc clears the search, the second closes the dialog.
+    await page.keyboard.press('Escape');
+    await expect(explorer.getByRole('searchbox')).toHaveValue('');
+    await expect(explorer.getByRole('listitem')).toHaveCount(3);
+    await page.keyboard.press('Escape');
+    await expect(explorer).toBeHidden();
+  });
+});

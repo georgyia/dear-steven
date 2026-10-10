@@ -15,7 +15,9 @@ interface DialogProps {
 
 /**
  * Modal built on the native <dialog>: the browser provides the focus trap, Esc-to-close, inert
- * background and top-layer stacking. Clicking the backdrop closes it.
+ * background and top-layer stacking. Clicking the backdrop closes it. `onClose` is called only for
+ * user-initiated closes (Esc, backdrop, the close button) — never for the native `close` event, which
+ * also fires when `open` turns false, so one dialog can hand over to another.
  */
 export function Dialog({ open, onClose, title, eyebrow, children, width = 'md' }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -33,7 +35,6 @@ export function Dialog({ open, onClose, title, eyebrow, children, width = 'md' }
     <dialog
       ref={ref}
       aria-labelledby={titleId}
-      onClose={onClose}
       onCancel={(e) => {
         e.preventDefault();
         onClose();

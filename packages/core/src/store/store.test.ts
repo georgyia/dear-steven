@@ -151,3 +151,50 @@ describe('toFtsQuery', () => {
     expect(toFtsQuery('why is it?')).toBe(null);
   });
 });
+
+describe('KnowledgeStore — browsing indexed episodes', () => {
+  const seedThree = () => {
+    const store = tempStore();
+    seedEpisode(store, 1, ['A conversation about procrastination and feelings.']);
+    seedEpisode(store, 2, ['A conversation about building companies from nothing.']);
+    seedEpisode(store, 3, ['A conversation about sleep.']);
+    store.upsertEpisodes([episodeInput(4, { title: 'Not yet transcribed: 100% raw' })]);
+    return store;
+  };
+
+  it('lists only indexed episodes, newest first, with passage counts', () => {
+    const page = seedThree().browseIndexed({ limit: 10, offset: 0 });
+    expect(page.total).toBe(3);
+    expect(page.episodes.map((e) => e.guestNames[0])).toEqual([
+      'Alan Turing',
+      'Grace Hopper',
+      'Ada Lovelace',
+    ]);
+    expect(page.episodes.every((e) => e.passages > 0)).toBe(true);
+  });
+
+  it('searches titles and guest names, case-insensitively', () => {
+    const store = seedThree();
+    expect(
+      store
+        .browseIndexed({ search: 'grace', limit: 10, offset: 0 })
+        .episodes.map((e) => e.guestNames[0]),
+    ).toEqual(['Grace Hopper']);
+    expect(store.browseIndexed({ search: 'Episode 3', limit: 10, offset: 0 }).total).toBe(1);
+  });
+
+  it('treats LIKE wildcards in the search as literal characters', () => {
+    const store = seedThree();
+    expect(store.browseIndexed({ search: '%', limit: 10, offset: 0 }).total).toBe(0);
+    expect(store.browseIndexed({ search: '_', limit: 10, offset: 0 }).total).toBe(0);
+  });
+
+  it('pages through results', () => {
+    const store = seedThree();
+    const first = store.browseIndexed({ limit: 2, offset: 0 });
+    const second = store.browseIndexed({ limit: 2, offset: 2 });
+    expect(first.episodes).toHaveLength(2);
+    expect(second.episodes).toHaveLength(1);
+    expect(second.total).toBe(3);
+  });
+});

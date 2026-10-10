@@ -2,6 +2,7 @@ import type {
   Citation,
   Episode,
   EpisodeRef,
+  EpisodeSummary,
   PassageContext,
   Segment,
   SpeakerState,
@@ -20,6 +21,30 @@ export function episodeRef(e: Episode): EpisodeRef {
     guestNames: e.guestNames,
     publishedAt: e.publishedAt,
     youtubeVideoId: e.youtubeVideoId,
+    demo: false,
+  };
+}
+
+/** An episode as the explorer lists it. The video link has no timestamp: it opens the episode. */
+export function episodeSummary(e: Episode & { passages: number }): EpisodeSummary {
+  const video = e.youtubeVideoId ? e.youtubeAlignment : 'none';
+  return {
+    id: e.id,
+    title: e.title,
+    guestNames: e.guestNames,
+    publishedAt: e.publishedAt,
+    passages: e.passages,
+    speakers:
+      e.transcriptSource === 'openai-diarize' || e.transcriptSource === 'manual'
+        ? 'verified'
+        : 'unverified',
+    video,
+    youtubeUrl: resolveMoment({
+      videoId: e.youtubeVideoId,
+      startMs: 0,
+      offsetMs: 0,
+      alignment: 'unknown',
+    }).url,
     demo: false,
   };
 }

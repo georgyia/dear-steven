@@ -31,6 +31,7 @@ import { useVoice, VoiceContext } from '@/lib/voice/useVoice';
 import { AboutDialog } from './AboutDialog';
 import { AmbientLayer } from './AmbientLayer';
 import { ConversationView } from './ConversationView';
+import { EpisodeExplorer } from './EpisodeExplorer';
 import { HomeView } from './HomeView';
 import { SetupDialog } from './SetupDialog';
 import { StatusPill } from './StatusPill';
@@ -63,7 +64,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const [conversation, dispatch] = useReducer(conversationReducer, initialConversation);
   const [draft, setDraft] = useState('');
   const [drawer, setDrawer] = useState<{ turnId: string; citationId: string } | null>(null);
-  const [dialog, setDialog] = useState<'setup' | 'about' | null>(null);
+  const [dialog, setDialog] = useState<'setup' | 'about' | 'episodes' | null>(null);
   const { toast, dismiss } = useToast();
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -368,7 +369,13 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
             : 'right-4 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] sm:right-6 sm:bottom-20'
         }
       />
-      <SetupDialog open={dialog === 'setup'} onClose={() => setDialog(null)} status={status} />
+      <SetupDialog
+        open={dialog === 'setup'}
+        onClose={() => setDialog(null)}
+        status={status}
+        onBrowse={() => setDialog('episodes')}
+      />
+      <EpisodeExplorer open={dialog === 'episodes'} onClose={() => setDialog(null)} />
       <AboutDialog open={dialog === 'about'} onClose={() => setDialog(null)} />
     </VoiceContext.Provider>
   );
