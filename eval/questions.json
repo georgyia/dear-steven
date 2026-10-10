@@ -1,0 +1,144 @@
+{
+  "$comment": "Seed evaluation set (plan §J Phase 2/3). Questions are phrased the way a listener would ask, mostly without naming the guest. `expect` lists RSS guids (stable across re-ingests) of episodes that should appear in the top 10 retrieved passages. Questions whose episodes are not indexed are skipped, not failed. `unanswerable` questions must come back mode=insufficient with no citations.",
+  "version": 1,
+  "questions": [
+    {
+      "id": "q01",
+      "question": "Why do I wake up exhausted even after a full night of sleep?",
+      "expect": ["flightcast:01M0ZPY4TQPFTDMTWWP68V36C9"],
+      "topic": "sleep"
+    },
+    {
+      "id": "q02",
+      "question": "Is it actually possible to build a serious business from your bedroom?",
+      "expect": ["flightcast:01M26N4N40D24TJPZ6V4N7JMTY"],
+      "topic": "business"
+    },
+    {
+      "id": "q03",
+      "question": "How can I tell when someone is lying to me?",
+      "expect": ["flightcast:01M1M9A59AFBGJG3WGBMW30A0F"],
+      "topic": "psychology"
+    },
+    {
+      "id": "q04",
+      "question": "Why do clever people sometimes come across as unlikeable in conversation?",
+      "expect": ["flightcast:01M23VE3XS205C0HMNRE4ENR58"],
+      "topic": "communication"
+    },
+    {
+      "id": "q05",
+      "question": "Should I quit my job before AI makes that choice for me?",
+      "expect": ["flightcast:01KZEMW7JE1GT1EJ9WC74DKA3M"],
+      "topic": "career"
+    },
+    {
+      "id": "q06",
+      "question": "Is the AI boom mostly hype?",
+      "expect": ["flightcast:01M0ZJXTQSPBEVY6X1T0EZ7M9C", "flightcast:01M2GNJS32R11MFGEF3FZ4MFGV"],
+      "topic": "ai"
+    },
+    {
+      "id": "q07",
+      "question": "Could AI agents go rogue and cover their tracks?",
+      "expect": ["flightcast:01M46YN191EJ0V3NPANXPEM9WA"],
+      "topic": "ai"
+    },
+    {
+      "id": "q08",
+      "question": "What does a great music producer actually do in the studio?",
+      "expect": ["flightcast:01M2RHNG0S1MZ1VD7AG18AGCZ7"],
+      "topic": "creativity"
+    },
+    {
+      "id": "q09",
+      "question": "Is overnight success a myth?",
+      "expect": ["flightcast:01M26CBRW55X2EMED8438W3PW7"],
+      "topic": "success"
+    },
+    {
+      "id": "q10",
+      "question": "Losing weight is easy, so why can't I keep it off?",
+      "expect": ["flightcast:01KZERQ8T6WKSG6169FR2YC3SZ"],
+      "topic": "health"
+    },
+    {
+      "id": "q11",
+      "question": "Did humans invent God and heaven?",
+      "expect": ["flightcast:01M011QCMPHN8FAV0XN9GXFS1N"],
+      "topic": "meaning"
+    },
+    {
+      "id": "q12",
+      "question": "Should I hold bitcoin for the long term?",
+      "expect": ["flightcast:01KYMQ6P4DHXHH9EJVKVCKE4Q0"],
+      "topic": "money"
+    },
+    {
+      "id": "q13",
+      "question": "Is the American dream still achievable for young people?",
+      "expect": ["flightcast:01KYMPYHGY7WKDEBPBJQ2VRQPJ"],
+      "topic": "society"
+    },
+    {
+      "id": "q14",
+      "question": "Is the current world order about to collapse?",
+      "expect": ["flightcast:01M243XAN33DBKT1N5844WSMAV", "flightcast:01M0ECWWKZKQ93WCFTA6JV03WZ"],
+      "topic": "geopolitics"
+    },
+    {
+      "id": "q15",
+      "question": "What really went wrong at WeWork?",
+      "expect": ["flightcast:01M32K500669XNSP3RQZSWNC4M"],
+      "topic": "business"
+    },
+    {
+      "id": "q16",
+      "question": "Has capitalism failed ordinary people?",
+      "expect": ["flightcast:01M011YXPMA7EXR82JB7CMWHJN", "flightcast:01M0ECWWKZKQ93WCFTA6JV03WZ"],
+      "topic": "economy"
+    },
+    {
+      "id": "q17",
+      "question": "What happens to a man's testosterone when he becomes a father?",
+      "expect": ["flightcast:01M0ECRSS1Y4MX77YFXTYP472G"],
+      "topic": "health"
+    },
+    {
+      "id": "q18",
+      "question": "Is America in decline as a superpower?",
+      "expect": ["flightcast:01M0ECWWKZKQ93WCFTA6JV03WZ", "flightcast:01M243XAN33DBKT1N5844WSMAV"],
+      "topic": "geopolitics"
+    },
+    {
+      "id": "q19",
+      "question": "Is artificial intelligence a genuine extinction risk?",
+      "expect": ["flightcast:01M2GNJS32R11MFGEF3FZ4MFGV", "flightcast:01M46YN191EJ0V3NPANXPEM9WA"],
+      "topic": "ai"
+    },
+    {
+      "id": "q20",
+      "question": "How did Dana White turn the UFC into a giant?",
+      "expect": ["flightcast:01M26N4N40D24TJPZ6V4N7JMTY"],
+      "topic": "business"
+    },
+    {
+      "id": "u01",
+      "question": "What's the best recipe for a sourdough starter?",
+      "unanswerable": true,
+      "topic": "off-topic"
+    },
+    {
+      "id": "u02",
+      "question": "Which knitting stitch should a beginner learn first?",
+      "unanswerable": true,
+      "topic": "off-topic"
+    },
+    {
+      "id": "u03",
+      "question": "What did Steven say about his favourite Pokémon?",
+      "unanswerable": true,
+      "topic": "fabrication bait"
+    }
+  ]
+}
