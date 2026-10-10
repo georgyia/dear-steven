@@ -1,0 +1,235 @@
+{
+  "$comment": "P3-08: the first live evaluation (2026-10-10), gpt-6-luna, 114 episodes / 8,394 passages, hybrid search. Metrics only, no answer text. Later prompt and retrieval changes compare against this.",
+  "date": "2026-10-10",
+  "model": "gpt-6-luna",
+  "knowledgeBase": {
+    "episodes": 114,
+    "passages": 8394,
+    "search": "hybrid"
+  },
+  "recallAt10": 0.95,
+  "estimatedCostUsd": 0.0194,
+  "totals": {
+    "citationsResolve": 1,
+    "attributionViolations": 0,
+    "quoteMismatches": 0,
+    "personaLint": 0,
+    "unanswerableHandled": "3/3",
+    "firstBlockP50Ms": 3666,
+    "violationsCaughtBeforeDisplay": 2,
+    "modes": {
+      "partial": 18,
+      "grounded": 2,
+      "insufficient": 3
+    }
+  },
+  "answers": [
+    {
+      "id": "q01",
+      "mode": "partial",
+      "citations": 3,
+      "episodes": 1,
+      "firstBlockMs": 6011,
+      "caveats": 2,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q02",
+      "mode": "partial",
+      "citations": 4,
+      "episodes": 2,
+      "firstBlockMs": 4248,
+      "caveats": 1,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q03",
+      "mode": "partial",
+      "citations": 3,
+      "episodes": 1,
+      "firstBlockMs": 5036,
+      "caveats": 2,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q04",
+      "mode": "partial",
+      "citations": 3,
+      "episodes": 1,
+      "firstBlockMs": 6660,
+      "caveats": 1,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q05",
+      "mode": "partial",
+      "citations": 4,
+      "episodes": 2,
+      "firstBlockMs": 4312,
+      "caveats": 2,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q06",
+      "mode": "partial",
+      "citations": 4,
+      "episodes": 2,
+      "firstBlockMs": 4304,
+      "caveats": 1,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q07",
+      "mode": "partial",
+      "citations": 4,
+      "episodes": 2,
+      "firstBlockMs": 3403,
+      "caveats": 1,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q08",
+      "mode": "grounded",
+      "citations": 2,
+      "episodes": 1,
+      "firstBlockMs": 3936,
+      "caveats": 0,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q09",
+      "mode": "partial",
+      "citations": 2,
+      "episodes": 1,
+      "firstBlockMs": 2922,
+      "caveats": 1,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q10",
+      "mode": "grounded",
+      "citations": 4,
+      "episodes": 3,
+      "firstBlockMs": 5704,
+      "caveats": 2,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q11",
+      "mode": "partial",
+      "citations": 6,
+      "episodes": 2,
+      "firstBlockMs": 4396,
+      "caveats": 1,
+      "violationsBeforeRepair": 1
+    },
+    {
+      "id": "q12",
+      "mode": "partial",
+      "citations": 3,
+      "episodes": 3,
+      "firstBlockMs": 5255,
+      "caveats": 2,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q13",
+      "mode": "partial",
+      "citations": 3,
+      "episodes": 2,
+      "firstBlockMs": 3666,
+      "caveats": 2,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q14",
+      "mode": "partial",
+      "citations": 4,
+      "episodes": 2,
+      "firstBlockMs": 8844,
+      "caveats": 2,
+      "violationsBeforeRepair": 1
+    },
+    {
+      "id": "q15",
+      "mode": "partial",
+      "citations": 3,
+      "episodes": 1,
+      "firstBlockMs": 3594,
+      "caveats": 1,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q16",
+      "mode": "partial",
+      "citations": 4,
+      "episodes": 2,
+      "firstBlockMs": 3642,
+      "caveats": 2,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q17",
+      "mode": "partial",
+      "citations": 2,
+      "episodes": 1,
+      "firstBlockMs": 2507,
+      "caveats": 1,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q18",
+      "mode": "partial",
+      "citations": 3,
+      "episodes": 2,
+      "firstBlockMs": 3533,
+      "caveats": 2,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q19",
+      "mode": "partial",
+      "citations": 3,
+      "episodes": 2,
+      "firstBlockMs": 3634,
+      "caveats": 2,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "q20",
+      "mode": "partial",
+      "citations": 3,
+      "episodes": 1,
+      "firstBlockMs": 3565,
+      "caveats": 1,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "u01",
+      "mode": "insufficient",
+      "citations": 0,
+      "episodes": 0,
+      "firstBlockMs": 2407,
+      "caveats": 1,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "u02",
+      "mode": "insufficient",
+      "citations": 0,
+      "episodes": 0,
+      "firstBlockMs": 1980,
+      "caveats": 1,
+      "violationsBeforeRepair": 0
+    },
+    {
+      "id": "u03",
+      "mode": "insufficient",
+      "citations": 0,
+      "episodes": 0,
+      "firstBlockMs": 2107,
+      "caveats": 1,
+      "violationsBeforeRepair": 0
+    }
+  ]
+}
