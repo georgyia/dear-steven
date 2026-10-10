@@ -305,6 +305,11 @@ recall on desktop Chrome, with the mic indicator visible and auto-off after 2 mi
 - [ ] Findings in `plan/11-research/R-06-wake-word.md` with numbers and a recommendation.
 - [ ] If recommended: an opt-in-only design with a persistent listening indicator, and a follow-up issue.
 
+#### Needs
+**H-09** (`plan/human/wake-word-spike.md`): a trained "hey steven" model (needs a GPU or a Colab
+account) and about 20 minutes of real recorded audio. The false-accept / false-reject numbers must
+come from people, not from synthetic speech, so this spike waits for them.
+
 #### Security notes
 Always-on listening is the most privacy-sensitive feature in the product; default off, explicit
 opt-in, visible state, auto-off.

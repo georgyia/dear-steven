@@ -10,7 +10,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 
 - **Phase:** 0–4 built in the first implementation pass; Phase 5 open.
 - **Done:** M0 (except GitHub publishing and third-party skills), M1 in code, M2; from M3: P5-03, P5-04, P5-05, P5-07, P5-12.
-- **Next to pick:** P5-08 (spike) and P5-11 — both unblocked by P5-07.
+- **Next to pick:** P5-11 (unblocked by P5-07). P5-08 waits on H-09.
 - **Critical path:** H-03 → `pnpm ingest index` → H-07 / P3-08 → P5-01.
 
 ## Verified in the first pass (2026-10-10)
@@ -41,6 +41,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | H-04 / H-05 | Host voice clip + diarization budget | P2-08 (verified speakers) | `human/host-voice-clip.md`, `human/transcription-budget.md` | 2026-10-10 |
 | H-06 | Agent identity + human reviewers | `risk:high` merge gate | `human/agent-identity.md` | 2026-10-10 |
 | H-08 | Hosting account and secrets | P5-10 | `human/deploy.md` | 2026-10-10 |
+| H-09 | Wake-word model + ~20 min of recorded audio | P5-08 | `human/wake-word-spike.md` | 2026-10-10 |
 
 ## Decisions waiting (`needs:decision`)
 
@@ -107,7 +108,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | P5-05 | — | feat(web): in-drawer YouTube player and podcast audio | P2 | medium | done (iOS device check open) | P3-05 | — |
 | P5-06 | — | feat(web): disagreements side by side | P2 | medium | open, blocked | P5-01 | — |
 | P5-07 | — | feat(voice): settings — speak replies, on-device recognition, voice picker | P2 | low | done | P4-02 | — |
-| P5-08 | — | spike(voice): "Hey Steven" wake word | P2 | medium | open | P5-07 | — |
+| P5-08 | — | spike(voice): "Hey Steven" wake word | P2 | medium | open, blocked | P5-07 | H-09 |
 | P5-09 | — | test(eval): LLM-judged usefulness, human-calibrated | P2 | low | open, blocked | P3-08 | — |
 | P5-10 | — | chore(infra): deploy to Fly.io | P2 | high | open | P0-03 | H-08 |
 | P5-11 | — | feat(web): optional conversation memory (opt-in) | P2 | medium | open | P5-07 | — |

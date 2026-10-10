@@ -21,3 +21,4 @@ so the agent can use them.
 | H-06 | `agent-identity.md` |
 | H-07 | `first-live-eval.md` |
 | H-08 | `deploy.md` |
+| H-09 | `wake-word-spike.md` |
