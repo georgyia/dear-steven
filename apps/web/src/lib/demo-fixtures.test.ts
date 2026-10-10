@@ -1,9 +1,14 @@
-import { CitationSchema, ResolvedBlockSchema } from '@dear-steven/core/schema';
+import {
+  CitationSchema,
+  RelatedMomentsSchema,
+  ResolvedBlockSchema,
+} from '@dear-steven/core/schema';
 import { describe, expect, it } from 'vitest';
 import {
   DEMO_ANSWERS,
   demoEpisodePage,
   demoPassageContext,
+  demoRelatedMoments,
   pickDemoAnswer,
 } from './demo-fixtures.ts';
 
@@ -81,5 +86,21 @@ describe('demoEpisodePage', () => {
       'Demo Guest · Founder',
     ]);
     expect(demoEpisodePage('nobody', 0).total).toBe(0);
+  });
+});
+
+describe('demoRelatedMoments', () => {
+  it('relates fixtures only across episodes, and knows nothing about real ids', () => {
+    for (const a of DEMO_ANSWERS)
+      for (const c of a.citations) {
+        const related = RelatedMomentsSchema.parse(demoRelatedMoments(c.passageId));
+        for (const p of related.passages) {
+          expect(p.episode.id).not.toBe(c.episode.id);
+          expect(p.episode.demo).toBe(true);
+          expect(p.youtubeUrl).toBe(null);
+        }
+      }
+    expect(demoRelatedMoments('demo_ps_problem')).toEqual({ passages: [] });
+    expect(demoRelatedMoments('ps_real_1')).toBe(null);
   });
 });

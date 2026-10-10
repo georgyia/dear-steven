@@ -45,3 +45,23 @@ test.describe('GET /api/episodes', () => {
     expect((await request.get(`/api/episodes?q=${'a'.repeat(101)}`)).status()).toBe(400);
   });
 });
+
+test.describe('GET /api/passages/:id/related', () => {
+  test('returns fixture passages from other episodes only', async ({ request }) => {
+    const res = await request.get('/api/passages/demo_ps_mood/related');
+    expect(res.status()).toBe(200);
+    const { passages } = await res.json();
+    expect(passages.map((p: { passageId: string }) => p.passageId)).toEqual([
+      'demo_ps_first_step',
+      'demo_ps_identity',
+    ]);
+    expect(passages.every((p: { episode: { id: string } }) => p.episode.id !== 'demo_ep_1')).toBe(
+      true,
+    );
+  });
+
+  test('rejects malformed ids and unknown passages', async ({ request }) => {
+    expect((await request.get('/api/passages/bad%20id/related')).status()).toBe(400);
+    expect((await request.get('/api/passages/ps_real_1/related')).status()).toBe(404);
+  });
+});

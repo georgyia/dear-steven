@@ -15,7 +15,8 @@ Tailwind utilities in `globals.css` (`bg-ink-1`, `text-ivory-0`, `text-ember-0`,
   sidebar. Chrome recedes.
 - **Colour carries meaning**, never decoration: ember = verified host / focus / the quote
   hairline; ivory chip = verified guest; dashed steel = unverified speaker; softer ivory =
-  synthesis; oxblood = error.
+  synthesis; oxblood = error. Related-but-not-cited material (the inspector's "Related moments")
+  has a dashed ink edge and no ember, so it never reads as support.
 - **Tokens only.** No raw hex in components. Two documented exceptions: canvas APIs that cannot
   read CSS variables (Threads colours, the VoicePill waveform) use the literal token value with a
   comment.

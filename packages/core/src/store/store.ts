@@ -551,6 +551,60 @@ export class KnowledgeStore {
     });
   }
 
+  /**
+   * Passages from *other* episodes nearest to a stored passage, by its own stored embedding: at most
+   * one per episode, only vectors from the same embedding model, only within `maxDistance` (cosine).
+   * Empty when the passage has no embedding. No model call.
+   */
+  similarPassages(
+    passageId: string,
+    options: { k: number; maxDistance: number; candidates: number },
+  ): { passage: StoredPassage; distance: number }[] {
+    const source = this.db
+      .prepare<[string], { pk: number; episode_id: string; embedding_model: string | null }>(
+        'SELECT pk, episode_id, embedding_model FROM passages WHERE id = ?',
+      )
+      .get(passageId);
+    if (!source?.embedding_model) return [];
+    const vector = this.db
+      .prepare<[bigint], { embedding: Buffer }>(
+        'SELECT embedding FROM passages_vec WHERE passage_pk = ?',
+      )
+      .get(BigInt(source.pk));
+    if (!vector) return [];
+
+    const near = this.db
+      .prepare<[Buffer, number], { passage_pk: number; distance: number }>(
+        'SELECT passage_pk, distance FROM passages_vec WHERE embedding MATCH ? AND k = ? ORDER BY distance',
+      )
+      .all(vector.embedding, Math.max(1, Math.floor(options.candidates)))
+      .filter((r) => r.passage_pk !== source.pk && r.distance <= options.maxDistance);
+    if (near.length === 0) return [];
+
+    const meta = new Map(
+      this.db
+        .prepare<number[], { pk: number; episode_id: string; embedding_model: string | null }>(
+          `SELECT pk, episode_id, embedding_model FROM passages WHERE pk IN (${near.map(() => '?').join(',')})`,
+        )
+        .all(...near.map((r) => r.passage_pk))
+        .map((m) => [m.pk, m] as const),
+    );
+    const seen = new Set([source.episode_id]);
+    const picked: { pk: number; distance: number }[] = [];
+    for (const r of near) {
+      const m = meta.get(r.passage_pk);
+      if (!m || m.embedding_model !== source.embedding_model || seen.has(m.episode_id)) continue;
+      seen.add(m.episode_id);
+      picked.push({ pk: r.passage_pk, distance: r.distance });
+      if (picked.length >= options.k) break;
+    }
+    const byPk = new Map(this.getPassagesByPks(picked.map((p) => p.pk)).map((p) => [p.pk, p]));
+    return picked.flatMap((p) => {
+      const passage = byPk.get(p.pk);
+      return passage ? [{ passage, distance: p.distance }] : [];
+    });
+  }
+
   hasEmbeddings(): boolean {
     return Boolean(
       this.db.prepare('SELECT 1 FROM passages WHERE embedding_model IS NOT NULL LIMIT 1').get(),

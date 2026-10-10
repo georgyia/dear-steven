@@ -87,7 +87,9 @@ unvalidated text is ever streamed.
 
 Outside the question flow, the episode explorer ("Browse the N conversations" in the setup panel)
 reads `GET /api/episodes?q=&offset=`: metadata only (title, guests, date, passage count, speaker
-and video states), 30 per page, searched by title or guest (`KnowledgeStore.browseIndexed`).
+and video states), 30 per page, searched by title or guest (`KnowledgeStore.browseIndexed`). The inspector's "Related moments"
+reads `GET /api/passages/:id/related`: up to three passages from other episodes nearest the cited
+one by its stored embedding (`buildRelatedMoments`, no model call; empty until embeddings exist).
 
 ## 5. Trust boundaries
 

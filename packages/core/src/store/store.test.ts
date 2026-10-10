@@ -198,3 +198,65 @@ describe('KnowledgeStore — browsing indexed episodes', () => {
     expect(second.total).toBe(3);
   });
 });
+
+describe('KnowledgeStore — similar passages', () => {
+  const embed = async (store: KnowledgeStore, model: string, episodeId?: string) => {
+    const todo = store.passagesNeedingEmbedding(model, 1000, episodeId);
+    const vectors = await fakeEmbedder.embed(todo.map(embeddingInput));
+    store.setEmbeddings(
+      todo.map((p, i) => ({ pk: p.pk, embedding: vectors[i] as Float32Array })),
+      model,
+    );
+  };
+  const avoid =
+    'Procrastination is avoiding the feeling a task gives you rather than the task itself.';
+  const seed = () => {
+    const store = tempStore();
+    const one = seedEpisode(store, 1, Array(8).fill(avoid));
+    const two = seedEpisode(store, 2, [
+      'People procrastinate to avoid the feeling a task gives them, not the task itself.',
+    ]);
+    const three = seedEpisode(store, 3, [
+      'Procrastination is the feeling you avoid; the task itself is rarely the hard part.',
+    ]);
+    seedEpisode(store, 4, ['Fighting is the oldest sport in the world and the UFC changed it.']);
+    const first = (episodeId: string) =>
+      store.db
+        .prepare<[string], { id: string }>(
+          'SELECT id FROM passages WHERE episode_id = ? ORDER BY idx LIMIT 1',
+        )
+        .get(episodeId)?.id as string;
+    return { store, one, two, three, first };
+  };
+  const loose = { k: 3, candidates: 50, maxDistance: 2 };
+
+  it('finds close passages in other episodes — never the same one, one per episode', async () => {
+    const { store, one, two, three, first } = seed();
+    await embed(store, fakeEmbedder.model);
+    expect(store.passageCount(one)).toBeGreaterThan(1);
+    const found = store.similarPassages(first(one), loose);
+    const episodes = found.map((r) => r.passage.episodeId);
+    expect(episodes).not.toContain(one);
+    expect(new Set(episodes).size).toBe(episodes.length);
+    expect(episodes.slice(0, 2).sort()).toEqual([two, three].sort());
+    expect(found.map((r) => r.distance)).toEqual([...found.map((r) => r.distance)].sort());
+    expect(store.similarPassages(first(one), { ...loose, k: 1 })).toHaveLength(1);
+  });
+
+  it('drops anything beyond the distance cut-off', async () => {
+    const { store, one, first } = seed();
+    await embed(store, fakeEmbedder.model);
+    expect(store.similarPassages(first(one), { ...loose, maxDistance: 0.0001 })).toEqual([]);
+  });
+
+  it('is empty without embeddings, and never mixes embedding models', async () => {
+    const { store, one, two, three, first } = seed();
+    expect(store.similarPassages(first(one), loose)).toEqual([]);
+    await embed(store, fakeEmbedder.model, one);
+    await embed(store, fakeEmbedder.model, three);
+    await embed(store, 'another-model', two);
+    const episodes = store.similarPassages(first(one), loose).map((r) => r.passage.episodeId);
+    expect(episodes).toEqual([three]);
+    expect(store.similarPassages('missing_p0001', loose)).toEqual([]);
+  });
+});

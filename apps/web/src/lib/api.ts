@@ -5,6 +5,7 @@ import type {
   EpisodePage,
   KnowledgeStatus,
   PassageContext,
+  RelatedMoments,
 } from '@dear-steven/core/schema';
 import { readEvents } from './sse';
 
@@ -56,6 +57,15 @@ export async function fetchPassage(
   const res = await fetch(`/api/passages/${encodeURIComponent(passageId)}`, { signal });
   if (!res.ok) throw new Error(`passage ${res.status}`);
   return (await res.json()) as PassageContext;
+}
+
+export async function fetchRelated(
+  passageId: string,
+  signal?: AbortSignal,
+): Promise<RelatedMoments> {
+  const res = await fetch(`/api/passages/${encodeURIComponent(passageId)}/related`, { signal });
+  if (!res.ok) throw new Error(`related ${res.status}`);
+  return (await res.json()) as RelatedMoments;
 }
 
 export async function fetchStatus(signal?: AbortSignal): Promise<KnowledgeStatus> {

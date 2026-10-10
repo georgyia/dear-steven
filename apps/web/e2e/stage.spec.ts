@@ -107,7 +107,7 @@ test.describe('evidence inspector', () => {
     const inspector = page.getByRole('dialog', { name: 'Source inspector' });
     await expect(inspector).toBeVisible();
     await expect(inspector.getByText('1 of 3')).toBeVisible();
-    await expect(inspector.getByText('Speaker not verified')).toBeVisible();
+    await expect(inspector.getByText('Speaker not verified', { exact: true })).toBeVisible();
 
     await page.keyboard.press(']');
     await expect(inspector.getByText('2 of 3')).toBeVisible();
@@ -122,6 +122,39 @@ test.describe('evidence inspector', () => {
 
     await page.keyboard.press('Escape');
     await expect(inspector).toBeHidden();
+  });
+
+  test('related moments: other conversations, labelled as not cited, opened in place', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await ask(page, 'Why do I keep procrastinating?');
+    await answered(page);
+    await page.locator('[data-citation]').first().click();
+    const inspector = page.getByRole('dialog', { name: 'Source inspector' });
+    const related = inspector.getByRole('region', { name: 'Related moments' });
+    await expect(related).toBeVisible();
+    await expect(related.getByText(/Related, not cited/)).toBeVisible();
+    await expect(related.getByRole('listitem')).toHaveCount(2);
+    // The cited passage is from "The Science Of Starting": related moments never are.
+    await expect(related.getByText(/Science Of Starting/)).toHaveCount(0);
+    const first = related.getByRole('button').first();
+    await expect(first).toHaveAttribute('aria-expanded', 'false');
+    await first.click();
+    await expect(first).toHaveAttribute('aria-expanded', 'true');
+    await expect(related.getByText(/in the podcast/)).toBeVisible();
+  });
+
+  test('related moments stay hidden when there are none', async ({ page }) => {
+    await page.goto('/');
+    await ask(page, 'Should I start a business?');
+    await answered(page);
+    const loaded = page.waitForResponse((r) => r.url().includes('/related'));
+    await page.locator('[data-citation]').first().click();
+    await loaded;
+    const inspector = page.getByRole('dialog', { name: 'Source inspector' });
+    await expect(inspector.getByText('Copy quote with attribution')).toBeVisible();
+    await expect(inspector.getByRole('region', { name: 'Related moments' })).toHaveCount(0);
   });
 
   test('desktop: the panel sits beside the conversation instead of covering it', async ({

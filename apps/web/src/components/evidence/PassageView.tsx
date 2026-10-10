@@ -16,6 +16,7 @@ import { initials, speakerLabel } from '@/components/answer/speaker';
 import { useToast } from '@/components/ui/Toasts';
 import RubberSegment from '@/components/vendor/react-bits/RubberSegment';
 import { fetchPassage } from '@/lib/api';
+import { RelatedMoments } from './RelatedMoments';
 
 type Tab = 'quote' | 'context' | 'video';
 
@@ -229,6 +230,7 @@ function QuoteTab({ citation, onCopy }: { citation: Citation; onCopy: () => void
         <HugeiconsIcon icon={Copy01Icon} size={14} strokeWidth={2} />
         Copy quote with attribution
       </button>
+      <RelatedMoments key={citation.passageId} passageId={citation.passageId} />
     </div>
   );
 }

@@ -3,7 +3,9 @@ import type {
   Citation,
   EpisodePage,
   EpisodeRef,
+  PassageCitation,
   PassageContext,
+  RelatedMoments,
   ResolvedBlock,
 } from '@dear-steven/core/schema';
 
@@ -398,24 +400,30 @@ export function pickDemoAnswer(question: string): DemoAnswer {
   return DEMO_ANSWERS.find((a) => a.matches?.test(question)) ?? insufficient;
 }
 
+const passageCitation = (
+  p: DemoPassage,
+  excerptChars = Number.POSITIVE_INFINITY,
+): PassageCitation => ({
+  passageId: p.id,
+  episode: p.episode,
+  speaker: p.speaker,
+  speakerName: p.speakerName,
+  startMs: p.startMs,
+  endMs: p.endMs,
+  timestamp: { ms: p.startMs, state: 'unknown' },
+  youtubeUrl: null,
+  excerpt:
+    p.text.length > excerptChars ? `${p.text.slice(0, excerptChars - 1).trimEnd()}…` : p.text,
+  quality: 'reviewed',
+  text: p.text,
+});
+
 export function demoPassageContext(passageId: string): PassageContext | null {
   const p = Object.values(passages).find((x) => x.id === passageId) as DemoPassage | undefined;
   if (!p) return null;
   const step = 7_000;
   return {
-    citation: {
-      passageId: p.id,
-      episode: p.episode,
-      speaker: p.speaker,
-      speakerName: p.speakerName,
-      startMs: p.startMs,
-      endMs: p.endMs,
-      timestamp: { ms: p.startMs, state: 'unknown' },
-      youtubeUrl: null,
-      excerpt: p.text,
-      quality: 'reviewed',
-      text: p.text,
-    },
+    citation: passageCitation(p),
     before: p.before.map((text, i) => ({
       text,
       startMs: p.startMs - (p.before.length - i) * step,
@@ -423,6 +431,22 @@ export function demoPassageContext(passageId: string): PassageContext | null {
     after: p.after.map((text, i) => ({ text, startMs: p.endMs + i * step })),
     lines: null,
   };
+}
+
+/** Hand-picked "related moments" between fixtures — always from another fixture episode. */
+const related: Partial<Record<PassageKey, PassageKey[]>> = {
+  feeling: ['firstStep', 'systems'],
+  mood: ['firstStep', 'identity'],
+  firstStep: ['feeling', 'systems'],
+  systems: ['firstStep', 'mood'],
+  identity: ['mood', 'firstStep'],
+};
+
+/** Related moments for a fixture passage; `null` when the id is not a fixture. */
+export function demoRelatedMoments(passageId: string): RelatedMoments | null {
+  const key = (Object.keys(passages) as PassageKey[]).find((k) => passages[k].id === passageId);
+  if (!key) return null;
+  return { passages: (related[key] ?? []).map((k) => passageCitation(passages[k], 240)) };
 }
 
 export const DEMO_EPISODE_COUNT = Object.keys(episodes).length;

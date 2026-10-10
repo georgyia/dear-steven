@@ -21,7 +21,8 @@ Every failure or weak score from P3-08 traced to a cause and fixed, or recorded 
 
 #### Scope
 **In** — persona prompt wording (`persona.ts` + `docs/PERSONA.md`, bump `PERSONA_VERSION`), schema
-field descriptions, retrieval knobs (`DEFAULT_RETRIEVAL`), eval questions that turned out ambiguous.
+field descriptions, retrieval knobs (`DEFAULT_RETRIEVAL`; `DEFAULT_RELATED.maxDistance`, the related
+moments cut-off set without live embeddings in P5-04), eval questions that turned out ambiguous.
 **Out** — rerankers (P5-02), new UI.
 
 #### Acceptance criteria
@@ -141,11 +142,15 @@ are semantically close to the cited one, each with episode, timestamp and speake
 **In** — `KnowledgeStore.similarPassages(pk, k)` (vec0 KNN on the stored embedding, excluding the
 same episode), `GET /api/passages/:id/related`, UI section with chips that open the related
 passage in place.
+**As built** — `similarPassages(passageId, {k, candidates, maxDistance})` also keeps one passage
+per episode and never mixes embedding models; `DEFAULT_RELATED` = 3 of 60 neighbours within cosine
+distance 0.55 (uncalibrated — P5-01). Items are disclosures in the Quote tab, dashed and
+ember-free so they never read as citations.
 **Out** — new model calls.
 
 #### Acceptance criteria
-- [ ] Never shows the same episode; hidden when no embeddings exist.
-- [ ] Related passages are labelled as related (not cited) so they are never read as support.
+- [x] Never shows the same episode; hidden when no embeddings exist.
+- [x] Related passages are labelled as related (not cited) so they are never read as support.
 
 #### Tests required
 Store unit test with the fake embedder; e2e in demo mode (fixture related passages).

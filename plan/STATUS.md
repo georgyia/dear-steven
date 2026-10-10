@@ -9,16 +9,16 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 ## Now
 
 - **Phase:** 0–4 built in the first implementation pass; Phase 5 open.
-- **Done:** M0 (except GitHub publishing and third-party skills), M1 in code, M2; from M3: P5-03.
-- **Next to pick:** P5-04, P5-05, P5-07 — none depends on live results.
+- **Done:** M0 (except GitHub publishing and third-party skills), M1 in code, M2; from M3: P5-03, P5-04.
+- **Next to pick:** P5-05, P5-07 — neither depends on live results.
 - **Critical path:** H-03 → `pnpm ingest index` → H-07 / P3-08 → P5-01.
 
 ## Verified in the first pass (2026-10-10)
 
 | Check | Result |
 |-------|--------|
-| `pnpm check` (Biome, tsc ×4, Vitest, dependency-cruiser) | green — 186 unit/integration tests in 24 files; 0 dependency violations |
-| `pnpm e2e` (production build, demo mode, desktop + mobile) | 41 passed, 5 skips (2 layout-specific; the HTTP route checks run on desktop only) |
+| `pnpm check` (Biome, tsc ×4, Vitest, dependency-cruiser) | green — 191 unit/integration tests in 24 files; 0 dependency violations |
+| `pnpm e2e` (production build, demo mode, desktop + mobile) | 47 passed, 7 skips (2 layout-specific; the HTTP route checks run on desktop only) |
 | Architecture rules | fire on a planted `react` import in core and a client import of core `store` |
 | `pnpm ingest all --limit 20` (real RSS feed, no keys) | 739 episodes discovered, 20 transcripts, 1,621 passages, ~10 s |
 | `pnpm eval` (retrieval, keyword-only) | recall@10 100% (20/20) |
@@ -102,7 +102,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | P5-01 | — | fix(core): tune prompt and retrieval against the live eval | P1 | medium | open, blocked | P3-08 | — |
 | P5-02 | — | spike: rerank and MMR, only if the eval justifies it | P2 | medium | open, blocked | P3-08 | — |
 | P5-03 | — | feat(web): episode explorer | P2 | low | done | P2-07 | — |
-| P5-04 | — | feat(web): related quotes in the inspector | P2 | low | open | P2-07 | — |
+| P5-04 | — | feat(web): related quotes in the inspector | P2 | low | done | P2-07 | — |
 | P5-05 | — | feat(web): in-drawer YouTube player and podcast audio | P2 | medium | open | P3-05 | — |
 | P5-06 | — | feat(web): disagreements side by side | P2 | medium | open, blocked | P5-01 | — |
 | P5-07 | — | feat(voice): settings — speak replies, on-device recognition, voice picker | P2 | low | open | P4-02 | — |

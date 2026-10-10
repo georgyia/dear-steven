@@ -1,9 +1,11 @@
+import { type RelatedOptions, relatedPassages } from '../retrieval/related.ts';
 import type {
   Citation,
   Episode,
   EpisodeRef,
   EpisodeSummary,
   PassageContext,
+  RelatedMoments,
   Segment,
   SpeakerState,
 } from '../schema/index.ts';
@@ -88,6 +90,29 @@ export function citationBase(p: StoredPassage) {
 
 const trimTo = (text: string, max: number) =>
   text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
+
+const passageSpeaker = (store: KnowledgeStore, p: StoredPassage) =>
+  speakerOf(store.getSegments(p.episodeId, p.segmentStartIdx, p.segmentEndIdx));
+
+/** Up to three passages from other conversations near a cited one, with their own speaker state. */
+export function buildRelatedMoments(
+  store: KnowledgeStore,
+  passageId: string,
+  options: Partial<RelatedOptions> = {},
+): RelatedMoments {
+  return {
+    passages: relatedPassages(store, passageId, options).map((p) => {
+      const who = passageSpeaker(store, p);
+      return {
+        ...citationBase(p),
+        speaker: who.speaker,
+        speakerName: who.name,
+        excerpt: trimTo(p.text, 240),
+        text: p.text,
+      };
+    }),
+  };
+}
 
 /** The evidence drawer's view of a passage: the passage, who spoke it, and its neighbours. */
 export function buildPassageContext(

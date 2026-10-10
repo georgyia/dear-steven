@@ -48,7 +48,12 @@ test.describe('interactive states', () => {
     await page.locator('[data-citation]').first().click();
     const inspector = page.getByRole('dialog', { name: 'Source inspector' });
     await expect(inspector).toBeVisible();
-    await audit(page, 'inspector — quote');
+    await inspector
+      .getByRole('region', { name: 'Related moments' })
+      .getByRole('button')
+      .first()
+      .click();
+    await audit(page, 'inspector — quote, related moment open');
     await inspector.getByRole('radio', { name: 'Context' }).click();
     await audit(page, 'inspector — context');
     await page.keyboard.press('Escape');

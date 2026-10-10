@@ -125,3 +125,12 @@ export const EpisodePageSchema = z.object({
   episodes: z.array(EpisodeSummarySchema),
 });
 export type EpisodePage = z.infer<typeof EpisodePageSchema>;
+
+/**
+ * "Related moments" in the inspector: passages from other conversations close to a cited one.
+ * Related, never cited — they support no claim in the answer and are labelled that way.
+ */
+export const RelatedMomentsSchema = z.object({
+  passages: z.array(PassageContextSchema.shape.citation).max(5),
+});
+export type RelatedMoments = z.infer<typeof RelatedMomentsSchema>;
