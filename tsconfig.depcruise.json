@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": { "@/*": ["apps/web/src/*"] }
+  },
+  "include": ["packages/*/src", "apps/web/src", "eval"]
+}

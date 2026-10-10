@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "allowJs": false,
+    "incremental": true,
+    // Vendored React Bits sources are written for default strictness; packages/core keeps it on.
+    "noUncheckedIndexedAccess": false,
+    "plugins": [{ "name": "next" }],
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".next/types/**/*.ts",
+    "e2e/**/*.ts",
+    "*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

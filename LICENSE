@@ -1,0 +1,39 @@
+MIT License
+
+Copyright (c) 2026 Dear Steven contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--------------------------------------------------------------------------------
+Exceptions
+
+1. apps/web/src/components/vendor/react-bits/ contains components from React Bits
+   (https://github.com/DavidHDev/react-bits), Copyright (c) 2026 David Haz, used
+   under the MIT + Commons Clause License Condition v1.0 (see the LICENSE.md in that
+   folder). They may be used as part of this application, but may not be sold,
+   sublicensed or redistributed on their own — not alone, in a bundle, or ported.
+   They are therefore NOT covered by the MIT licence above.
+
+2. No podcast content is distributed with this repository. Transcripts, audio,
+   embeddings and the knowledge base are generated locally by the ingest pipeline
+   from the publisher's public feed and remain the property of their owners.
+
+3. "The Diary Of A CEO" and "Steven Bartlett" are names of their respective
+   owners. This project is an independent, non-commercial fan project; it is not
+   affiliated with, endorsed by, or speaking for either.

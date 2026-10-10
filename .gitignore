@@ -1,0 +1,39 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# secrets — never commit these
+.env
+.env.*
+!.env.example
+
+# the knowledge base: transcripts, audio, embeddings, caches, voiceprints
+data/
+
+# build output
+.next/
+out/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# test output
+coverage/
+test-results/
+playwright-report/
+apps/web/e2e/screenshots/
+eval/results/
+
+# local planning scratch and the reference kit (its shape is adopted under docs/ and plan/)
+*.plan.md
+agent-engineering-kit/
+
+# tooling
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# per-user agent settings (the committed skills under .claude/skills are shared)
+.claude/settings.local.json

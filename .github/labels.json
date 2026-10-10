@@ -1,0 +1,75 @@
+{
+  "$comment": "Label taxonomy (plan/06-workflow.md). Create or update with: bash scripts/sync-labels.sh",
+  "labels": [
+    { "name": "type:core", "color": "0e4429", "description": "Domain logic in packages/core" },
+    {
+      "name": "type:service",
+      "color": "1f4a3d",
+      "description": "Routes, CLI commands, integrations"
+    },
+    { "name": "type:ui", "color": "1f3d5c", "description": "User interface" },
+    { "name": "type:design", "color": "5a3d1f", "description": "Design system" },
+    { "name": "type:infra", "color": "1d2d3d", "description": "Tooling, CI, deployment" },
+    { "name": "type:docs", "color": "3d3d3d", "description": "Documentation" },
+    { "name": "type:test", "color": "4a2d5c", "description": "Tests and evaluation" },
+    { "name": "type:security", "color": "5c1f1f", "description": "Security work" },
+    { "name": "type:research", "color": "2d3d5c", "description": "Question → recorded decision" },
+    { "name": "type:spike", "color": "3d2d5c", "description": "Time-boxed experiment" },
+    { "name": "type:human-task", "color": "5c4a1f", "description": "Only a person can do this" },
+
+    { "name": "stage:m0", "color": "d4c5f9", "description": "Milestone 0 — foundations" },
+    { "name": "stage:m1", "color": "d4c5f9", "description": "Milestone 1 — grounded text answers" },
+    { "name": "stage:m2", "color": "d4c5f9", "description": "Milestone 2 — voice" },
+    { "name": "stage:m3", "color": "d4c5f9", "description": "Milestone 3 — depth and polish" },
+    { "name": "stage:research", "color": "d4c5f9", "description": "Research brief" },
+    { "name": "stage:harness", "color": "d4c5f9", "description": "Agent harness / process" },
+
+    { "name": "track:web", "color": "bfdadc", "description": "apps/web" },
+    { "name": "track:core", "color": "bfdadc", "description": "packages/core" },
+    {
+      "name": "track:ingest",
+      "color": "bfdadc",
+      "description": "Knowledge base and the ingest CLI"
+    },
+    { "name": "track:design", "color": "bfdadc", "description": "Visual system" },
+    { "name": "track:voice", "color": "bfdadc", "description": "Speech in and out" },
+    { "name": "track:eval", "color": "bfdadc", "description": "Evaluation harness" },
+    { "name": "track:docs", "color": "bfdadc", "description": "Documentation and plan" },
+    { "name": "track:infra", "color": "bfdadc", "description": "CI, Docker, deploy" },
+    { "name": "track:security", "color": "bfdadc", "description": "Security" },
+
+    { "name": "owner:ai", "color": "ededed", "description": "An agent may take this" },
+    {
+      "name": "needs:human",
+      "color": "e4b820",
+      "description": "Blocked on a person doing a runbook"
+    },
+    {
+      "name": "needs:human-review",
+      "color": "e4b820",
+      "description": "A human must approve the PR"
+    },
+    {
+      "name": "needs:decision",
+      "color": "e4b820",
+      "description": "Blocked on a recorded decision"
+    },
+    { "name": "blocked", "color": "b60205", "description": "Cannot proceed yet" },
+
+    { "name": "risk:low", "color": "0e8a16", "description": "No security surface" },
+    { "name": "risk:medium", "color": "fbca04", "description": "Security-adjacent" },
+    {
+      "name": "risk:high",
+      "color": "d93f0b",
+      "description": "Keys, spend, egress, the validator — human review"
+    },
+
+    { "name": "P0", "color": "b60205", "description": "Blocks milestone exit" },
+    { "name": "P1", "color": "d93f0b", "description": "Blocks milestone exit" },
+    { "name": "P2", "color": "fbca04", "description": "Does not block milestone exit" },
+
+    { "name": "size:S", "color": "c5def5", "description": "Small" },
+    { "name": "size:M", "color": "c5def5", "description": "Medium" },
+    { "name": "size:L", "color": "c5def5", "description": "Large" }
+  ]
+}

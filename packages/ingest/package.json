@@ -1,0 +1,17 @@
+{
+  "name": "@dear-steven/ingest",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Ingestion CLI: discovers episodes, fetches or transcribes transcripts, chunks and indexes them.",
+  "bin": {
+    "dear-steven-ingest": "./src/cli.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@dear-steven/core": "workspace:*",
+    "fast-xml-parser": "5.11.2"
+  }
+}

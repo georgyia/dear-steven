@@ -1,0 +1,13 @@
+{
+  "name": "@dear-steven/eval",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Retrieval, citation and persona evaluation harness.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@dear-steven/core": "workspace:*"
+  }
+}

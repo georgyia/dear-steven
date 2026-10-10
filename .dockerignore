@@ -1,0 +1,16 @@
+**/node_modules
+**/.next
+data
+.env
+.env.*
+!.env.example
+.git
+agent-engineering-kit
+*.plan.md
+coverage
+test-results
+playwright-report
+apps/web/e2e/screenshots
+eval/results
+**/*.log
+.DS_Store

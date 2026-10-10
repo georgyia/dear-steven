@@ -1,0 +1,11 @@
+packages:
+  - apps/*
+  - packages/*
+  - eval
+
+# pnpm 10 blocks dependency install scripts by default; these are the native/binary ones we need.
+onlyBuiltDependencies:
+  - better-sqlite3
+  - esbuild
+  - sharp
+  - '@biomejs/biome'

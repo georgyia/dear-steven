@@ -1,0 +1,35 @@
+{
+  "name": "@dear-steven/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Framework-free domain core: schemas, knowledge store, retrieval, answer composition and citation validation.",
+  "exports": {
+    "./schema": "./src/schema/index.ts",
+    "./limits": "./src/schema/limits.ts",
+    "./youtube": "./src/youtube/links.ts",
+    "./format": "./src/format/time.ts",
+    "./config": "./src/config/env.ts",
+    "./models": "./src/config/models.ts",
+    "./store": "./src/store/index.ts",
+    "./retrieval": "./src/retrieval/index.ts",
+    "./answer": "./src/answer/index.ts",
+    "./persona": "./src/persona/persona.ts",
+    "./copy": "./src/persona/copy.ts",
+    "./ingest": "./src/ingest/index.ts",
+    "./openai": "./src/openai/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "better-sqlite3": "13.0.3",
+    "openai": "6.49.0",
+    "partial-json": "0.1.7",
+    "sqlite-vec": "0.1.9",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "9.6.0"
+  }
+}
