@@ -11,6 +11,7 @@ import { TurnView } from '@/components/answer/TurnView';
 import { Composer } from '@/components/composer/Composer';
 import { EvidenceDrawer, type EvidenceTarget } from '@/components/evidence/EvidenceDrawer';
 import { ToastProvider, ToastViewport, useToast } from '@/components/ui/Toasts';
+import { VoiceControl } from '@/components/voice/VoiceControl';
 import { AskError, askStream, fetchStatus } from '@/lib/api';
 import {
   citationOrder,
@@ -26,6 +27,7 @@ import {
   type StageErrorKind,
   transition,
 } from '@/lib/stage-machine';
+import { useVoice, VoiceContext } from '@/lib/voice/useVoice';
 import { AboutDialog } from './AboutDialog';
 import { AmbientLayer } from './AmbientLayer';
 import { ConversationView } from './ConversationView';
@@ -53,7 +55,7 @@ export function Stage({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   );
 }
 
-type Ask = (question: string) => Promise<void>;
+type Ask = (question: string, options?: { voice?: boolean }) => Promise<void>;
 
 function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const [status, setStatus] = useState(initialStatus);
@@ -67,6 +69,8 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const seq = useRef(0);
+  const voiceTurns = useRef(new Set<string>());
+  const askRef = useRef<Ask>(async () => undefined);
   const stageRef = useRef(stage);
   stageRef.current = stage;
   const turnsRef = useRef(conversation.turns);
@@ -75,6 +79,16 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const turns = conversation.turns;
   const inConversation = turns.length > 0;
   const busy = isBusy(stage);
+
+  const voice = useVoice({
+    serverVoice: status.mode === 'live',
+    send,
+    setDraft,
+    onTranscript: (text) => void askRef.current(text, { voice: true }),
+    notify: (title, description) => toast({ title, description, tone: 'error', duration: 5200 }),
+  });
+  const voiceRef = useRef(voice);
+  voiceRef.current = voice;
 
   // Status: rendered on the server, refreshed when the tab regains focus (e.g. after an ingest run).
   useEffect(() => {
@@ -110,11 +124,15 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     }
   }, [status.mode, dialog, toast, dismiss]);
 
-  const ask = useCallback<Ask>(async (raw) => {
+  const ask = useCallback<Ask>(async (raw, options = {}) => {
     const question = raw.trim().slice(0, LIMITS.questionChars);
-    if (!question || isBusy(stageRef.current)) return;
+    // Only an answer already in flight blocks a new question. (A voice transcript arrives in the same
+    // tick as TRANSCRIBED, before stageRef catches up; the reducer applies both in order.)
+    if (!question || stageRef.current.kind === 'composing') return;
+    if (voiceRef.current.speakingTurnId) voiceRef.current.stopSpeaking();
     seq.current += 1;
     const id = `t${Date.now().toString(36)}${seq.current}`;
+    if (options.voice) voiceTurns.current.add(id);
     const history = historyFor(turnsRef.current);
     setDraft('');
     setDrawer(null);
@@ -137,6 +155,10 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
         } else if (event.type === 'final') {
           settled = true;
           send({ type: 'ANSWERED', insufficient: event.answer.mode === 'insufficient' });
+          // Spoken replies only follow a spoken question: that press is the gesture that unlocked audio.
+          if (voiceTurns.current.has(id) && event.answer.spoken) {
+            voiceRef.current.speak(id, event.answer.spoken);
+          }
         } else if (event.type === 'error') {
           settled = true;
           send({ type: 'FAILED', error: STAGE_ERROR[event.code] });
@@ -170,11 +192,13 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       if (abortRef.current === ctrl) abortRef.current = null;
     }
   }, []);
+  askRef.current = ask;
 
   const stop = useCallback(() => abortRef.current?.abort(), []);
 
   const reset = useCallback(() => {
     abortRef.current?.abort();
+    voiceRef.current.stopSpeaking();
     dispatch({ type: 'reset' });
     send({ type: 'RESET' });
     setDrawer(null);
@@ -218,15 +242,27 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
 
   useKeydown((e) => {
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || dialog) return;
-    if (e.key === 'Escape' && drawer) {
-      e.preventDefault();
-      setDrawer(null);
+    const mic = voice.pillRef.current;
+    if (e.key === 'Escape') {
+      if (mic?.isListening()) {
+        e.preventDefault();
+        mic.cancel();
+      } else if (voice.speakingTurnId) {
+        voice.stopSpeaking();
+      } else if (drawer) {
+        e.preventDefault();
+        setDrawer(null);
+      }
       return;
     }
     if (isTypingTarget(e.target)) return;
     if (e.key === '/') {
       e.preventDefault();
       inputRef.current?.focus();
+    } else if ((e.key === 'm' || e.key === 'M') && voice.input !== 'none' && !e.repeat) {
+      e.preventDefault();
+      if (mic?.isListening()) mic.stop();
+      else if (!busy) mic?.start();
     } else if (e.key === ']') {
       e.preventDefault();
       if (target) stepCitation(1);
@@ -241,6 +277,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     }
   });
 
+  const listening = stage.kind === 'listening' || stage.kind === 'requestingMic';
   const composer = (
     <Composer
       value={draft}
@@ -248,8 +285,19 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       onSend={(q) => void ask(q)}
       onStop={stop}
       busy={busy}
-      placeholder={inConversation ? brand.followUpPlaceholder : brand.placeholder}
+      placeholder={
+        listening ? 'Listening…' : inConversation ? brand.followUpPlaceholder : brand.placeholder
+      }
       inputRef={inputRef}
+      voice={
+        <VoiceControl
+          voice={voice}
+          disabled={busy}
+          onUnavailable={() =>
+            toast({ id: 'no-voice', title: brand.copy.errors.micUnsupported, duration: 4000 })
+          }
+        />
+      }
     />
   );
 
@@ -267,7 +315,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   );
 
   return (
-    <>
+    <VoiceContext.Provider value={voice}>
       <AmbientLayer
         level={ambientLevel(stage, inConversation)}
         active={stage.kind === 'composing'}
@@ -322,6 +370,6 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       />
       <SetupDialog open={dialog === 'setup'} onClose={() => setDialog(null)} status={status} />
       <AboutDialog open={dialog === 'about'} onClose={() => setDialog(null)} />
-    </>
+    </VoiceContext.Provider>
   );
 }

@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { brand } from '@/brand';
 import type { Turn } from '@/lib/conversation';
 import { AnswerBlocks } from './AnswerBlocks';
 import { EpisodeCards } from './EpisodeCards';
+import { type AnswerView, SpokenControls } from './SpokenControls';
 import { ThoughtTrace } from './ThoughtTrace';
 
 interface TurnViewProps {
@@ -27,6 +29,8 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
   const open = (citationId: string) => onOpenCitation(turn.id, citationId);
   const demo = turn.final?.demo ?? Object.values(turn.citations).some((c) => c.episode.demo);
   const headingId = `q-${turn.id}`;
+  const [view, setView] = useState<AnswerView>('written');
+  const spoken = turn.final?.spoken ?? '';
 
   return (
     <article id={`turn-${turn.id}`} aria-labelledby={headingId} className="scroll-mt-28">
@@ -48,14 +52,30 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
       </div>
 
       <div className="mt-6">
-        <AnswerBlocks
-          blocks={turn.blocks}
-          citations={turn.citations}
-          activeCitationId={activeCitationId}
-          onOpenCitation={open}
-        />
+        {view === 'spoken' && spoken ? (
+          <div>
+            <p className="mb-3 font-mono text-[11px] tracking-[0.16em] text-steel uppercase">
+              What I’d say out loud
+            </p>
+            <p className="font-display text-[21px] leading-[1.55] text-ivory-0 italic sm:text-[23px]">
+              {spoken}
+            </p>
+            <p className="mt-3 text-[13px] text-ivory-2">The written answer carries the sources.</p>
+          </div>
+        ) : (
+          <AnswerBlocks
+            blocks={turn.blocks}
+            citations={turn.citations}
+            activeCitationId={activeCitationId}
+            onOpenCitation={open}
+          />
+        )}
         {turn.status === 'streaming' && turn.writingIndex !== null ? <WritingPlaceholder /> : null}
       </div>
+
+      {turn.final && spoken ? (
+        <SpokenControls turnId={turn.id} spoken={spoken} view={view} onView={setView} />
+      ) : null}
 
       {turn.final && turn.final.caveats.length > 0 ? (
         <ul className="mt-6 flex flex-col gap-1.5 border-l border-ink-3 pl-4 text-[14px] leading-relaxed text-ivory-2">
