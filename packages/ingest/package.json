@@ -2,6 +2,7 @@
   "name": "@dear-steven/ingest",
   "version": "0.0.0",
   "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "description": "Ingestion CLI: discovers episodes, fetches or transcribes transcripts, chunks and indexes them.",
   "bin": {

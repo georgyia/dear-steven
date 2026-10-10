@@ -2,6 +2,7 @@
   "name": "@dear-steven/core",
   "version": "0.0.0",
   "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "description": "Framework-free domain core: schemas, knowledge store, retrieval, answer composition and citation validation.",
   "exports": {

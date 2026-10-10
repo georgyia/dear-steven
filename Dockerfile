@@ -22,7 +22,8 @@ COPY . .
 RUN pnpm --filter @dear-steven/web build \
   && mkdir -p /out/apps/web/.next \
   && cp -R apps/web/.next/standalone/. /out/ \
-  && cp -R apps/web/.next/static /out/apps/web/.next/static
+  && cp -R apps/web/.next/static /out/apps/web/.next/static \
+  && cp LICENSE NOTICE /out/
 
 FROM node:22.23.1-slim AS run
 ENV NODE_ENV=production \

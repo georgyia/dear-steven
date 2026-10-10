@@ -1,0 +1,23 @@
+Required Notice: Copyright (c) 2026 Dear Steven contributors (https://github.com/georgyia/dear-steven)
+
+Dear Steven is licensed under the PolyForm Noncommercial License 1.0.0 (see LICENSE, or
+https://polyformproject.org/licenses/noncommercial/1.0.0). You may read, run, change and share
+it for any noncommercial purpose. You may not sell it, or use it to make money.
+
+Exceptions
+
+1. apps/web/src/components/vendor/react-bits/ contains components from React Bits
+   (https://github.com/DavidHDev/react-bits), Copyright (c) 2026 David Haz, used
+   under the MIT + Commons Clause License Condition v1.0 (see the LICENSE.md in that
+   folder). They may be used as part of this application, but may not be sold,
+   sublicensed or redistributed on their own — not alone, in a bundle, or ported.
+
+2. Third-party packages installed by pnpm keep their own licences.
+
+3. No podcast content is distributed with this repository. Transcripts, audio,
+   embeddings and the knowledge base are generated locally by the ingest pipeline
+   from the publisher's public feed and remain the property of their owners.
+
+4. "The Diary Of A CEO" and "Steven Bartlett" are names of their respective
+   owners. This project is an independent, non-commercial fan project; it is not
+   affiliated with, endorsed by, or speaking for either.
