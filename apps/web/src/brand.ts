@@ -56,6 +56,18 @@ export const brand = {
     toast: {
       quoteCopied: 'Quote copied with attribution',
     },
+    /** Sending people to the original conversations (P6-14). One wording everywhere. */
+    youtube: {
+      watch: 'Watch on YouTube',
+      // The moment never breaks across lines: "≈ 40:10" stays together on a narrow card.
+      watchFrom: (moment: string) => `Watch on YouTube · ${moment.replace(' ', '\u00a0')}`,
+      newTab: ' — opens YouTube in a new tab',
+      unmatched: 'No video matched yet',
+      fixture: 'Fixture · no video',
+      invitation:
+        'These conversations are worth watching in full — they go further than any answer I can give.',
+      channel: 'The Diary Of A CEO on YouTube',
+    },
   },
 } as const;
 

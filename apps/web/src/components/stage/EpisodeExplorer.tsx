@@ -2,11 +2,12 @@
 
 import { formatDate } from '@dear-steven/core/format';
 import type { EpisodePage, EpisodeSummary } from '@dear-steven/core/schema';
-import { Cancel01Icon, LinkSquare02Icon, Search01Icon } from '@hugeicons/core-free-icons';
+import { Cancel01Icon, Search01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { brand } from '@/brand';
 import { Dialog } from '@/components/ui/Dialog';
+import { NoVideo, YouTubeLink } from '@/components/ui/YouTubeLink';
 import { fetchEpisodes } from '@/lib/api';
 
 interface EpisodeExplorerProps {
@@ -166,25 +167,9 @@ function EpisodeRow({ episode }: { episode: EpisodeSummary }) {
             </span>
           )}
           {episode.youtubeUrl ? (
-            <a
-              href={episode.youtubeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-full border border-ink-3 px-2 py-0.5 text-ivory-1 transition-colors hover:border-ink-4 hover:text-ivory-0"
-            >
-              <HugeiconsIcon icon={LinkSquare02Icon} size={12} strokeWidth={2} />
-              video
-              {episode.video === 'estimated'
-                ? ' · timing ≈'
-                : episode.video === 'exact'
-                  ? ' · timing exact'
-                  : ''}
-              <span className="sr-only"> — opens YouTube in a new tab</span>
-            </a>
+            <YouTubeLink href={episode.youtubeUrl} />
           ) : (
-            <span className="text-steel">
-              {episode.demo ? 'fixture · no video' : 'no video linked'}
-            </span>
+            <NoVideo demo={episode.demo} />
           )}
         </div>
       </div>

@@ -87,7 +87,7 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
 
       {turn.final ? (
         <div className="mt-8">
-          <EpisodeCards episodes={turn.final.episodes} onOpen={open} />
+          <EpisodeCards episodes={turn.final.episodes} citations={turn.citations} onOpen={open} />
         </div>
       ) : null}
 

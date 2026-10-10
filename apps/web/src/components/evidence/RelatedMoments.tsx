@@ -1,11 +1,13 @@
 'use client';
 
-import { formatDate, formatTimestamp } from '@dear-steven/core/format';
+import { formatDate, formatMoment, formatTimestamp } from '@dear-steven/core/format';
 import type { PassageCitation, RelatedMoments as Related } from '@dear-steven/core/schema';
-import { ArrowDown01Icon, LinkSquare02Icon } from '@hugeicons/core-free-icons';
+import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useId, useState } from 'react';
+import { brand } from '@/brand';
 import { speakerLabel } from '@/components/answer/speaker';
+import { YouTubeLink } from '@/components/ui/YouTubeLink';
 import { fetchRelated } from '@/lib/api';
 
 const cache = new Map<string, Related>();
@@ -101,16 +103,11 @@ function RelatedItem({ passage: p }: { passage: PassageCitation }) {
               · {formatTimestamp(p.startMs)} in the podcast
             </span>
             {p.youtubeUrl ? (
-              <a
-                href={p.youtubeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-ivory-1 underline-offset-2 hover:text-ivory-0 hover:underline"
-              >
-                <HugeiconsIcon icon={LinkSquare02Icon} size={12} strokeWidth={2} />
-                video{p.timestamp.state === 'estimated' ? ' (≈)' : ''}
-                <span className="sr-only"> — opens YouTube in a new tab</span>
-              </a>
+              <YouTubeLink href={p.youtubeUrl} variant="inline">
+                {p.timestamp.state === 'unknown'
+                  ? brand.copy.youtube.watch
+                  : brand.copy.youtube.watchFrom(formatMoment(p.timestamp.ms, p.timestamp.state))}
+              </YouTubeLink>
             ) : null}
           </p>
         ) : null}
