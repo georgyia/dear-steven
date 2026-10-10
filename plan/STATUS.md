@@ -28,6 +28,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | axe-core WCAG 2.1 A/AA, interactive states (e2e) | clean at 375 and 1280 after one fix (P1-08) |
 | In-drawer player and podcast audio (P5-05) | no third-party request before a click (request log, e2e); iOS Safari playback **not checked on a device** |
 | `docker build` | not run locally (Docker daemon not running); runs in CI (`docker` job) |
+| Security scans (P6-10) | `pnpm audit --prod`: no known vulnerabilities; weekly full-history gitleaks, audit and (once public) CodeQL in `security.yml`; Dependabot updates + alerts on |
 | Answers from the real model | **not yet run** — P3-08 / H-07 |
 
 ## Waiting on a human

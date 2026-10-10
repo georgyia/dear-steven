@@ -1,0 +1,59 @@
+# Scheduled and on-demand security scans (plan/07-ci-cd.md § 1). The PR checks in ci.yml scan only
+# the commits a PR adds; this workflow re-scans everything, so a leak or a vulnerable dependency
+# that slipped in earlier is still caught. Third-party actions are pinned by commit SHA.
+name: Security
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * 1' # Mondays, 04:17 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks-history:
+    name: gitleaks (full history)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      # On schedule and workflow_dispatch the action scans every commit, not a range — so it also
+      # covers the repository's first push, which the push-triggered scan can't diff against.
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  audit:
+    name: pnpm audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.23.1
+      # New advisories appear without any commit; the weekly run catches them between PRs.
+      - run: pnpm audit --prod --audit-level=high
+
+  codeql:
+    name: CodeQL
+    # Code scanning is free on public repositories; a private one needs GitHub Advanced Security.
+    # Skipped (not failed) while the repository is private.
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          queries: security-extended
+      - uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
