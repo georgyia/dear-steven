@@ -79,7 +79,7 @@ Threads (ambient), Noise (film grain), BlurText (wordmark), PromptBar (composer,
 VoicePill (mic, adapted), ThoughtLine (thinking trace), StatusMark (setup checklist),
 LatticeLoader (indexing pill), WarmTooltip (chip previews, adapted), SwipeToast (notices),
 SpotlightCard (episode cards), RubberSegment (drawer tabs, Written/Spoken), Magnet (mic pull),
-GradualBlur (scroll edge), SquishSwitch (voice settings). Local changes are listed in each file's header. MIT + Commons Clause:
+GradualBlur (scroll edge), SquishSwitch (voice settings, conversation memory), FuseButton (Forget, with undo). Local changes are listed in each file's header. MIT + Commons Clause:
 use inside the app only.
 
 ## 7. Motion and accessibility

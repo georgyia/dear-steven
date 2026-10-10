@@ -64,6 +64,19 @@ test.describe('interactive states', () => {
     await audit(page, 'spoken view');
   });
 
+  test('conversation memory switched on, with Forget', async ({ page }) => {
+    await page.goto('/');
+    const box = page.getByRole('textbox', { name: 'Ask Steven' });
+    await box.fill('Should I start a business?');
+    await box.press('Enter');
+    await answered(page);
+    const region = page.getByRole('region', { name: 'Conversation memory' });
+    await region.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await region.getByRole('switch').click();
+    await expect(region.getByRole('button', { name: 'Forget' })).toBeVisible();
+    await audit(page, 'conversation memory on');
+  });
+
   test('setup, how-this-works, explorer and voice dialogs', async ({ page }) => {
     test.slow(); // four full axe audits
     await page.goto('/');

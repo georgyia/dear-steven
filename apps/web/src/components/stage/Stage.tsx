@@ -28,6 +28,7 @@ import {
   type StageErrorKind,
   transition,
 } from '@/lib/stage-machine';
+import { useConversationMemory } from '@/lib/useConversationMemory';
 import { useVoicePreferences } from '@/lib/voice/preferences';
 import { unlockAudio } from '@/lib/voice/speaker';
 import { useVoice, VoiceContext } from '@/lib/voice/useVoice';
@@ -36,6 +37,7 @@ import { AmbientLayer } from './AmbientLayer';
 import { ConversationView } from './ConversationView';
 import { EpisodeExplorer } from './EpisodeExplorer';
 import { HomeView } from './HomeView';
+import { MemoryControl } from './MemoryControl';
 import { SetupDialog } from './SetupDialog';
 import { StatusPill } from './StatusPill';
 import { CompactWordmark } from './Wordmark';
@@ -103,6 +105,18 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   });
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
+
+  const memory = useConversationMemory(conversation.turns, {
+    restore: (restored) => dispatch({ type: 'restore', turns: restored }),
+    onRestored: () =>
+      toast({
+        id: 'restored',
+        title: 'Picked up where you left off',
+        description:
+          'This conversation is remembered on this device. Forget it at the end of the page.',
+        duration: 6000,
+      }),
+  });
 
   // Status: rendered on the server, refreshed when the tab regains focus (e.g. after an ingest run).
   useEffect(() => {
@@ -376,6 +390,14 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
                 onRetry={(q) => void ask(q)}
               />
             ))}
+            <MemoryControl
+              remember={memory.remember}
+              supported={memory.supported}
+              saveFailed={memory.saveFailed}
+              onChange={memory.setRemember}
+              onForget={() => void memory.forget()}
+              onUndo={() => memory.setRemember(true)}
+            />
           </ConversationView>
         ) : (
           <HomeView

@@ -97,17 +97,29 @@ one by its stored embedding (`buildRelatedMoments`, no model call; empty until e
 |----------|------|
 | Browser → server | Every body validated with zod; size caps; per-IP token buckets (live answers, transcribe, speech, passages + episode list). |
 | Server → OpenAI | Key only in server memory (`readConfig`); provider error text never logged or shown (`server/errors.ts`). |
+| Browser storage → page | Untrusted on read: stored answers are re-validated, links rebuilt from ids, unknown fields dropped. |
 | Transcript text → model | Untrusted data: wrapped in `<sources>`, `<`/`>` neutralised, instructions say to ignore commands inside. |
 | Model → browser | Nothing passes without `validateBlock`; citation ids must be retrieved ids; quotes are re-derived from storage. |
 | Browser → YouTube / podcast host | Only after the user presses play: the youtube-nocookie player and the https RSS enclosure. CSP `frame-src` / `media-src` fence everything else. |
 | CLI → network | Polite UA, timeouts, retries with backoff; RSS + VTT + YouTube Data API + OpenAI only. Paid stages require `--budget`. |
 
-## 6. Storage (SQLite, `data/dear-steven.db`)
+## 6. Storage
+
+### Server: SQLite, `data/dear-steven.db`
 
 Tables: `episodes`, `segments` (speaker truth), `passages` (+ `passages_fts` FTS5 external
 content, `passages_vec` vec0 cosine, both maintained by triggers), `ingestion_runs`, `kb_meta`.
 Migrations are numbered SQL in `store/migrations.ts`, tracked by `PRAGMA user_version`. Purging an
 episode cascades to segments, passages, FTS rows, vectors and runs (tested).
+
+### Browser (opt-in only)
+
+- Voice settings: `localStorage` (`lib/voice/preferences.ts`), defaults when storage is blocked.
+- Conversation memory (P5-11): IndexedDB `dear-steven-memory`, written only after the user
+  switches "Remember this conversation" on; finished turns only (question + validated final
+  answer). Looking for a memory never creates the database; Forget or switching off deletes it.
+  On restore the data is untrusted: answers are re-validated against `FinalAnswerSchema` and
+  every link is rebuilt from ids by `linksAt` (`lib/memory.ts`).
 
 ## 7. Fail modes
 

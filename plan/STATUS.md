@@ -9,16 +9,16 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 ## Now
 
 - **Phase:** 0–4 built in the first implementation pass; Phase 5 open.
-- **Done:** M0 (except GitHub publishing and third-party skills), M1 in code, M2; from M3: P5-03, P5-04, P5-05, P5-07, P5-12.
-- **Next to pick:** P5-11 (unblocked by P5-07). P5-08 waits on H-09.
+- **Done:** M0 (except GitHub publishing and third-party skills), M1 in code, M2; from M3: P5-03, P5-04, P5-05, P5-07, P5-11, P5-12.
+- **Next to pick:** nothing unblocked. P5-01/02/06/09 wait on the first live eval (H-03, H-07), P5-08 on H-09, P5-10 on H-08.
 - **Critical path:** H-03 → `pnpm ingest index` → H-07 / P3-08 → P5-01.
 
 ## Verified in the first pass (2026-10-10)
 
 | Check | Result |
 |-------|--------|
-| `pnpm check` (Biome, tsc ×4, Vitest, dependency-cruiser) | green — 201 unit/integration tests in 27 files; 0 dependency violations |
-| `pnpm e2e` (production build, demo mode, desktop + mobile) | 60 passed, 8 skips (2 layout-specific; the HTTP route checks run on desktop only) |
+| `pnpm check` (Biome, tsc ×4, Vitest, dependency-cruiser) | green — 207 unit/integration tests in 28 files; 0 dependency violations |
+| `pnpm e2e` (production build, demo mode, desktop + mobile) | 68 passed, 8 skips (2 layout-specific; the HTTP route checks run on desktop only) |
 | Architecture rules | fire on a planted `react` import in core and a client import of core `store` |
 | `pnpm ingest all --limit 20` (real RSS feed, no keys) | 739 episodes discovered, 20 transcripts, 1,621 passages, ~10 s |
 | `pnpm eval` (retrieval, keyword-only) | recall@10 100% (20/20) |
@@ -111,5 +111,5 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | P5-08 | — | spike(voice): "Hey Steven" wake word | P2 | medium | open, blocked | P5-07 | H-09 |
 | P5-09 | — | test(eval): LLM-judged usefulness, human-calibrated | P2 | low | open, blocked | P3-08 | — |
 | P5-10 | — | chore(infra): deploy to Fly.io | P2 | high | open | P0-03 | H-08 |
-| P5-11 | — | feat(web): optional conversation memory (opt-in) | P2 | medium | open | P5-07 | — |
+| P5-11 | — | feat(web): optional conversation memory (opt-in) | P2 | medium | done | P5-07 | — |
 | P5-12 | — | fix(web): wordmark hydration mismatch under reduced motion | P1 | low | done | — | — |

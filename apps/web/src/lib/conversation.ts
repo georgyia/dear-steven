@@ -36,7 +36,9 @@ export type ConversationAction =
   | { type: 'turn.event'; id: string; event: AskEvent; at: number }
   | { type: 'turn.stopped'; id: string; at: number }
   | { type: 'turn.failed'; id: string; code: AskErrorCode | 'network'; message: string; at: number }
-  | { type: 'reset' };
+  | { type: 'reset' }
+  /** A remembered conversation (P5-11). Ignored once the user has started a new one. */
+  | { type: 'restore'; turns: Turn[] };
 
 export const initialConversation: ConversationState = { turns: [] };
 
@@ -101,6 +103,8 @@ export function conversationReducer(
   switch (action.type) {
     case 'reset':
       return initialConversation;
+    case 'restore':
+      return state.turns.length === 0 ? { turns: action.turns } : state;
     case 'turn.start':
       return {
         turns: [

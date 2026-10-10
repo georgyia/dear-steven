@@ -383,9 +383,16 @@ A user who opts in can come back to their previous conversation; nothing is kept
 device" switch, "Forget" with FuseButton (vendor) undo, history replay without re-asking.
 **Out** — server-side storage, accounts, sync.
 
+**As built** — the switch sits at the end of the conversation, and says where the data is kept.
+FuseButton's Forget deletes the IndexedDB database the moment it is pressed; Undo (5 s) writes the
+conversation still on screen back. Switching off deletes too. Looking for a memory on load uses an
+upgrade that is aborted if the database doesn't exist, so a visitor who never opted in has no
+database at all. Restored data is treated as untrusted (re-validated, links rebuilt from ids by the
+new core `linksAt`).
+
 #### Acceptance criteria
-- [ ] Off by default; when off, nothing is written.
-- [ ] Forget removes everything immediately.
+- [x] Off by default; when off, nothing is written.
+- [x] Forget removes everything immediately.
 
 #### Security notes
 Personal questions on a shared device: copy must say where it's stored.

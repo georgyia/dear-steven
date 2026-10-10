@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { httpsUrl, isYouTubeVideoId, podcastAudioAt, resolveMoment } from './links.ts';
+import { httpsUrl, isYouTubeVideoId, linksAt, podcastAudioAt, resolveMoment } from './links.ts';
 
 describe('resolveMoment', () => {
   it('links to the exact second when alignment is exact', () => {
@@ -101,5 +101,25 @@ describe('resolveMoment — embeds', () => {
     expect(
       resolveMoment({ videoId: 'bad', startMs: 0, offsetMs: 0, alignment: 'exact' }).embedUrl,
     ).toBe(null);
+  });
+});
+
+describe('linksAt', () => {
+  it('spells out the same links resolveMoment gives', () => {
+    const m = resolveMoment({
+      videoId: 'dQw4w9WgXcQ',
+      startMs: 61_500,
+      offsetMs: 2_000,
+      alignment: 'exact',
+    });
+    expect(linksAt('dQw4w9WgXcQ', m.ms, m.state)).toEqual({ url: m.url, embedUrl: m.embedUrl });
+  });
+
+  it('rebuilds nothing from a malformed id, and never a timestamp when timing is unknown', () => {
+    expect(linksAt('javascript:alert(1)', 1000, 'exact')).toEqual({ url: null, embedUrl: null });
+    expect(linksAt(null, 1000, 'exact')).toEqual({ url: null, embedUrl: null });
+    expect(linksAt('dQw4w9WgXcQ', 99_000, 'unknown').url).toBe(
+      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    );
   });
 });
