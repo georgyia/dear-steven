@@ -1,5 +1,13 @@
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { NextConfig } from 'next';
+
+// The keys live in the repository-root .env, shared with the ingest CLI and the eval harness;
+// Next itself only reads apps/web/.env*. Variables already in the environment win (Node's loader
+// never overrides them), so the e2e suite's DEAR_STEVEN_DEMO=1 still forces demo mode. In Docker
+// there is no .env: the platform sets the variables.
+const rootEnv = fileURLToPath(new URL('../../.env', import.meta.url));
+if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 
 const nextConfig: NextConfig = {
   // One deployable unit: `output: 'standalone'` runs in a single Docker container (ADR-001).
