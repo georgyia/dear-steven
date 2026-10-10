@@ -1,0 +1,9 @@
+/** Request bounds shared by the client (to trim) and the server (to enforce). Zod-free on purpose. */
+export const LIMITS = {
+  questionChars: 2000,
+  answerContextChars: 4000,
+  historyTurns: 11,
+  audioBytes: 25 * 1024 * 1024,
+  audioSeconds: 60,
+  speechChars: 1200,
+} as const;

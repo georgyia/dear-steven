@@ -1,0 +1,68 @@
+'use client';
+
+import { formatTimestamp } from '@dear-steven/core/format';
+import type { Citation } from '@dear-steven/core/schema';
+import { speakerLabel } from './speaker';
+
+interface PullQuoteProps {
+  citation: Citation;
+  /** The stored transcript span — never model text. */
+  text: string;
+  lead: string | null;
+  active: boolean;
+  onOpen: (citationId: string) => void;
+}
+
+/**
+ * The memorable moment: a verbatim line set large in Fraunces italic, with an ember hairline that
+ * draws down beside it. The attribution says plainly who said it — or that we don't know.
+ */
+export function PullQuote({ citation, text, lead, active, onOpen }: PullQuoteProps) {
+  const who = speakerLabel(citation);
+  const attribution =
+    citation.speaker === 'unverified'
+      ? `From my conversation with ${who.short}`
+      : citation.speaker === 'host'
+        ? `${who.short}, on the show`
+        : who.short;
+
+  return (
+    <figure className="relative my-2 pl-6 sm:pl-8">
+      <span
+        aria-hidden="true"
+        className="absolute top-1 bottom-1 left-0 w-[2px] origin-top rounded-full bg-[linear-gradient(180deg,var(--ember-1),var(--ember-0)_60%,transparent)] animate-[ds-hairline-grow_900ms_var(--ease-out)_both] motion-reduce:animate-none"
+      />
+      {lead ? <p className="mb-3 text-[15px] text-ivory-2">{lead}</p> : null}
+      <blockquote>
+        <button
+          type="button"
+          onClick={() => onOpen(citation.id)}
+          aria-pressed={active}
+          className={`group block w-full text-left font-display text-[24px] leading-[1.35] text-ivory-0 italic transition-colors sm:text-[28px] ${active ? 'text-ember-1' : 'hover:text-ember-1'}`}
+          style={{ fontVariationSettings: '"opsz" 72, "SOFT" 50' }}
+        >
+          <span aria-hidden="true" className="mr-0.5 text-ember-0">
+            “
+          </span>
+          {text}
+          <span aria-hidden="true" className="ml-0.5 text-ember-0">
+            ”
+          </span>
+          <span className="sr-only">. Open the source.</span>
+        </button>
+      </blockquote>
+      <figcaption className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[12px] text-steel">
+        <span className="text-ivory-1">— {attribution}</span>
+        <span aria-hidden="true">·</span>
+        <span className="tabular">{formatTimestamp(citation.startMs)}</span>
+        <span aria-hidden="true">·</span>
+        <span>verbatim from the transcript</span>
+        {citation.speaker === 'unverified' ? (
+          <span className="rounded-full border border-dashed border-steel/60 px-2 py-0.5 text-[10.5px]">
+            speaker not verified
+          </span>
+        ) : null}
+      </figcaption>
+    </figure>
+  );
+}

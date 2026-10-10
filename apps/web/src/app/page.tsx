@@ -1,4 +1,9 @@
-/** Phase 0 skeleton: the stage arrives in Phase 1 (plan/04-issues/phase-1.md). */
+import { Stage } from '@/components/stage/Stage';
+import { getKnowledgeStatus } from '@/server/status';
+
+export const dynamic = 'force-dynamic';
+
+/** A thin server shell: read the knowledge-base status once, then hand over to the client stage. */
 export default function Page() {
-  return <main>Dear Steven</main>;
+  return <Stage initialStatus={getKnowledgeStatus()} />;
 }

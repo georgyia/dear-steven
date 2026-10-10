@@ -1,0 +1,53 @@
+/*
+ * Dear Steven design tokens — docs/DESIGN.md is the source of truth; names are the vocabulary.
+ * Components use these tokens (via Tailwind utilities like `bg-ink-1`, `text-ivory-0`) and never
+ * raw colour values. The product is dark by design: a lamp-lit late-night studio.
+ */
+:root {
+  color-scheme: dark;
+
+  /* Ink — surfaces, deep warm blacks */
+  --ink-0: #0a0908; /* page */
+  --ink-1: #12100e; /* stage */
+  --ink-2: #1a1714; /* raised: composer, cards, drawer */
+  --ink-3: #241f1b; /* hairlines, hover */
+  --ink-4: #2f2924; /* pressed, strong hairlines */
+
+  /* Ivory — text */
+  --ivory-0: #f4eee4; /* primary */
+  --ivory-1: #cfc6b8; /* secondary, synthesis prose */
+  --ivory-2: #a39a8d; /* muted, still ≥ 4.5:1 on ink-2 */
+
+  /* Ember — the one accent: host, focus, the pull-quote hairline */
+  --ember-0: #e3a857;
+  --ember-1: #f3c47a; /* hover */
+  --ember-tint: rgb(227 168 87 / 0.14);
+  --ember-glow: rgb(227 168 87 / 0.32);
+
+  /* Steel — machine metadata, unverified speaker */
+  --steel: #8b949e;
+  --steel-tint: rgb(139 148 158 / 0.12);
+
+  /* Oxblood — errors and destructive actions */
+  --oxblood: #b3473b; /* borders, icons */
+  --oxblood-1: #e38b7d; /* error text on ink */
+  --oxblood-tint: rgb(179 71 59 / 0.14);
+
+  /* Shape */
+  --radius-chip: 999px;
+  --radius-field: 22px;
+  --radius-card: 18px;
+  --radius-panel: 24px;
+
+  /* Layout */
+  --column: 44rem;
+  --drawer: 420px;
+  --composer-h: 64px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-fast: 160ms;
+  --dur: 320ms;
+  --dur-slow: 640ms;
+}

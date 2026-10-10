@@ -1,0 +1,137 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+@theme inline {
+  --color-ink-0: var(--ink-0);
+  --color-ink-1: var(--ink-1);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-ivory-0: var(--ivory-0);
+  --color-ivory-1: var(--ivory-1);
+  --color-ivory-2: var(--ivory-2);
+  --color-ember-0: var(--ember-0);
+  --color-ember-1: var(--ember-1);
+  --color-ember-tint: var(--ember-tint);
+  --color-steel: var(--steel);
+  --color-steel-tint: var(--steel-tint);
+  --color-oxblood: var(--oxblood);
+  --color-oxblood-1: var(--oxblood-1);
+  --color-oxblood-tint: var(--oxblood-tint);
+
+  --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+
+  --ease-out: var(--ease-out);
+  --ease-in-out: var(--ease-in-out);
+}
+
+@layer base {
+  html {
+    background: var(--ink-0);
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    min-height: 100dvh;
+    color: var(--ivory-0);
+    font-family: var(--font-sans);
+    /* The lamp: a low, warm pool of light above the stage. */
+    background:
+      radial-gradient(110% 60% at 50% -12%, rgb(227 168 87 / 0.075), transparent 62%),
+      radial-gradient(80% 50% at 50% 115%, rgb(36 31 27 / 0.9), transparent 70%), var(--ink-0);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: var(--ember-tint);
+    color: var(--ivory-0);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ember-0);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  textarea:focus-visible {
+    outline: none;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ink-4) transparent;
+  }
+}
+
+@layer utilities {
+  /* Fraunces' optical sizes: display cuts for the wordmark, text cuts for quotes. */
+  .font-display {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Focus ring for elements sitting on an ember surface. */
+  .focus-ring-ivory:focus-visible {
+    outline-color: var(--ivory-0);
+  }
+}
+
+/* The contained-focus ring around the composer shell. */
+.composer-shell:focus-within {
+  box-shadow:
+    0 0 0 1px var(--ember-glow),
+    0 24px 60px -24px rgb(0 0 0 / 0.8),
+    0 0 48px -12px var(--ember-tint);
+}
+
+@keyframes ds-hairline-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes ds-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes ds-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes ds-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+}
