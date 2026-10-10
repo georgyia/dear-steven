@@ -2,7 +2,7 @@
 
 import { LIMITS } from '@dear-steven/core/limits';
 import type { AskErrorCode, KnowledgeStatus } from '@dear-steven/core/schema';
-import { InformationCircleIcon } from '@hugeicons/core-free-icons';
+import { InformationCircleIcon, VoiceIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { LayoutGroup, MotionConfig } from 'motion/react';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
@@ -12,6 +12,7 @@ import { Composer } from '@/components/composer/Composer';
 import { EvidenceDrawer, type EvidenceTarget } from '@/components/evidence/EvidenceDrawer';
 import { ToastProvider, ToastViewport, useToast } from '@/components/ui/Toasts';
 import { VoiceControl } from '@/components/voice/VoiceControl';
+import { VoiceSettings } from '@/components/voice/VoiceSettings';
 import { AskError, askStream, fetchStatus } from '@/lib/api';
 import {
   citationOrder,
@@ -27,6 +28,8 @@ import {
   type StageErrorKind,
   transition,
 } from '@/lib/stage-machine';
+import { useVoicePreferences } from '@/lib/voice/preferences';
+import { unlockAudio } from '@/lib/voice/speaker';
 import { useVoice, VoiceContext } from '@/lib/voice/useVoice';
 import { AboutDialog } from './AboutDialog';
 import { AmbientLayer } from './AmbientLayer';
@@ -58,19 +61,28 @@ export function Stage({ initialStatus }: { initialStatus: KnowledgeStatus }) {
 
 type Ask = (question: string, options?: { voice?: boolean }) => Promise<void>;
 
+/** Sticky user activation: has this visit had a click, tap or key press yet? */
+const hasBeenActive = () =>
+  (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation
+    ?.hasBeenActive ?? true;
+
 function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const [status, setStatus] = useState(initialStatus);
   const [stage, send] = useReducer(transition, initialStage);
   const [conversation, dispatch] = useReducer(conversationReducer, initialConversation);
   const [draft, setDraft] = useState('');
   const [drawer, setDrawer] = useState<{ turnId: string; citationId: string } | null>(null);
-  const [dialog, setDialog] = useState<'setup' | 'about' | 'episodes' | null>(null);
+  const [dialog, setDialog] = useState<'setup' | 'about' | 'episodes' | 'voice' | null>(null);
+  const { prefs, update: updatePrefs, persisted } = useVoicePreferences();
+  const prefsRef = useRef(prefs);
+  prefsRef.current = prefs;
   const { toast, dismiss } = useToast();
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const seq = useRef(0);
-  const voiceTurns = useRef(new Set<string>());
+  /** Turns whose answer is read aloud: spoken questions, and every question with "always speak". */
+  const spokenTurns = useRef(new Set<string>());
   const askRef = useRef<Ask>(async () => undefined);
   const stageRef = useRef(stage);
   stageRef.current = stage;
@@ -87,6 +99,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     setDraft,
     onTranscript: (text) => void askRef.current(text, { voice: true }),
     notify: (title, description) => toast({ title, description, tone: 'error', duration: 5200 }),
+    preferences: prefs,
   });
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
@@ -133,7 +146,12 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     if (voiceRef.current.speakingTurnId) voiceRef.current.stopSpeaking();
     seq.current += 1;
     const id = `t${Date.now().toString(36)}${seq.current}`;
-    if (options.voice) voiceTurns.current.add(id);
+    if (options.voice) spokenTurns.current.add(id);
+    else if (prefsRef.current.alwaysSpeak && hasBeenActive()) {
+      // A typed question: this key press or click is the gesture that lets the reply play later.
+      unlockAudio();
+      spokenTurns.current.add(id);
+    }
     const history = historyFor(turnsRef.current);
     setDraft('');
     setDrawer(null);
@@ -156,8 +174,9 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
         } else if (event.type === 'final') {
           settled = true;
           send({ type: 'ANSWERED', insufficient: event.answer.mode === 'insufficient' });
-          // Spoken replies only follow a spoken question: that press is the gesture that unlocked audio.
-          if (voiceTurns.current.has(id) && event.answer.spoken) {
+          // Spoken replies follow a spoken question, or any question with "always speak" on — both
+          // start from a gesture that unlocked audio.
+          if (spokenTurns.current.has(id) && event.answer.spoken) {
             voiceRef.current.speak(id, event.answer.spoken);
           }
         } else if (event.type === 'error') {
@@ -303,6 +322,17 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   );
 
   const pill = <StatusPill status={status} onOpen={() => setDialog('setup')} />;
+  const voiceSettings = (
+    <button
+      type="button"
+      onClick={() => setDialog('voice')}
+      aria-label="Voice settings"
+      className="inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[12.5px] whitespace-nowrap text-ivory-2 transition-colors hover:bg-ink-2 hover:text-ivory-0"
+    >
+      <HugeiconsIcon icon={VoiceIcon} size={15} strokeWidth={1.8} />
+      <span className="hidden sm:inline">Voice</span>
+    </button>
+  );
   const about = (
     <button
       type="button"
@@ -330,6 +360,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
               <>
                 <CompactWordmark onClick={reset} />
                 <div className="flex items-center gap-1">
+                  {voiceSettings}
                   {about}
                   {pill}
                 </div>
@@ -350,7 +381,12 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
           <HomeView
             composer={composer}
             footerStart={pill}
-            footerEnd={about}
+            footerEnd={
+              <div className="flex items-center gap-1">
+                {voiceSettings}
+                {about}
+              </div>
+            }
             onExample={(q) => void ask(q)}
           />
         )}
@@ -377,6 +413,14 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       />
       <EpisodeExplorer open={dialog === 'episodes'} onClose={() => setDialog(null)} />
       <AboutDialog open={dialog === 'about'} onClose={() => setDialog(null)} />
+      <VoiceSettings
+        open={dialog === 'voice'}
+        onClose={() => setDialog(null)}
+        prefs={prefs}
+        update={updatePrefs}
+        persisted={persisted}
+        voice={voice}
+      />
     </VoiceContext.Provider>
   );
 }

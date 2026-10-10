@@ -38,6 +38,7 @@ test.describe('interactive states', () => {
   test.use({ reducedMotion: 'reduce' });
 
   test('an answer, its evidence inspector and the spoken view', async ({ page }) => {
+    test.slow(); // four full axe audits after a streamed answer
     await page.goto('/');
     const box = page.getByRole('textbox', { name: 'Ask Steven' });
     await box.fill('Why do I keep procrastinating?');
@@ -63,7 +64,8 @@ test.describe('interactive states', () => {
     await audit(page, 'spoken view');
   });
 
-  test('setup and how-this-works dialogs', async ({ page }) => {
+  test('setup, how-this-works, explorer and voice dialogs', async ({ page }) => {
+    test.slow(); // four full axe audits
     await page.goto('/');
     await page.getByTestId('status-pill').click();
     await expect(page.getByRole('dialog', { name: 'What I have to work with' })).toBeVisible();
@@ -79,5 +81,9 @@ test.describe('interactive states', () => {
       page.getByRole('dialog', { name: 'The conversations I know' }).getByRole('listitem'),
     ).toHaveCount(3);
     await audit(page, 'episode explorer');
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Voice settings' }).click();
+    await expect(page.getByRole('dialog', { name: 'Voice' })).toBeVisible();
+    await audit(page, 'voice settings');
   });
 });

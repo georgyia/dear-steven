@@ -24,7 +24,14 @@ import {
   type VoiceInput,
   type VoiceOutput,
 } from './capabilities';
-import { createRecognizer, type Recognizer } from './recognition';
+import type { VoicePreferences } from './preferences';
+import {
+  createRecognizer,
+  installOnDevice,
+  type OnDeviceStatus,
+  onDeviceStatus,
+  type Recognizer,
+} from './recognition';
 import { MicDeniedError, type Recording, startRecording, transcribe } from './recorder';
 import { createSpeaker, unlockAudio } from './speaker';
 
@@ -39,6 +46,14 @@ export interface VoiceApi {
   speak: (turnId: string, text: string) => void;
   stopSpeaking: () => void;
   speakingTurnId: string | null;
+  /** Chrome on-device recognition for this browser; `unknown` until checked. */
+  onDevice: OnDeviceStatus | 'unknown';
+  /** Look up on-device support (once). Called when the settings open. */
+  checkOnDevice: () => void;
+  /** Download the on-device model; resolves to whether it is now available. */
+  installOnDevice: () => Promise<boolean>;
+  /** Say a sample line in the chosen voice. Call from a click. */
+  preview: (text: string) => void;
 }
 
 interface UseVoiceOptions {
@@ -49,6 +64,7 @@ interface UseVoiceOptions {
   setDraft: (text: string) => void;
   onTranscript: (text: string) => void;
   notify: (title: string, description?: string) => void;
+  preferences: VoicePreferences;
 }
 
 type Session =
@@ -66,6 +82,7 @@ export function useVoice({
   setDraft,
   onTranscript,
   notify,
+  preferences,
 }: UseVoiceOptions): VoiceApi {
   const [env, setEnv] = useState<VoiceEnvironment | null>(null);
   const [browserFailed, setBrowserFailed] = useState(false);
@@ -98,8 +115,28 @@ export function useVoice({
 
   const input = env ? chooseVoiceInput(env) : 'none';
   const output = env ? chooseVoiceOutput(env) : 'none';
-  const speaker = useMemo(() => createSpeaker(output), [output]);
+  const { serverVoice: chosenServer, browserVoice: chosenBrowser } = preferences;
+  const speaker = useMemo(
+    () => createSpeaker(output, { server: chosenServer, browser: chosenBrowser }),
+    [output, chosenServer, chosenBrowser],
+  );
   useEffect(() => () => speaker.stop(), [speaker]);
+
+  // Probed lazily — when the settings open, or when the user already opted in — never just because
+  // the page loaded (see onDeviceProbeAllowed).
+  const [onDevice, setOnDevice] = useState<OnDeviceStatus | 'unknown'>('unknown');
+  const [probe, setProbe] = useState(false);
+  const wantOnDevice = preferences.onDevice;
+  useEffect(() => {
+    if (input !== 'browser' || !(probe || wantOnDevice)) return;
+    let live = true;
+    void onDeviceStatus().then((s) => live && setOnDevice(s));
+    return () => {
+      live = false;
+    };
+  }, [input, probe, wantOnDevice]);
+  const checkOnDevice = useCallback(() => setProbe(true), []);
+  const processLocally = preferences.onDevice && onDevice === 'available';
 
   const { errors } = brand.copy;
 
@@ -145,27 +182,30 @@ export function useVoice({
     latest.current.send({ type: 'MIC_REQUESTED' });
 
     if (input === 'browser') {
-      const recognizer = createRecognizer({
-        onAudioStart: () => latest.current.send({ type: 'MIC_GRANTED' }),
-        onPartial: (t) => latest.current.setDraft(t),
-        onFinal: finish,
-        onError: (e) => {
-          if (e === 'denied') fail('micDenied');
-          else if (e === 'no-speech') {
-            pillRef.current?.cancel();
-            finish('');
-          } else if (e === 'network' && serverVoice) {
-            setBrowserFailed(true);
-            pillRef.current?.cancel();
-            transcribeFailed(
-              'Your browser’s speech service is unreachable, so I’ve switched to server transcription. Try once more.',
-            );
-          } else {
-            pillRef.current?.cancel();
-            transcribeFailed('Speech recognition stopped unexpectedly.');
-          }
+      const recognizer = createRecognizer(
+        {
+          onAudioStart: () => latest.current.send({ type: 'MIC_GRANTED' }),
+          onPartial: (t) => latest.current.setDraft(t),
+          onFinal: finish,
+          onError: (e) => {
+            if (e === 'denied') fail('micDenied');
+            else if (e === 'no-speech') {
+              pillRef.current?.cancel();
+              finish('');
+            } else if (e === 'network' && serverVoice) {
+              setBrowserFailed(true);
+              pillRef.current?.cancel();
+              transcribeFailed(
+                'Your browser’s speech service is unreachable, so I’ve switched to server transcription. Try once more.',
+              );
+            } else {
+              pillRef.current?.cancel();
+              transcribeFailed('Speech recognition stopped unexpectedly.');
+            }
+          },
         },
-      });
+        { processLocally },
+      );
       if (!recognizer) return fail('micUnsupported');
       session.current = { kind: 'browser', recognizer };
       recognizer.start();
@@ -183,7 +223,7 @@ export function useVoice({
     }
 
     fail('micUnsupported');
-  }, [input, serverVoice, speaker, finish, fail, transcribeFailed]);
+  }, [input, serverVoice, speaker, processLocally, finish, fail, transcribeFailed]);
 
   const onPillStop = useCallback(
     ({ reason }: { reason: VoicePillStopReason }) => {
@@ -241,6 +281,22 @@ export function useVoice({
     [speaker],
   );
 
+  const preview = useCallback(
+    (text: string) => {
+      unlockAudio();
+      setSpeakingTurnId(null);
+      void speaker.speak(text);
+    },
+    [speaker],
+  );
+
+  const install = useCallback(async () => {
+    const ok = await installOnDevice();
+    const status = await onDeviceStatus();
+    setOnDevice(status);
+    return ok && status === 'available';
+  }, []);
+
   const stopSpeaking = useCallback(() => {
     speaker.stop();
     setSpeakingTurnId(null);
@@ -257,6 +313,10 @@ export function useVoice({
     speak,
     stopSpeaking,
     speakingTurnId,
+    onDevice,
+    checkOnDevice,
+    installOnDevice: install,
+    preview,
   };
 }
 

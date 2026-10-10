@@ -22,7 +22,7 @@ anyone's mouth), the **operator's keys**, and the **user's voice and questions**
 | SR-08 | FTS5 query from user text | FTS syntax injection / errors | `toFtsQuery` quotes every term, drops operators | `store.test.ts` (`neutralises FTS5 syntax`) |
 | SR-09 | `/api/transcribe` | Large or non-audio uploads | ≤ 8 MB; audio MIME allow-list; never stored | route |
 | SR-10 | Microphone | Listening without consent | Mic opened only on press/toggle; released on stop; Permissions-Policy `microphone=(self)` | e2e (voice), `next.config.ts` |
-| SR-11 | TTS | Audio playing unbidden | Speech only after a spoken question or a Listen click | e2e (`typed questions are never read aloud`) |
+| SR-11 | TTS | Audio playing unbidden; a voice that imitates a real person | Speech only after a spoken question, a Listen click, or — with "always speak" opted in — a typed or clicked question in a visit that already has user activation; the speech route accepts only `STOCK_VOICES`, never a custom or cloned voice id | e2e (`typed questions are never read aloud`, voice settings); `schema/ask.test.ts` |
 | SR-12 | YouTube links | Link injection via a malformed video id | 11-char id allow-list; otherwise no link | `links.test.ts` |
 | SR-13 | Ingest CLI | Unbounded spend | Paid stages need `--budget`; stop before exceeding; dry-run for embeddings | `transcribe.ts`, `index.ts` |
 | SR-14 | Repository | Committed secrets or podcast data | `.gitignore` (`.env*`, `data/`); gitleaks in CI | CI `gitleaks` |

@@ -40,7 +40,10 @@ removed; controlled value; trailing slot), BlurText (`as`, reduced-motion gate, 
 label), WarmTooltip (opt-in wrapping), VoicePill (imperative handle; CSS variables initialised).
 Deliberately not used: CometDial, DodgeField, JellyRadio, ScrubField, SlingButton, FolderFloat,
 SpringCheck, GlassSurface, and the WebGL-heavy Orb / LightRays / Aurora / Silk. Later candidates:
-RefineFrame, GlideSelect, SquishSwitch, FuseButton, AnimatedList, PulseHeart (P5).
+RefineFrame, GlideSelect, SquishSwitch, FuseButton, AnimatedList, PulseHeart (P5). Since then:
+SquishSwitch is used (P5-07, voice settings); GlideSelect, AnimatedList and RefineFrame were
+evaluated and not used (no scrolling menu; one search field fits better; a thumbnail would load
+from Google before the click — P5-07, P5-03, P5-05).
 
 ## Sources
 

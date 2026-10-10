@@ -27,7 +27,10 @@ export async function POST(req: Request) {
   if (!parsed.success) return jsonError(400, 'bad_request', 'Nothing to say.');
 
   try {
-    const body = await synthesizeSpeech(client, parsed.data.text, req.signal);
+    const body = await synthesizeSpeech(client, parsed.data.text, {
+      voice: parsed.data.voice,
+      signal: req.signal,
+    });
     return new Response(body, {
       headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store' },
     });

@@ -1,5 +1,6 @@
 'use client';
 
+import type { StockVoice } from '@dear-steven/core/schema';
 import type { VoiceOutput } from './capabilities';
 
 /**
@@ -24,9 +25,17 @@ export function unlockAudio() {
   if (context.state === 'suspended') void context.resume();
 }
 
-function browserVoice(): SpeechSynthesisVoice | null {
+export interface VoiceChoice {
+  /** Stock OpenAI voice for /api/speech; `null` = the server default. */
+  server: StockVoice | null;
+  /** `voiceURI` of a system voice; `null` = pick automatically. */
+  browser: string | null;
+}
+
+function browserVoice(uri: string | null): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices();
   return (
+    (uri ? voices.find((v) => v.voiceURI === uri) : undefined) ??
     voices.find((v) => v.lang === 'en-GB' && /daniel|arthur|male/i.test(v.name)) ??
     voices.find((v) => v.lang === 'en-GB') ??
     voices.find((v) => v.lang.startsWith('en')) ??
@@ -34,7 +43,10 @@ function browserVoice(): SpeechSynthesisVoice | null {
   );
 }
 
-export function createSpeaker(output: VoiceOutput): TextToSpeech {
+export function createSpeaker(
+  output: VoiceOutput,
+  choice: VoiceChoice = { server: null, browser: null },
+): TextToSpeech {
   let source: AudioBufferSourceNode | null = null;
   let generation = 0;
 
@@ -43,7 +55,7 @@ export function createSpeaker(output: VoiceOutput): TextToSpeech {
       if (!('speechSynthesis' in window)) return resolve();
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      const voice = browserVoice();
+      const voice = browserVoice(choice.browser);
       if (voice) u.voice = voice;
       u.rate = 1.02;
       u.onstart = () => h.onStart?.();
@@ -80,7 +92,7 @@ export function createSpeaker(output: VoiceOutput): TextToSpeech {
         const res = await fetch('/api/speech', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify(choice.server ? { text, voice: choice.server } : { text }),
         });
         if (!res.ok) throw new Error(`speech ${res.status}`);
         const buffer = await context.decodeAudioData(await res.arrayBuffer());

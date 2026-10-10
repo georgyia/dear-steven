@@ -258,10 +258,21 @@ stock-voice picker. Preferences in `localStorage` (try/catch; defaults when unav
 **In** — SquishSwitch and GlideSelect (vendor), `lib/voice/preferences.ts`, wiring into
 `useVoice` and `speaker.ts`, `SPEECH_VOICE` becomes a default.
 **Out** — custom or cloned voices (never).
+**As built** — SquishSwitch vendored (local changes: focus ring kept, `ariaDescribedBy`).
+GlideSelect not used: its menu doesn't scroll, and macOS alone offers 40-odd English system
+voices, so the picker is a token-styled native `<select>` (stock OpenAI voices in live mode,
+system voices otherwise) with a "Hear it" preview. The server takes `voice` only from
+`STOCK_VOICES`; `SPEECH_VOICE` (`ash`) is the default. **Found while building:** in Chromium
+builds without Chrome's speech component (headless Chromium 156),
+`SpeechRecognition.available({ processLocally: true })` crashes the tab. On-device support is
+therefore probed only in Google Chrome (`userAgentData` brands), and only lazily — when the
+settings open or the user already opted in — never on page load. "Always speak" marks a typed
+question for speech only when the visit already has user activation, and unlocks audio in that
+same gesture.
 
 #### Acceptance criteria
-- [ ] Each preference survives a reload and degrades gracefully when storage is blocked.
-- [ ] "Always speak" never plays before the first user gesture of a session.
+- [x] Each preference survives a reload and degrades gracefully when storage is blocked.
+- [x] "Always speak" never plays before the first user gesture of a session.
 
 #### Tests required
 Unit tests for preferences; e2e for "always speak" gesture gating.
@@ -376,3 +387,31 @@ Personal questions on a shared device: copy must say where it's stored.
 
 #### Dependencies
 P5-07. **Size:** M.
+
+---
+
+### P5-12 — fix(web): wordmark hydration mismatch under reduced motion
+
+<!-- issue {"id":"P5-12","title":"fix(web): wordmark hydration mismatch under reduced motion","labels":["type:ui","stage:m3","track:web","owner:ai","risk:low","P1","size:S"],"milestone":"M3 Depth","depends":[],"github":null} -->
+
+#### Context
+Found while building P5-07. With `prefers-reduced-motion: reduce`, every page load logs React
+error #418 (text mismatch): BlurText picks "static text" or "animated words" from
+`useReducedMotion()` during render, and the server can't know the user's setting.
+
+#### Goal
+The wordmark hydrates cleanly for everyone; reduced-motion users still get no blur animation.
+
+#### Scope
+**In** — BlurText renders the same markup on server and client, and applies the reduced-motion
+choice after mount (or purely through CSS). **Out** — other animation changes.
+
+#### Acceptance criteria
+- [ ] No `pageerror` on load with reduced motion on or off (e2e listens for it).
+- [ ] The wordmark still renders statically under reduced motion.
+
+#### Tests required
+e2e: load `/` with `reducedMotion: 'reduce'` and `'no-preference'`, assert no page errors.
+
+#### Dependencies
+None. **Size:** S.

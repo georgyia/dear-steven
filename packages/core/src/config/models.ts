@@ -1,3 +1,5 @@
+import { DEFAULT_STOCK_VOICE, type StockVoice } from '../schema/ask.ts';
+
 /**
  * Every OpenAI model id lives here (ADR-003). Models get renamed and retired; when that happens,
  * this is the only file that changes. `gpt-6-luna` (released 2026-09-22; structured outputs,
@@ -24,4 +26,5 @@ export const PRICES = {
   diarizePerAudioHour: 0.36,
 } as const;
 
-export const SPEECH_VOICE = 'ash';
+/** The default stock voice; listeners can pick another from `STOCK_VOICES` (P5-07). */
+export const SPEECH_VOICE: StockVoice = DEFAULT_STOCK_VOICE;

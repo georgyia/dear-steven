@@ -87,7 +87,7 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
             The microphone is only used while you hold or toggle it. Short, attributed quotations
             link back to the original episodes; full transcripts are never published. The video
             player and the podcast audio load from YouTube and the podcast’s host only when you
-            press play.
+            press play. Voice settings are kept in this browser only.
           </p>
         </section>
       </div>

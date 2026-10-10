@@ -16,6 +16,10 @@ Can "Hey Steven" work in a browser, and what is a reliable, privacy-conscious de
 - `MediaRecorder` is universal (webm/opus; Safari mp4) → server STT (`gpt-4o-mini-transcribe`).
 - Autoplay: audio must start from a user gesture; iOS needs an `AudioContext` resumed in that
   gesture — playing decoded audio through Web Audio is the reliable path.
+- **On-device recognition crashes some Chromium builds** (found in P5-07): in headless Chromium
+  156, `SpeechRecognition.available({ langs, processLocally: true })` kills the tab. Google
+  Chrome ships the speech component; other Chromium builds may not. So it is probed only in
+  Google Chrome (`userAgentData` brands) and only on demand.
 - Wake words: Picovoice's free tier ended (June 2026); openWakeWord runs in the browser via ONNX
   but needs a custom "Hey Steven" model, an always-open mic, and a visible indicator. Background
   listening is unreliable across tabs and mobile.

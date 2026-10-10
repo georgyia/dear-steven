@@ -123,3 +123,5 @@ episode cascades to segments, passages, FTS rows, vectors and runs (tested).
 | Mic denied / unsupported | Explained in a toast; typing unaffected; retry works. |
 | Web Speech network error | Switches to server transcription when available. |
 | Server TTS fails | Falls back to `speechSynthesis`. |
+| Browser storage blocked | Voice settings apply for the visit; the settings say they won't be kept. |
+| On-device recognition missing | The switch is disabled; it is never probed outside Google Chrome. |

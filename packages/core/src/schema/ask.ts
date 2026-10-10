@@ -94,8 +94,32 @@ export const KnowledgeStatusSchema = z.object({
 });
 export type KnowledgeStatus = z.infer<typeof KnowledgeStatusSchema>;
 
+/**
+ * OpenAI's built-in voices. Stock only: a custom or cloned voice id is never accepted, so the
+ * persona can't be made to sound like anyone real (ADR-003).
+ */
+export const STOCK_VOICES = [
+  'alloy',
+  'ash',
+  'ballad',
+  'cedar',
+  'coral',
+  'echo',
+  'fable',
+  'marin',
+  'nova',
+  'onyx',
+  'sage',
+  'shimmer',
+  'verse',
+] as const;
+export type StockVoice = (typeof STOCK_VOICES)[number];
+export const DEFAULT_STOCK_VOICE: StockVoice = 'ash';
+
 export const SpeechRequestSchema = z.strictObject({
   text: z.string().trim().min(1).max(LIMITS.speechChars),
+  /** The listener's pick; the server default (`SPEECH_VOICE`) when absent. */
+  voice: z.enum(STOCK_VOICES).optional(),
 });
 
 /** One row of the episode explorer: metadata only, never transcript text. */

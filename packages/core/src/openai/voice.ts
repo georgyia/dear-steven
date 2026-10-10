@@ -1,6 +1,7 @@
 import type OpenAI from 'openai';
 import { toFile } from 'openai';
 import { MODELS, SPEECH_VOICE } from '../config/models.ts';
+import type { StockVoice } from '../schema/index.ts';
 
 /**
  * The voice seams (ADR-003): speech-to-text for browsers without Web Speech, and text-to-speech
@@ -23,18 +24,18 @@ export async function transcribeSpeech(
 export async function synthesizeSpeech(
   client: OpenAI,
   text: string,
-  signal?: AbortSignal,
+  options: { voice?: StockVoice; signal?: AbortSignal } = {},
 ): Promise<ReadableStream<Uint8Array> | null> {
   const audio = await client.audio.speech.create(
     {
       model: MODELS.speech,
-      voice: SPEECH_VOICE,
+      voice: options.voice ?? SPEECH_VOICE,
       input: text,
       instructions:
         'Warm, relaxed and conversational, like a thoughtful podcast host talking to one person. Natural pauses; never theatrical.',
       response_format: 'mp3',
     },
-    { signal },
+    { signal: options.signal },
   );
   return audio.body;
 }
