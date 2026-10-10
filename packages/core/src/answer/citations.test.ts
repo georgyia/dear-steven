@@ -19,6 +19,7 @@ const episode = (over: Partial<Episode> = {}): Episode & { passages: number } =>
   transcriptStatus: 'fetched',
   youtubeVideoId: null,
   youtubeOffsetMs: 0,
+  youtubeOffsetSteps: [],
   youtubeAlignment: 'unknown',
   summary: null,
   indexedAt: '2026-01-02T00:00:00Z',

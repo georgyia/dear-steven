@@ -1,17 +1,20 @@
 import { createHash } from 'node:crypto';
+import { z } from 'zod';
 import { EMBEDDING_DIMENSIONS } from '../config/models.ts';
 import type { PassageDraft } from '../ingest/chunk.ts';
-import type {
-  AttributionMethod,
-  Episode,
-  EpisodeType,
-  Passage,
-  Segment,
-  Speaker,
-  SpeakersPresent,
-  TranscriptSource,
-  TranscriptStatus,
-  YouTubeAlignment,
+import {
+  type AttributionMethod,
+  type Episode,
+  type EpisodeType,
+  type OffsetStep,
+  OffsetStepSchema,
+  type Passage,
+  type Segment,
+  type Speaker,
+  type SpeakersPresent,
+  type TranscriptSource,
+  type TranscriptStatus,
+  type YouTubeAlignment,
 } from '../schema/index.ts';
 import { toFtsQuery } from './fts.ts';
 import { type Db, type OpenOptions, openDatabase } from './sqlite.ts';
@@ -79,6 +82,7 @@ interface EpisodeRow {
   transcript_status: TranscriptStatus;
   youtube_video_id: string | null;
   youtube_offset_ms: number;
+  youtube_offset_steps: string;
   youtube_alignment: YouTubeAlignment;
   summary: string | null;
   indexed_at: string | null;
@@ -118,6 +122,16 @@ export const episodeIdFor = (sourceGuid: string) =>
 export const passageIdFor = (episodeId: string, idx: number) =>
   `${episodeId}_p${String(idx).padStart(4, '0')}`;
 
+/** Ascending by `fromMs`; anything malformed reads as "one offset throughout". */
+function parseOffsetSteps(json: string): OffsetStep[] {
+  try {
+    const parsed = z.array(OffsetStepSchema).safeParse(JSON.parse(json));
+    return parsed.success ? parsed.data.sort((a, b) => a.fromMs - b.fromMs) : [];
+  } catch {
+    return [];
+  }
+}
+
 const toEpisode = (r: EpisodeRow): Episode => ({
   id: r.id,
   sourceGuid: r.source_guid,
@@ -133,6 +147,7 @@ const toEpisode = (r: EpisodeRow): Episode => ({
   transcriptStatus: r.transcript_status,
   youtubeVideoId: r.youtube_video_id,
   youtubeOffsetMs: r.youtube_offset_ms,
+  youtubeOffsetSteps: parseOffsetSteps(r.youtube_offset_steps),
   youtubeAlignment: r.youtube_alignment,
   summary: r.summary,
   indexedAt: r.indexed_at,
@@ -315,15 +330,29 @@ export class KnowledgeStore {
       videoId: string | null;
       durationMs: number | null;
       offsetMs: number;
+      /** Later offsets; omitted or empty when one offset holds throughout. */
+      offsetSteps?: OffsetStep[];
       alignment: YouTubeAlignment;
     },
   ) {
+    const steps = (v.offsetSteps ?? []).map((s) => ({
+      fromMs: Math.round(s.fromMs),
+      offsetMs: Math.round(s.offsetMs),
+    }));
     this.db
       .prepare(
         `UPDATE episodes SET youtube_video_id = ?, youtube_duration_ms = ?, youtube_offset_ms = ?,
-          youtube_alignment = ?, updated_at = ? WHERE id = ?`,
+          youtube_offset_steps = ?, youtube_alignment = ?, updated_at = ? WHERE id = ?`,
       )
-      .run(v.videoId, v.durationMs, Math.round(v.offsetMs), v.alignment, now(), episodeId);
+      .run(
+        v.videoId,
+        v.durationMs,
+        Math.round(v.offsetMs),
+        JSON.stringify(steps),
+        v.alignment,
+        now(),
+        episodeId,
+      );
   }
 
   setTranscriptFailed(episodeId: string) {

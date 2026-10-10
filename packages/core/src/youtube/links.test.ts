@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { httpsUrl, isYouTubeVideoId, linksAt, podcastAudioAt, resolveMoment } from './links.ts';
+import {
+  httpsUrl,
+  isYouTubeVideoId,
+  linksAt,
+  offsetAt,
+  podcastAudioAt,
+  resolveMoment,
+} from './links.ts';
 
 describe('resolveMoment', () => {
   it('links to the exact second when alignment is exact', () => {
@@ -24,6 +31,23 @@ describe('resolveMoment', () => {
     });
     expect(m.url).toContain('&t=72s');
     expect(m.state).toBe('estimated');
+  });
+
+  it('uses the offset in force at that point when the edits differ mid-episode', () => {
+    const moment = (startMs: number) =>
+      resolveMoment({
+        videoId: 'dQw4w9WgXcQ',
+        startMs,
+        offsetMs: -11_000,
+        offsetSteps: [
+          { fromMs: 1_200_000, offsetMs: 43_000 },
+          { fromMs: 2_400_000, offsetMs: 49_000 },
+        ],
+        alignment: 'exact',
+      });
+    expect(moment(600_000).ms).toBe(589_000);
+    expect(moment(1_200_000).ms).toBe(1_243_000);
+    expect(moment(3_000_000).url).toContain('&t=3049s');
   });
 
   it('never produces a negative timestamp', () => {
@@ -121,5 +145,18 @@ describe('linksAt', () => {
     expect(linksAt('dQw4w9WgXcQ', 99_000, 'unknown').url).toBe(
       'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     );
+  });
+});
+
+describe('offsetAt', () => {
+  it('takes the last step at or before the position, in whatever order the steps come', () => {
+    const steps = [
+      { fromMs: 2_000, offsetMs: 30 },
+      { fromMs: 1_000, offsetMs: 20 },
+    ];
+    expect(offsetAt({ startMs: 999, offsetMs: 10, offsetSteps: steps })).toBe(10);
+    expect(offsetAt({ startMs: 1_500, offsetMs: 10, offsetSteps: steps })).toBe(20);
+    expect(offsetAt({ startMs: 2_000, offsetMs: 10, offsetSteps: steps })).toBe(30);
+    expect(offsetAt({ startMs: 5_000, offsetMs: 10 })).toBe(10);
   });
 });

@@ -10,8 +10,13 @@ export function status(ctx: Context, opts: { episodes: boolean }) {
   const discovered = ctx.store.discoveredCount();
   const all = ctx.store.listEpisodes();
   const withVtt = all.filter((e) => e.transcriptUrl).length;
-  const exact = all.filter((e) => e.youtubeAlignment === 'exact').length;
-  const linked = all.filter((e) => e.youtubeVideoId).length;
+  const full = all.filter((e) => e.episodeType === 'full');
+  const linked = full.filter((e) => e.youtubeVideoId).length;
+  const exact = full.filter((e) => e.youtubeVideoId && e.youtubeAlignment === 'exact').length;
+  const estimated = full.filter(
+    (e) => e.youtubeVideoId && e.youtubeAlignment === 'estimated',
+  ).length;
+  const coverage = full.length ? Math.round((linked / full.length) * 100) : 0;
   const pending = ctx.store.countNeedingEmbedding(MODELS.embedding).passages;
   const pct = s.passages ? Math.round((s.embeddedPassages / s.passages) * 100) : 0;
 
@@ -27,7 +32,7 @@ export function status(ctx: Context, opts: { episodes: boolean }) {
     `  ${c.dim('speakers')}   ${s.diarizedEpisodes} diarized episodes (verified host/guest statements)`,
   );
   console.log(
-    `  ${c.dim('youtube')}    ${linked} linked · ${exact} exact · ${linked - exact} estimated`,
+    `  ${c.dim('youtube')}    ${linked} of ${full.length} full episodes linked (${coverage}%) · ${exact} exact · ${estimated} estimated (≈) · ${linked - exact - estimated} no timing`,
   );
   console.log(`  ${c.dim('spend')}      ${usd(ctx.store.spentUsd())} recorded by paid stages`);
 

@@ -107,4 +107,8 @@ export const MIGRATIONS: readonly string[] = [
   );
   CREATE INDEX ingestion_runs_episode ON ingestion_runs (episode_id, stage, id DESC);
   `,
+  // 2 — offsets that change mid-episode (P6-15): JSON array of { fromMs, offsetMs }
+  `
+  ALTER TABLE episodes ADD COLUMN youtube_offset_steps TEXT NOT NULL DEFAULT '[]';
+  `,
 ];

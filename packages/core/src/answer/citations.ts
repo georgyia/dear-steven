@@ -72,6 +72,7 @@ export function momentOf(episode: Episode, startMs: number) {
     videoId: episode.youtubeVideoId,
     startMs,
     offsetMs: episode.youtubeOffsetMs,
+    offsetSteps: episode.youtubeOffsetSteps,
     alignment: episode.youtubeAlignment,
   });
   return { timestamp: { ms: m.ms, state: m.state }, youtubeUrl: m.url, embedUrl: m.embedUrl };

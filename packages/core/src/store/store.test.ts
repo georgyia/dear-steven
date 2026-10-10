@@ -1,8 +1,14 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import Database from 'better-sqlite3';
+import * as sqliteVec from 'sqlite-vec';
 import { describe, expect, it } from 'vitest';
 import { embeddingInput } from '../openai/embedder.ts';
 import { episodeInput, fakeEmbedder, seedEpisode, tempStore } from '../test/fixtures.ts';
 import { toFtsQuery } from './fts.ts';
 import { episodeIdFor, KnowledgeStore, StoreMissingError } from './index.ts';
+import { MIGRATIONS } from './migrations.ts';
 
 describe('KnowledgeStore — episodes', () => {
   it('upserts idempotently and keeps manual guest names', () => {
@@ -29,6 +35,58 @@ describe('KnowledgeStore — episodes', () => {
     expect(store.findEpisodes('guid-1')).toHaveLength(1);
     expect(store.findEpisodes(episodeIdFor('guid-1'))).toHaveLength(1);
     expect(store.findEpisodes('Dana White')[0]?.title).toBe('Dana White: Build It');
+  });
+
+  it('keeps the YouTube offset and where it changes, in order', () => {
+    const store = tempStore();
+    store.upsertEpisodes([episodeInput(1)]);
+    const id = episodeIdFor('guid-1');
+    expect(store.getEpisode(id)?.youtubeOffsetSteps).toEqual([]);
+    store.setYouTube(id, {
+      videoId: 'dQw4w9WgXcQ',
+      durationMs: 3_600_000,
+      offsetMs: -11_000,
+      offsetSteps: [
+        { fromMs: 2_400_000.4, offsetMs: 49_000 },
+        { fromMs: 1_200_000, offsetMs: 43_000 },
+      ],
+      alignment: 'exact',
+    });
+    expect(store.getEpisode(id)).toMatchObject({
+      youtubeOffsetMs: -11_000,
+      youtubeOffsetSteps: [
+        { fromMs: 1_200_000, offsetMs: 43_000 },
+        { fromMs: 2_400_000, offsetMs: 49_000 },
+      ],
+    });
+    store.setYouTube(id, {
+      videoId: 'dQw4w9WgXcQ',
+      durationMs: null,
+      offsetMs: 5_000,
+      alignment: 'exact',
+    });
+    expect(store.getEpisode(id)?.youtubeOffsetSteps).toEqual([]);
+  });
+
+  it('upgrades a first-version database without losing its links', () => {
+    const path = join(mkdtempSync(join(tmpdir(), 'dear-steven-v1-')), 'kb.db');
+    const v1 = new Database(path);
+    sqliteVec.load(v1);
+    v1.exec(MIGRATIONS[0] ?? '');
+    v1.pragma('user_version = 1');
+    v1.prepare(
+      `INSERT INTO episodes (id, source_guid, title, published_at, episode_type, youtube_video_id,
+        youtube_offset_ms, youtube_alignment) VALUES ('ep_1', 'g1', 'T', '2026-01-01', 'full',
+        'dQw4w9WgXcQ', 7000, 'estimated')`,
+    ).run();
+    v1.close();
+    const store = KnowledgeStore.open(path);
+    expect(store.getEpisode('ep_1')).toMatchObject({
+      youtubeVideoId: 'dQw4w9WgXcQ',
+      youtubeOffsetMs: 7000,
+      youtubeOffsetSteps: [],
+      youtubeAlignment: 'estimated',
+    });
   });
 
   it('refuses to create a database unless asked', () => {

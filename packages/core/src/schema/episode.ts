@@ -12,6 +12,17 @@ export type TranscriptStatus = z.infer<typeof TranscriptStatusSchema>;
 export const YouTubeAlignmentSchema = z.enum(['exact', 'estimated', 'unknown']);
 export type YouTubeAlignment = z.infer<typeof YouTubeAlignmentSchema>;
 
+/**
+ * From podcast position `fromMs` on, the video runs `offsetMs` ahead. The podcast and the video
+ * are sometimes edited differently mid-episode (an ad break only one of them has), so one offset
+ * can't hold throughout; shared chapter timestamps show where it changes (P6-15).
+ */
+export const OffsetStepSchema = z.object({
+  fromMs: z.number().int().nonnegative(),
+  offsetMs: z.number().int(),
+});
+export type OffsetStep = z.infer<typeof OffsetStepSchema>;
+
 /** One podcast episode, as discovered from the official RSS feed. */
 export const EpisodeSchema = z.object({
   id: z.string(),
@@ -28,6 +39,8 @@ export const EpisodeSchema = z.object({
   transcriptStatus: TranscriptStatusSchema,
   youtubeVideoId: z.string().nullable(),
   youtubeOffsetMs: z.number().int(),
+  /** Where the offset changes later in the episode; empty when one offset holds throughout. */
+  youtubeOffsetSteps: z.array(OffsetStepSchema),
   youtubeAlignment: YouTubeAlignmentSchema,
   summary: z.string().nullable(),
   indexedAt: z.string().nullable(),
