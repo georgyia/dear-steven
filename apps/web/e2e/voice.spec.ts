@@ -127,6 +127,8 @@ test('Firefox path: no Web Speech, so it records and transcribes on the server',
   });
   await page.goto('/');
   await page.waitForResponse('**/api/status');
+  // The mic switches to server transcription once the (mocked) live status has rendered.
+  await expect(page.getByRole('button', { name: /Talk to Steven/ })).toBeVisible();
   await page.locator('body').click({ position: { x: 5, y: 5 } });
   await page.keyboard.press('m');
   await page.waitForTimeout(800);
