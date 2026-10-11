@@ -1,0 +1,70 @@
+{
+  "$comment": "P6-07: the same 28 questions (q01–q20, a01–a08) before and after adding neighbouring passages and generated episode overviews to the context, and with multi-query on (shipped off). gpt-6-luna, 114 episodes, hybrid. Metrics only. First-block latency varied 2–11 s for the same question between runs on 2026-10-11, so it is not comparable run to run.",
+  "date": "2026-10-11",
+  "before": {
+    "config": "persona-v2.1, passages only",
+    "personaRubric": {
+      "judged": 28,
+      "adviceSeeking": 17,
+      "opensWithPosition": 17,
+      "opensWithPositionRate": 1,
+      "decisiveness": 4.29,
+      "actionability": 3.68,
+      "hedgesPerAnswer": 2.64,
+      "usefulness": 4.43,
+      "specificity": 4
+    },
+    "answerDensity": {
+      "citationsPerAnswer": 3.46,
+      "episodesPerAnswer": 2,
+      "usdPerAnswer": 0.00085,
+      "inputTokensPerAnswer": 8270
+    },
+    "violationsCaught": 4,
+    "firstBlockP50Ms": 3351
+  },
+  "withMultiQuery": {
+    "config": "neighbours + overviews + 2 extra phrasings",
+    "personaRubric": {
+      "judged": 28,
+      "adviceSeeking": 16,
+      "opensWithPosition": 16,
+      "opensWithPositionRate": 1,
+      "decisiveness": 4.32,
+      "actionability": 3.57,
+      "hedgesPerAnswer": 2.04,
+      "usefulness": 4.32,
+      "specificity": 4.21
+    },
+    "answerDensity": {
+      "citationsPerAnswer": 3.61,
+      "episodesPerAnswer": 2.21,
+      "usdPerAnswer": 0.001459,
+      "inputTokensPerAnswer": 13852
+    },
+    "violationsCaught": 11,
+    "firstBlockP50Ms": 5029
+  },
+  "final": {
+    "config": "persona-v2.2, neighbours + overviews (multi-query off)",
+    "personaRubric": {
+      "judged": 28,
+      "adviceSeeking": 16,
+      "opensWithPosition": 16,
+      "opensWithPositionRate": 1,
+      "decisiveness": 4.29,
+      "actionability": 3.71,
+      "hedgesPerAnswer": 2.46,
+      "usefulness": 4.32,
+      "specificity": 4.07
+    },
+    "answerDensity": {
+      "citationsPerAnswer": 3,
+      "episodesPerAnswer": 1.89,
+      "usdPerAnswer": 0.001167,
+      "inputTokensPerAnswer": 11044
+    },
+    "violationsCaught": 2,
+    "firstBlockP50Ms": 5884
+  }
+}

@@ -89,6 +89,30 @@ describe('KnowledgeStore — episodes', () => {
     });
   });
 
+  it('keeps a generated summary, and finds what was said around a passage', () => {
+    const store = tempStore();
+    const id = seedEpisode(store, 1, [
+      'First the guest talks about growing up poor in a small town, sharing a bedroom with three brothers, working weekends in a bakery and saving every coin for a second-hand bicycle.',
+      'Then the guest explains the first business, a market stall selling phone cases on Saturdays, the early mornings, the cold, the regulars who came back, and the first month that made a profit.',
+      'Finally the guest says the stall taught them to sell, to read a face, to price quickly and to walk away from a bad deal, which mattered more than anything they later learned at university.',
+    ]);
+    store.setSummary(id, 'A conversation about starting small.');
+    expect(store.getEpisode(id)?.summary).toBe('A conversation about starting small.');
+    const passages = store.getPassagesByIds(
+      Array.from(
+        { length: store.passageCount(id) },
+        (_, i) => `${id}_p${String(i).padStart(4, '0')}`,
+      ),
+    );
+    expect(passages.length).toBeGreaterThan(1);
+    const middle = passages[1];
+    if (!middle) throw new Error('no middle passage');
+    const around = store.neighbourPassages(id, middle.idx);
+    expect(around.before).toBe(passages[0]?.text);
+    expect(around.after).toBe(passages[2]?.text ?? null);
+    expect(store.neighbourPassages(id, 0).before).toBeNull();
+  });
+
   it('refuses to create a database unless asked', () => {
     expect(() => KnowledgeStore.open('/nonexistent/dir/kb.db')).toThrow(StoreMissingError);
   });

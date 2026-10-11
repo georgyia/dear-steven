@@ -27,7 +27,7 @@ import type {
   ResolvedBlock,
 } from '../schema/index.ts';
 import type { KnowledgeStore } from '../store/index.ts';
-import { searchQuery } from './condense.ts';
+import { alternateQueries, searchQuery } from './condense.ts';
 import { buildContext } from './context.ts';
 import type { AnswerModel } from './model.ts';
 import {
@@ -62,6 +62,12 @@ export interface ComposeDeps {
   now?: () => number;
   /** Called once with everything that happened, for the eval harness and optional logging. */
   onComplete?: (record: AnswerRecord) => void;
+  /**
+   * Also search two more phrasings of the question (P6-07). Off by default: on the live eval it
+   * drew on more conversations per answer (2.2 vs 1.9) and scored more specific, but added about
+   * two seconds before the first block — against a three-second target.
+   */
+  multiQuery?: boolean;
   /** Moderation of the question (P6-11). Without it, the phrase rules decide alone. */
   moderate?: (text: string, signal: AbortSignal) => Promise<ModerationResult>;
 }
@@ -106,13 +112,15 @@ export async function* composeAnswer(
   yield { type: 'status', step: 'searching', message: thinking.searching(stats.episodes) };
   // The transcripts are English: search in English, and by meaning in the question's own language
   // too (P6-01). The answer comes back in the question's language.
+  // Optionally a few phrasings of it, fused (P6-07): guests rarely use the asker's words.
   const language = detectLanguage(request.question);
   const query = await searchQuery(deps.model, request.question, request.history, language, signal);
+  const alternates = deps.multiQuery ? await alternateQueries(deps.model, query, signal) : [];
   const retrieval = await hybridSearch(
     deps.store,
     query,
     deps.embedder,
-    language === 'en' ? {} : { alsoSemantic: [request.question] },
+    { alternates, ...(language === 'en' ? {} : { alsoSemantic: [request.question] }) },
     signal,
   );
   const route = routeQuestion(request.question, await moderation);

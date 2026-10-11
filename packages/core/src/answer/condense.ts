@@ -34,3 +34,36 @@ export async function searchQuery(
     return `${prev} ${question}`.trim();
   }
 }
+
+const ALTERNATES_INSTRUCTIONS =
+  'Give two more English search queries for the same question, each using different words that a podcast guest might use when talking about it. One per line, no numbering, no quotes, at most 12 words each.';
+
+/**
+ * Two more ways to search for the same thing (P6-07): guests rarely use the asker's words, so
+ * fusing a few phrasings finds the moment more often. Best-effort — on any failure, none.
+ */
+export async function alternateQueries(
+  model: AnswerModel,
+  query: string,
+  signal?: AbortSignal,
+): Promise<string[]> {
+  try {
+    const text = await model.completeText({
+      instructions: ALTERNATES_INSTRUCTIONS,
+      input: [{ role: 'user', content: query }],
+      maxOutputTokens: 60,
+      signal,
+    });
+    const seen = new Set([query.toLowerCase()]);
+    return text
+      .split('\n')
+      .map((l) => l.replace(/^[-*\d.)\s"']+|["']$/g, '').trim())
+      .filter(
+        (l) =>
+          l.length > 3 && l.length < 200 && !seen.has(l.toLowerCase()) && seen.add(l.toLowerCase()),
+      )
+      .slice(0, 2);
+  } catch {
+    return [];
+  }
+}

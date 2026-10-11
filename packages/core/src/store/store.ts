@@ -442,6 +442,29 @@ export class KnowledgeStore {
     return drafts.length;
   }
 
+  /** What was said just before and just after a passage in its episode (P6-07), if anything. */
+  neighbourPassages(
+    episodeId: string,
+    idx: number,
+  ): { before: string | null; after: string | null } {
+    const rows = this.db
+      .prepare<[string, number, number], { idx: number; text: string }>(
+        'SELECT idx, text FROM passages WHERE episode_id = ? AND idx IN (?, ?)',
+      )
+      .all(episodeId, idx - 1, idx + 1);
+    return {
+      before: rows.find((r) => r.idx === idx - 1)?.text ?? null,
+      after: rows.find((r) => r.idx === idx + 1)?.text ?? null,
+    };
+  }
+
+  /** A machine-written overview of the whole conversation (P6-07); `null` clears it. */
+  setSummary(episodeId: string, summary: string | null) {
+    this.db
+      .prepare('UPDATE episodes SET summary = ?, updated_at = ? WHERE id = ?')
+      .run(summary, now(), episodeId);
+  }
+
   passageCount(episodeId: string): number {
     return (
       this.db

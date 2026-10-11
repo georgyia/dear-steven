@@ -41,6 +41,15 @@ export const PRICES = {
   diarizePerAudioHour: 0.36,
 } as const;
 
+/**
+ * What one answer may use (P6-07): the context grows with neighbouring passages and episode
+ * summaries, and the eval fails a run whose average answer goes over either limit.
+ */
+export const ANSWER_BUDGET = {
+  inputTokens: 30_000,
+  usd: 0.006,
+} as const;
+
 /** Token counts as the Responses API reports them (cached input is part of input). */
 export interface TokenUsage {
   inputTokens: number;

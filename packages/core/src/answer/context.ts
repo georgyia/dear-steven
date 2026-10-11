@@ -13,6 +13,15 @@ export interface SourcePassage {
   verifiedGuests: string[];
   hasVerifiedHost: boolean;
   hasVerifiedGuest: boolean;
+  /** What was said just before and after, trimmed (P6-07): context, never citable or quotable. */
+  before: string | null;
+  after: string | null;
+}
+
+/** A machine-written overview of one conversation the sources come from (P6-07). */
+export interface EpisodeOverview {
+  title: string;
+  summary: string;
 }
 
 export interface AnswerContext {
@@ -22,9 +31,34 @@ export interface AnswerContext {
   retrievedGuests: string[];
   /** Every guest in the knowledge base, for the fabricated-guest guard. */
   knownGuests: string[];
+  /** Overviews of the conversations the sources come from, where one has been generated. */
+  episodes: EpisodeOverview[];
 }
 
-export function buildContext(store: KnowledgeStore, passages: RetrievedPassage[]): AnswerContext {
+/** How much surrounding conversation the model sees (P6-07); counted in the answer budget. */
+export const CONTEXT_BUDGET = {
+  /** Only the strongest sources get their neighbours. */
+  neighbourSources: 6,
+  /** Words kept on each side. */
+  neighbourWords: 90,
+} as const;
+
+const lastWords = (text: string | null, n: number) => {
+  if (!text) return null;
+  const words = text.trim().split(/\s+/);
+  return words.length > n ? `…${words.slice(-n).join(' ')}` : text.trim();
+};
+const firstWords = (text: string | null, n: number) => {
+  if (!text) return null;
+  const words = text.trim().split(/\s+/);
+  return words.length > n ? `${words.slice(0, n).join(' ')}…` : text.trim();
+};
+
+export function buildContext(
+  store: KnowledgeStore,
+  passages: RetrievedPassage[],
+  budget: { neighbourSources: number; neighbourWords: number } = CONTEXT_BUDGET,
+): AnswerContext {
   const sources = passages.map((passage, i): SourcePassage => {
     const segments = store.getSegments(
       passage.episodeId,
@@ -32,8 +66,14 @@ export function buildContext(store: KnowledgeStore, passages: RetrievedPassage[]
       passage.segmentEndIdx,
     );
     const verified = segments.filter(isVerified);
+    const around =
+      i < budget.neighbourSources
+        ? store.neighbourPassages(passage.episodeId, passage.idx)
+        : { before: null, after: null };
     return {
       shortId: `p${i + 1}`,
+      before: lastWords(around.before, budget.neighbourWords),
+      after: firstWords(around.after, budget.neighbourWords),
       passage,
       segments,
       verifiedGuests: [
@@ -52,6 +92,9 @@ export function buildContext(store: KnowledgeStore, passages: RetrievedPassage[]
     byShortId: new Map(sources.map((s) => [s.shortId, s])),
     retrievedGuests: [...new Set(passages.flatMap((p) => p.episode.guestNames))],
     knownGuests: store.knownGuestNames(),
+    episodes: [...new Map(passages.map((p) => [p.episodeId, p.episode])).values()].flatMap((e) =>
+      e.summary ? [{ title: e.title, summary: e.summary }] : [],
+    ),
   };
 }
 
@@ -86,14 +129,24 @@ function renderSource(s: SourcePassage): string {
     body = neutralise(p.text);
   }
 
+  const before = s.before ? `<before>${neutralise(s.before)}</before>\n` : '';
+  const after = s.after ? `\n<after>${neutralise(s.after)}</after>` : '';
   return `<source id="${s.shortId}" episode="${attr(p.episode.title)}" guests="${attr(p.episode.guestNames.join(', ') || 'not named')}" date="${p.episode.publishedAt.slice(0, 10)}" at="${formatTimestamp(p.startMs)}" speakers="${speakers}">
-${body}
+${before}${body}${after}
 </source>`;
+}
+
+function renderOverviews(ctx: AnswerContext): string {
+  if (ctx.episodes.length === 0) return '';
+  const items = ctx.episodes.map(
+    (e) => `<episode title="${attr(e.title)}" generated="true">${neutralise(e.summary)}</episode>`,
+  );
+  return `<episodes>\n${items.join('\n')}\n</episodes>\n\n`;
 }
 
 export function renderSources(ctx: AnswerContext): string {
   if (ctx.sources.length === 0) {
     return '<sources>\n(no passages matched this question)\n</sources>';
   }
-  return `<sources>\n${ctx.sources.map(renderSource).join('\n\n')}\n</sources>`;
+  return `${renderOverviews(ctx)}<sources>\n${ctx.sources.map(renderSource).join('\n\n')}\n</sources>`;
 }

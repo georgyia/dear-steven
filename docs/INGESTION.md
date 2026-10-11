@@ -43,6 +43,7 @@ transcripts (1,621 passages) takes about 10 seconds; embedding them costs about 
 | `attribute` | QA report for diarized episodes: host share, guest count, flags (enrolment failure, multi-guest panels). | — |
 | `chunk [--force] [--episode <ref>]` | Speaker-turn-aware passages of ~350–500 tokens with a short overlap, plus a deterministic context prefix (`title · guests · date`). Keyword search works from here. | — |
 | `index [--dry-run] [--budget <usd>]` | Embed passages lacking a current embedding (`text-embedding-3-small`, 1,536 dims) in batches of 128. `--dry-run` prints tokens and cost; with `--budget`, nothing is embedded if the estimate is over it. | key |
+| `summarise --dry-run \| --budget <usd> [--limit N] [--episode <ref>] [--force]` | Paid (P6-07): a 3–5 sentence, machine-written overview of each indexed conversation, stored in `episodes.summary` and shown to the answer model as `generated="true"` — never cited, quoted or shown as anyone's words. Stops before the budget would be passed. 114 episodes cost $0.28 on 2026-10-11. | key |
 | `status [--episodes]` | Counts per stage, recent failures, recorded spend, the next command. | — |
 | `doctor [--online]` | Checks Node, keys, ffmpeg, SQLite + sqlite-vec, the feed. | — |
 | `align <episode> [--video <id>] [--offset <s>] [--exact \| --unknown]` | Hand-correct a video link or its timing. | — |
