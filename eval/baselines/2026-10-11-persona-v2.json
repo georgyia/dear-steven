@@ -1,0 +1,794 @@
+{
+  "$comment": "P6-06: persona-v1.1 (before) vs persona-v2 (after), same knowledge base (114 episodes, hybrid), gpt-6-luna, judged by eval/lib/judge.ts. Metrics only, no answer text.",
+  "date": "2026-10-11",
+  "before": {
+    "persona": "persona-v1.1",
+    "questions": "q01–q20, a01–a08",
+    "personaRubric": {
+      "judged": 28,
+      "adviceSeeking": 16,
+      "opensWithPosition": 0,
+      "opensWithPositionRate": 0,
+      "decisiveness": 3.61,
+      "actionability": 3.54,
+      "hedgesPerAnswer": 3.64
+    },
+    "modes": {
+      "partial": 24,
+      "grounded": 4
+    },
+    "answers": [
+      {
+        "id": "q01",
+        "mode": "partial",
+        "citations": 5,
+        "firstBlockMs": 4488,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": false,
+          "decisiveness": 3,
+          "actionability": 5,
+          "hedges": 3
+        }
+      },
+      {
+        "id": "q02",
+        "mode": "partial",
+        "citations": 3,
+        "firstBlockMs": 4090,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 4,
+          "hedges": 2
+        }
+      },
+      {
+        "id": "q03",
+        "mode": "partial",
+        "citations": 3,
+        "firstBlockMs": 3234,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 4,
+          "hedges": 4
+        }
+      },
+      {
+        "id": "q04",
+        "mode": "grounded",
+        "citations": 3,
+        "firstBlockMs": 4380,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 3,
+          "hedges": 3
+        }
+      },
+      {
+        "id": "q05",
+        "mode": "partial",
+        "citations": 4,
+        "firstBlockMs": 3698,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 5,
+          "hedges": 5
+        }
+      },
+      {
+        "id": "q06",
+        "mode": "partial",
+        "citations": 3,
+        "firstBlockMs": 4380,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 3,
+          "hedges": 5
+        }
+      },
+      {
+        "id": "q07",
+        "mode": "partial",
+        "citations": 4,
+        "firstBlockMs": 3175,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 4,
+          "hedges": 5
+        }
+      },
+      {
+        "id": "q08",
+        "mode": "partial",
+        "citations": 3,
+        "firstBlockMs": 2678,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 2,
+          "hedges": 4
+        }
+      },
+      {
+        "id": "q09",
+        "mode": "partial",
+        "citations": 1,
+        "firstBlockMs": 3319,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 3,
+          "actionability": 3,
+          "hedges": 4
+        }
+      },
+      {
+        "id": "q10",
+        "mode": "grounded",
+        "citations": 4,
+        "firstBlockMs": 3474,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": false,
+          "decisiveness": 3,
+          "actionability": 4,
+          "hedges": 7
+        }
+      },
+      {
+        "id": "q11",
+        "mode": "partial",
+        "citations": 5,
+        "firstBlockMs": 4028,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": false,
+          "decisiveness": 2,
+          "actionability": 1,
+          "hedges": 4
+        }
+      },
+      {
+        "id": "q12",
+        "mode": "partial",
+        "citations": 3,
+        "firstBlockMs": 3841,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 4,
+          "hedges": 5
+        }
+      },
+      {
+        "id": "q13",
+        "mode": "partial",
+        "citations": 4,
+        "firstBlockMs": 10704,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 3,
+          "actionability": 3,
+          "hedges": 3
+        }
+      },
+      {
+        "id": "q14",
+        "mode": "partial",
+        "citations": 3,
+        "firstBlockMs": 3461,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": false,
+          "decisiveness": 3,
+          "actionability": 3,
+          "hedges": 4
+        }
+      },
+      {
+        "id": "q15",
+        "mode": "partial",
+        "citations": 3,
+        "firstBlockMs": 3434,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": false,
+          "decisiveness": 3,
+          "actionability": 1,
+          "hedges": 5
+        }
+      },
+      {
+        "id": "q16",
+        "mode": "partial",
+        "citations": 4,
+        "firstBlockMs": 3267,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 3,
+          "hedges": 1
+        }
+      },
+      {
+        "id": "q17",
+        "mode": "partial",
+        "citations": 2,
+        "firstBlockMs": 2870,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 3,
+          "hedges": 5
+        }
+      },
+      {
+        "id": "q18",
+        "mode": "partial",
+        "citations": 2,
+        "firstBlockMs": 3992,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 3,
+          "actionability": 3,
+          "hedges": 8
+        }
+      },
+      {
+        "id": "q19",
+        "mode": "partial",
+        "citations": 4,
+        "firstBlockMs": 3802,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": false,
+          "decisiveness": 3,
+          "actionability": 3,
+          "hedges": 5
+        }
+      },
+      {
+        "id": "q20",
+        "mode": "grounded",
+        "citations": 2,
+        "firstBlockMs": 3647,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 2,
+          "hedges": 1
+        }
+      },
+      {
+        "id": "a01",
+        "mode": "partial",
+        "citations": 3,
+        "firstBlockMs": 2971,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 4,
+          "hedges": 2
+        }
+      },
+      {
+        "id": "a02",
+        "mode": "partial",
+        "citations": 2,
+        "firstBlockMs": 3194,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 5,
+          "hedges": 1
+        }
+      },
+      {
+        "id": "a03",
+        "mode": "grounded",
+        "citations": 3,
+        "firstBlockMs": 3282,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 5,
+          "hedges": 2
+        }
+      },
+      {
+        "id": "a04",
+        "mode": "partial",
+        "citations": 2,
+        "firstBlockMs": 7940,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 3,
+          "actionability": 5,
+          "hedges": 2
+        }
+      },
+      {
+        "id": "a05",
+        "mode": "partial",
+        "citations": 2,
+        "firstBlockMs": 3284,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 5,
+          "hedges": 5
+        }
+      },
+      {
+        "id": "a06",
+        "mode": "partial",
+        "citations": 2,
+        "firstBlockMs": 4245,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 4,
+          "hedges": 2
+        }
+      },
+      {
+        "id": "a07",
+        "mode": "partial",
+        "citations": 2,
+        "firstBlockMs": 3640,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 4,
+          "hedges": 2
+        }
+      },
+      {
+        "id": "a08",
+        "mode": "partial",
+        "citations": 2,
+        "firstBlockMs": 3514,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 4,
+          "hedges": 3
+        }
+      }
+    ]
+  },
+  "after": {
+    "persona": "persona-v2",
+    "questions": "full set + red team",
+    "redTeamLive": "22/22",
+    "falseRefusalsWithModeration": "0/31",
+    "personaRubric": {
+      "judged": 28,
+      "adviceSeeking": 18,
+      "opensWithPosition": 18,
+      "opensWithPositionRate": 1,
+      "decisiveness": 4.29,
+      "actionability": 3.68,
+      "hedgesPerAnswer": 2.79
+    },
+    "modes": {
+      "grounded": 18,
+      "partial": 11,
+      "insufficient": 2
+    },
+    "answers": [
+      {
+        "id": "q01",
+        "mode": "grounded",
+        "citations": 3,
+        "firstBlockMs": 3467,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 4,
+          "hedges": 4
+        }
+      },
+      {
+        "id": "q02",
+        "mode": "grounded",
+        "citations": 4,
+        "firstBlockMs": 2830,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": true,
+          "decisiveness": 5,
+          "actionability": 5,
+          "hedges": 1
+        }
+      },
+      {
+        "id": "q03",
+        "mode": "grounded",
+        "citations": 3,
+        "firstBlockMs": 3167,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 4,
+          "hedges": 2
+        }
+      },
+      {
+        "id": "q04",
+        "mode": "grounded",
+        "citations": 3,
+        "firstBlockMs": 4097,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 4,
+          "hedges": 3
+        }
+      },
+      {
+        "id": "q05",
+        "mode": "grounded",
+        "citations": 3,
+        "firstBlockMs": 1676,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 5,
+          "actionability": 4,
+          "hedges": 3
+        }
+      },
+      {
+        "id": "q06",
+        "mode": "partial",
+        "citations": 5,
+        "firstBlockMs": 3972,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 2,
+          "hedges": 4
+        }
+      },
+      {
+        "id": "q07",
+        "mode": "grounded",
+        "citations": 5,
+        "firstBlockMs": 9203,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 5,
+          "hedges": 3
+        }
+      },
+      {
+        "id": "q08",
+        "mode": "grounded",
+        "citations": 3,
+        "firstBlockMs": 3962,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 2,
+          "hedges": 0
+        }
+      },
+      {
+        "id": "q09",
+        "mode": "grounded",
+        "citations": 2,
+        "firstBlockMs": 2837,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 5,
+          "actionability": 3,
+          "hedges": 5
+        }
+      },
+      {
+        "id": "q10",
+        "mode": "grounded",
+        "citations": 5,
+        "firstBlockMs": 1887,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 5,
+          "hedges": 5
+        }
+      },
+      {
+        "id": "q11",
+        "mode": "partial",
+        "citations": 5,
+        "firstBlockMs": 3717,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 1,
+          "hedges": 5
+        }
+      },
+      {
+        "id": "q12",
+        "mode": "grounded",
+        "citations": 3,
+        "firstBlockMs": 3245,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 4,
+          "hedges": 3
+        }
+      },
+      {
+        "id": "q13",
+        "mode": "grounded",
+        "citations": 4,
+        "firstBlockMs": 4148,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 3,
+          "hedges": 3
+        }
+      },
+      {
+        "id": "q14",
+        "mode": "partial",
+        "citations": 5,
+        "firstBlockMs": 3440,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 4,
+          "hedges": 4
+        }
+      },
+      {
+        "id": "q15",
+        "mode": "partial",
+        "citations": 3,
+        "firstBlockMs": 4014,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 1,
+          "hedges": 3
+        }
+      },
+      {
+        "id": "q16",
+        "mode": "grounded",
+        "citations": 4,
+        "firstBlockMs": 2557,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 2,
+          "hedges": 4
+        }
+      },
+      {
+        "id": "q17",
+        "mode": "partial",
+        "citations": 2,
+        "firstBlockMs": 2867,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": false,
+          "decisiveness": 4,
+          "actionability": 2,
+          "hedges": 2
+        }
+      },
+      {
+        "id": "q18",
+        "mode": "partial",
+        "citations": 4,
+        "firstBlockMs": 3169,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 3,
+          "hedges": 5
+        }
+      },
+      {
+        "id": "q19",
+        "mode": "partial",
+        "citations": 5,
+        "firstBlockMs": 3474,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 3,
+          "hedges": 7
+        }
+      },
+      {
+        "id": "q20",
+        "mode": "grounded",
+        "citations": 1,
+        "firstBlockMs": 3154,
+        "judgement": {
+          "adviceSeeking": false,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 2,
+          "hedges": 0
+        }
+      },
+      {
+        "id": "u01",
+        "mode": "insufficient",
+        "citations": 0,
+        "firstBlockMs": 1782,
+        "judgement": null
+      },
+      {
+        "id": "u02",
+        "mode": "insufficient",
+        "citations": 0,
+        "firstBlockMs": 1909,
+        "judgement": null
+      },
+      {
+        "id": "u03",
+        "mode": "partial",
+        "citations": 1,
+        "firstBlockMs": 3506,
+        "judgement": null
+      },
+      {
+        "id": "a01",
+        "mode": "grounded",
+        "citations": 5,
+        "firstBlockMs": 4145,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 5,
+          "actionability": 5,
+          "hedges": 0
+        }
+      },
+      {
+        "id": "a02",
+        "mode": "partial",
+        "citations": 3,
+        "firstBlockMs": 3997,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 5,
+          "hedges": 2
+        }
+      },
+      {
+        "id": "a03",
+        "mode": "grounded",
+        "citations": 3,
+        "firstBlockMs": 2882,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 5,
+          "actionability": 5,
+          "hedges": 3
+        }
+      },
+      {
+        "id": "a04",
+        "mode": "grounded",
+        "citations": 2,
+        "firstBlockMs": 8698,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 5,
+          "actionability": 5,
+          "hedges": 2
+        }
+      },
+      {
+        "id": "a05",
+        "mode": "grounded",
+        "citations": 3,
+        "firstBlockMs": 3705,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 5,
+          "actionability": 5,
+          "hedges": 1
+        }
+      },
+      {
+        "id": "a06",
+        "mode": "partial",
+        "citations": 2,
+        "firstBlockMs": 3721,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 5,
+          "hedges": 2
+        }
+      },
+      {
+        "id": "a07",
+        "mode": "partial",
+        "citations": 2,
+        "firstBlockMs": 2625,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 4,
+          "actionability": 5,
+          "hedges": 1
+        }
+      },
+      {
+        "id": "a08",
+        "mode": "grounded",
+        "citations": 3,
+        "firstBlockMs": 4597,
+        "judgement": {
+          "adviceSeeking": true,
+          "opensWithPosition": true,
+          "decisiveness": 5,
+          "actionability": 5,
+          "hedges": 1
+        }
+      }
+    ]
+  }
+}

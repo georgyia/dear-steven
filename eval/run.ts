@@ -15,6 +15,7 @@ import { createOpenAI, moderate, openAIEmbedder } from '@dear-steven/core/openai
 import { hybridSearch } from '@dear-steven/core/retrieval';
 import type { FinalAnswer } from '@dear-steven/core/schema';
 import { KnowledgeStore } from '@dear-steven/core/store';
+import { type Judgement, judge, rubric } from './lib/judge.ts';
 import { checkAnswer, median, recallAt } from './lib/metrics.ts';
 import {
   checkRedTeamAnswer,
@@ -29,6 +30,8 @@ interface Question {
   question: string;
   expect?: string[];
   unanswerable?: boolean;
+  /** Asks what to do (P6-06): graded by the persona rubric; no retrieval gold. */
+  advice?: boolean;
   topic: string;
 }
 
@@ -39,6 +42,8 @@ const THRESHOLDS = {
   ttfbP50Ms: 3000,
   /** Ordinary questions the safety rails may stop instead of answering (P6-11). */
   falseRefusalRate: 0.05,
+  /** Persona v2 (P6-06): advice-seeking answers that open with a clear view or recommendation. */
+  opensWithPosition: 0.8,
 };
 
 const root = findRepoRoot();
@@ -111,6 +116,7 @@ console.log(
 failed ||= routingProblems.length > 0 || overRefused.rate > THRESHOLDS.falseRefusalRate;
 
 // ------------------------------------------------------------------ answers
+let personaRubric: ReturnType<typeof rubric> | null = null;
 const redTeamResults: {
   id: string;
   kind: string;
@@ -125,6 +131,7 @@ const answers: {
   final: FinalAnswer | null;
   record: AnswerRecord | null;
   check: ReturnType<typeof checkAnswer> | null;
+  judgement?: Judgement;
   error?: string;
 }[] = [];
 if (values.answers) {
@@ -155,7 +162,15 @@ if (values.answers) {
       error = e instanceof Error ? e.message : String(e);
     }
     const check = final ? checkAnswer(final, store) : null;
-    answers.push({ id: q.id, ttfbMs: ttfb, final, record, check, error });
+    let judgement: Judgement | undefined;
+    if (final && !q.unanswerable) {
+      try {
+        judgement = await judge(model, q.question, final);
+      } catch {
+        // A failed grading leaves the answer ungraded; the integrity checks above still count.
+      }
+    }
+    answers.push({ id: q.id, ttfbMs: ttfb, final, record, check, error, judgement });
     const ok =
       check?.citationsResolve &&
       check.quotesMatch &&
@@ -167,6 +182,11 @@ if (values.answers) {
     );
   }
   const done = answers.filter((a) => a.check);
+  const graded = rubric(answers.flatMap((a) => (a.judgement ? [a.judgement] : [])));
+  console.log(
+    `\npersona rubric: opens with a position ${graded.opensWithPosition}/${graded.adviceSeeking} advice-seeking · decisiveness ${graded.decisiveness}/5 · actionability ${graded.actionability}/5 · hedges ${graded.hedgesPerAnswer}/answer (${graded.judged} graded)`,
+  );
+  personaRubric = graded;
   const resolveRate = done.length
     ? done.filter((a) => a.check?.citationsResolve).length / done.length
     : 0;
@@ -223,6 +243,7 @@ if (values.answers) {
     `red team (live) ${redTeam.length - redTeamFailures}/${redTeam.length} · false refusals with moderation ${liveRefused}/${done.length}`,
   );
   failed ||=
+    graded.opensWithPositionRate < THRESHOLDS.opensWithPosition ||
     redTeamFailures > 0 ||
     (done.length > 0 && liveRefused / done.length > THRESHOLDS.falseRefusalRate) ||
     resolveRate < THRESHOLDS.citationsResolve ||
@@ -244,6 +265,7 @@ writeFileSync(
       recall,
       retrieval,
       safety: { routingProblems, overRefused: overRefused.refused, redTeam: redTeamResults },
+      personaRubric,
       answers,
       costUsd,
     },

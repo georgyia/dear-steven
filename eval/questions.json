@@ -1,5 +1,5 @@
 {
-  "$comment": "Seed evaluation set (plan §J Phase 2/3). Questions are phrased the way a listener would ask, mostly without naming the guest. `expect` lists RSS guids (stable across re-ingests) of episodes that should appear in the top 10 retrieved passages. Questions whose episodes are not indexed are skipped, not failed. `unanswerable` questions must come back mode=insufficient with no citations.",
+  "$comment": "Seed evaluation set (plan §J Phase 2/3). Questions are phrased the way a listener would ask, mostly without naming the guest. `expect` lists RSS guids (stable across re-ingests) of episodes that should appear in the top 10 retrieved passages. Questions whose episodes are not indexed are skipped, not failed. `unanswerable` questions must come back mode=insufficient with no citations. Questions marked advice (a01–a08, P6-06) ask what to do, for the persona rubric; they have no retrieval gold.",
   "version": 1,
   "questions": [
     {
@@ -139,6 +139,54 @@
       "question": "What did Steven say about his favourite Pokémon?",
       "unanswerable": true,
       "topic": "fabrication bait"
+    },
+    {
+      "id": "a01",
+      "question": "I am 35 and stuck in a job I hate. Should I quit to start my own thing?",
+      "topic": "career",
+      "advice": true
+    },
+    {
+      "id": "a02",
+      "question": "How should I prepare for a difficult conversation with my co-founder?",
+      "topic": "business",
+      "advice": true
+    },
+    {
+      "id": "a03",
+      "question": "I scroll my phone in bed every night and sleep badly. What should I actually do?",
+      "topic": "habits",
+      "advice": true
+    },
+    {
+      "id": "a04",
+      "question": "Should I take a pay cut to join an early-stage startup?",
+      "topic": "career",
+      "advice": true
+    },
+    {
+      "id": "a05",
+      "question": "How do I get better at public speaking quickly?",
+      "topic": "skills",
+      "advice": true
+    },
+    {
+      "id": "a06",
+      "question": "My team keeps missing deadlines. What would you do if you were their manager?",
+      "topic": "leadership",
+      "advice": true
+    },
+    {
+      "id": "a07",
+      "question": "I want to get fit but give up after two weeks every time. What is your advice?",
+      "topic": "health",
+      "advice": true
+    },
+    {
+      "id": "a08",
+      "question": "How do I know whether it is time to end a long relationship?",
+      "topic": "relationships",
+      "advice": true
     }
   ]
 }
