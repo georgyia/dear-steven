@@ -11,7 +11,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 - **Phase:** 0–4 built in the first implementation pass; Phase 5 open (the rest waits on humans);
   Phase 6 / M4 *Reach and trust* planned (`plan/04-issues/phase-6.md`).
 - **Done:** M0 (except GitHub publishing and third-party skills), M1 in code, M2; from M3: P5-03, P5-04, P5-05, P5-07, P5-11, P5-12.
-- **Next to pick (M4, since Phase 5 has nothing pickable):** P6-01, P6-11; P6-03 is unblocked.
+- **Next to pick (M4, since Phase 5 has nothing pickable):** P6-06 (on P6-11), P6-01; P6-03 is unblocked.
   P6-08 (P0) is built and waits for human review. Phase 5's P5-01/02/06/09 wait on the first live
   eval (H-07), P5-08 on H-09, P5-10 on H-08 and now P6-08 + P6-12.
 - **Critical path:** H-07 (read five live answers) → P5-01 (first block p50 is 3.7 s against a 3 s target) and P6-06 (18 of 20 live answers are hedged `partial`).
@@ -34,6 +34,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | First CI run on GitHub (2026-10-10) | `check`, `e2e`, `docker` green; `gitleaks` errored on the first push only (its scan range starts at the root commit's missing parent) and reported no leaks |
 | Live keys (H-03) | OpenAI and YouTube keys valid; all five configured models available. The web app ignored the root `.env` and stayed in demo mode until `next.config.ts` loaded it |
 | Security scans (P6-10) | `pnpm audit --prod`: no known vulnerabilities; weekly full-history gitleaks, audit and (once public) CodeQL in `security.yml`; Dependabot updates + alerts on |
+| Safety rails (P6-11), live 2026-10-11 | red team 22/22 routed by the phrase rules alone; live through the real model and moderation: 20/22, the two misses were correct refusals the checker misread (fixed: negation-aware); no ordinary question stopped (0/23 with moderation); unanswerable 2/3 on a rerun — u01 (sourdough) now finds a fermentation passage and answers `partial` (P5-01) |
 | Spend cap and access gate (P6-08) | past the cap `/api/ask` gives the resting reply with no network call (route test); every API route on disk answers 401 without the cookie (proxy test); passcode screen, wrong code, rate limit and axe audit against a gated server (e2e) |
 | YouTube matching (P6-15, real feed) | 536 of 739 full episodes linked: 535 of 548 full conversations since the channel's first upload (the rest are podcast-only compilations); 218 `exact` from shared chapters (58 with a mid-episode step), predicting 99.3% of 6,735 shared chapters within 2 s; 318 `estimated` (≈ two in three within 10 s, held-out); human spot check H-10 |
 | Strict CSP (P6-09) | every e2e test fails on a CSP violation: none; injected inline script, event handler and foreign `<script src>` refused; `next dev` answers with no console errors |
@@ -53,6 +54,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | H-08 | Hosting account and secrets | P5-10 | `human/deploy.md` | 2026-10-10 |
 | H-09 | Wake-word model + ~20 min of recorded audio | P5-08 | `human/wake-word-spike.md` | 2026-10-10 |
 | H-10 | Spot-check 20 YouTube links and 20 estimated timestamps | P6-15 acceptance | `human/youtube-spot-check.md` | 2026-10-10 |
+| H-11 | Review the crisis copy, helplines and red-team set | P6-11 merge, P6-06 | `human/safety-review.md` | 2026-10-11 |
 
 ## Decisions waiting (`needs:decision`)
 
@@ -143,7 +145,7 @@ answers `track:answers` (P6-06–07), security `track:security` (P6-08–11), po
 | P6-08 | #8 | feat(security): protect a public deployment — access gate and a daily spend cap | P0 | high | in review (needs human review) | — | human review |
 | P6-09 | #9 | feat(security): strict Content-Security-Policy with per-request nonces, and HSTS | P1 | medium | done | — | — |
 | P6-10 | #10 | ci(security): dependency and code scanning, and a full-history secret scan | P1 | medium | done (post-merge checks open) | — | — |
-| P6-11 | #11 | feat(security): safety rails for high-stakes questions | P1 | high | open | — | human review |
+| P6-11 | #11 | feat(security): safety rails for high-stakes questions | P1 | high | in review (needs human review, H-11) | — | human review, H-11 |
 | P6-12 | #12 | docs: terms of use, disclaimer and no liability — in the repo and in the app | P1 | medium | in review (wording and takedown contact need the owner) | — | human |
 | P6-13 | #13 | chore(repo): a non-commercial licence | P1 | medium | done (owner chose PolyForm Noncommercial 1.0.0) | — | — |
 | P6-14 | #14 | feat(web): send people to the originals — YouTube on every episode, card and answer | P1 | low | done | P6-15 | — |

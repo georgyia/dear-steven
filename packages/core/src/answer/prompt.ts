@@ -29,16 +29,22 @@ export function historyMessages(history: HistoryTurn[], turns = 6): ModelMessage
   ]);
 }
 
+/**
+ * The question with its sources. `guidance` is per-question care (P6-11: high stakes, sensitive
+ * topics); it travels here rather than in the instructions, so the cached prefix never changes.
+ */
 export function answerInput(
   question: string,
   history: HistoryTurn[],
   ctx: AnswerContext,
+  guidance: string | null = null,
 ): ModelMessage[] {
+  const care = guidance ? `\n\n<care>\n${guidance}\n</care>` : '';
   return [
     ...historyMessages(history),
     {
       role: 'user',
-      content: `${renderSources(ctx)}\n\n<question>\n${question}\n</question>\n\nAnswer the question as Dear Steven, following every rule in your instructions. Return only the JSON answer object.`,
+      content: `${renderSources(ctx)}\n\n<question>\n${question}\n</question>${care}\n\nAnswer the question as Dear Steven, following every rule in your instructions. Return only the JSON answer object.`,
     },
   ];
 }

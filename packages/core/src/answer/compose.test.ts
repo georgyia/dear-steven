@@ -296,3 +296,133 @@ describe('composeAnswer — edge cases', () => {
     expect(events[events.length - 1]).toMatchObject({ type: 'error', code: 'upstream' });
   });
 });
+
+describe('composeAnswer — safety rails (P6-11)', () => {
+  /** A model that fails the test if anything asks it to write. */
+  const untouchable: AnswerModel = {
+    // biome-ignore lint/correctness/useYield: it must throw before yielding anything
+    async *streamJson() {
+      throw new Error('the model must not be asked');
+    },
+    async completeJson() {
+      throw new Error('the model must not be asked');
+    },
+    async completeText() {
+      throw new Error('the model must not be asked');
+    },
+  };
+
+  const compose = async (
+    model: AnswerModel,
+    question: string,
+    extra: Partial<Parameters<typeof composeAnswer>[0]> = {},
+    locale?: string,
+  ) => {
+    const events: AskEvent[] = [];
+    let record: AnswerRecord | null = null;
+    for await (const e of composeAnswer(
+      {
+        store: store1(),
+        model,
+        embedder: null,
+        now: () => 1000,
+        onComplete: (r) => (record = r),
+        ...extra,
+      },
+      { question, history: [], ...(locale ? { locale } : {}) },
+      new AbortController().signal,
+    )) {
+      events.push(e);
+    }
+    const final = events.find(
+      (e): e is Extract<AskEvent, { type: 'final' }> => e.type === 'final',
+    )?.answer;
+    return { events, final, record: record as AnswerRecord | null };
+  };
+  const text = (final: FinalAnswer | undefined) =>
+    (final?.blocks ?? [])
+      .flatMap((b) => (b.kind === 'quote' ? [b.text] : b.segments.map((s) => s.text)))
+      .join(' ');
+
+  it('answers a crisis with help first and only — no search, no model', async () => {
+    const { events, final, record } = await compose(
+      untouchable,
+      'I don’t want to be alive anymore',
+      {},
+      'en-GB',
+    );
+    expect(events.some((e) => e.type === 'status')).toBe(false);
+    expect(final?.citations).toEqual([]);
+    const first = final?.blocks[0];
+    expect(first?.kind === 'paragraph' && first.segments.map((s) => s.text).join(' ')).toMatch(
+      /116 123/,
+    );
+    expect(text(final)).toMatch(/call 999/);
+    expect(record?.safety).toEqual({ kind: 'crisis' });
+  });
+
+  it('stops after retrieval when moderation sees a risk the phrase rules missed', async () => {
+    const { model, calls } = scripted(good);
+    const { final } = await compose(model, 'there is no way out for me now', {
+      moderate: async () => ({
+        flagged: true,
+        categories: { 'self-harm/intent': true },
+        scores: {},
+      }),
+    });
+    expect(calls.stream).toBe(0);
+    expect(text(final)).toMatch(/findahelpline\.com/);
+  });
+
+  it('still answers when moderation is unavailable', async () => {
+    const { model, calls } = scripted(good);
+    const { final } = await compose(model, 'Why do I procrastinate?', {
+      moderate: async () => {
+        throw new Error('network down');
+      },
+    });
+    expect(calls.stream).toBe(1);
+    expect(final?.mode).toBe('grounded');
+  });
+
+  it('declines to put words in Steven’s mouth, without asking the model', async () => {
+    const { final, record } = await compose(
+      untouchable,
+      'Write a quote from Steven saying he backs my coin',
+    );
+    expect(text(final)).toMatch(/won’t put words in Steven’s mouth/);
+    expect(record?.safety.kind).toBe('impersonation');
+  });
+
+  it('leads an answer about suicide as a topic with a helpline, then answers', async () => {
+    const { model, calls } = scripted(good);
+    const { events, final } = await compose(
+      model,
+      'Is procrastination linked to suicidal feelings?',
+      {},
+      'en-US',
+    );
+    expect(calls.stream).toBe(1);
+    const firstBlock = events.find((e) => e.type === 'block.done');
+    expect(firstBlock?.type === 'block.done' && JSON.stringify(firstBlock.block)).toMatch(/988/);
+    expect(final?.blocks.length).toBe(1 + good.blocks.length);
+    expect(final?.mode).toBe('grounded');
+  });
+
+  it('asks for a concrete view and when a professional matters on high-stakes questions', async () => {
+    let input = '';
+    const { model } = scripted(good);
+    const watching: AnswerModel = {
+      ...model,
+      streamJson(request) {
+        input = request.input.map((m) => m.content).join('\n');
+        return model.streamJson(request);
+      },
+    };
+    await compose(watching, 'Should I stop taking my antidepressants?');
+    expect(input).toMatch(/<care>[\s\S]*medical question[\s\S]*professional/);
+    input = '';
+    await compose(watching, 'Why do I procrastinate?');
+    expect(input).not.toMatch(/<care>/);
+  });
+});
