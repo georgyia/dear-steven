@@ -5,6 +5,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { useId, useState } from 'react';
 import FuseButton, { type FusePhase } from '@/components/vendor/react-bits/FuseButton';
 import SquishSwitch from '@/components/vendor/react-bits/SquishSwitch';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface MemoryControlProps {
   remember: boolean;
@@ -30,19 +31,20 @@ export function MemoryControl({
   const control = useId();
   const note = useId();
   const [phase, setPhase] = useState<FusePhase>('idle');
+  const { memory } = useI18n().t;
 
   const text = !supported
-    ? 'This browser isn’t letting me store anything, so this conversation can’t be remembered.'
+    ? memory.unsupported
     : saveFailed
-      ? 'I couldn’t save to this browser’s storage just now. Nothing new is kept.'
+      ? memory.saveFailed
       : remember
-        ? 'Kept in this browser’s own storage, on this device only, until you forget it. Never sent anywhere.'
+        ? memory.on
         : phase === 'armed'
-          ? 'Forgotten — nothing from this conversation is stored on this device.'
-          : 'Off: nothing is kept once you close this tab.';
+          ? memory.forgotten
+          : memory.off;
 
   return (
-    <section aria-label="Conversation memory" className="border-t border-ink-3 pt-5">
+    <section aria-label={memory.label} className="border-t border-ink-3 pt-5">
       <div className="flex items-start gap-4">
         <SquishSwitch
           id={control}
@@ -61,7 +63,7 @@ export function MemoryControl({
         />
         <div className="min-w-0 flex-1 pt-0.5">
           <label htmlFor={control} className="text-[14px] text-ivory-1">
-            Remember this conversation on this device
+            {memory.remember}
           </label>
           <p
             id={note}
@@ -73,9 +75,9 @@ export function MemoryControl({
           {remember || phase === 'armed' ? (
             <div className="mt-3">
               <FuseButton
-                label="Forget"
-                undoLabel="Undo"
-                doneLabel="Forgotten"
+                label={memory.forget}
+                undoLabel={memory.undo}
+                doneLabel={memory.done}
                 icon={<HugeiconsIcon icon={Delete02Icon} size={14} strokeWidth={1.8} />}
                 size="sm"
                 radius={18}

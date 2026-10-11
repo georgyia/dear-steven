@@ -97,8 +97,22 @@ use inside the app only.
 
 ## 8. Copy
 
-In-product, in the persona's voice, short. Never framework defaults. All strings in
-`src/brand.ts` (+ thinking copy in `@dear-steven/core/copy`).
+In-product, in the persona's voice, short. Never framework defaults. Every interface string is in
+the message catalogues `src/i18n/{en,de}.ts` (German is typed against English, so a missing key
+fails `tsc`); thinking steps and fixed replies per locale are in `@dear-steven/core/copy`; names
+in `src/brand.ts`.
+
+- The interface language is English or German: the `dear-steven-locale` cookie (set by the
+  Language picker in Voice settings), else `Accept-Language`, else English. The server renders in
+  it, so `<html lang>` is right on first paint.
+- Answers follow the language of the question, not the interface: answer prose and the spoken
+  reply carry `lang` = the answer's language.
+- Original words stay as they were said and are marked `lang="en"`: quotes, transcript excerpts
+  and context, episode titles, and the policy text (English only for now). `e2e/i18n.spec.ts`
+  fails on English outside those.
+- German runs ~30% longer: check the pill, composer, chips and dialogs at 375 px.
+- Dates use the month names in `@dear-steven/core/format` (not `Intl`, whose output differs between
+  Node and browsers and breaks hydration); numbers use `toLocaleString(LOCALE_TAG[locale])`.
 
 ## 9. Anti-goals
 

@@ -1,7 +1,9 @@
 import { composeAnswer, emptyKnowledgeAnswer, restingAnswer } from '@dear-steven/core/answer';
 import { readConfig } from '@dear-steven/core/config';
+import { uiLocaleFrom } from '@dear-steven/core/copy';
 import { routeQuestion, safetyReply } from '@dear-steven/core/safety';
 import { AskRequestSchema } from '@dear-steven/core/schema';
+import { MESSAGES } from '@/i18n';
 import { streamDemoAnswer } from '@/server/demo';
 import {
   answerLogger,
@@ -20,7 +22,7 @@ export const maxDuration = 60;
 const MAX_BODY_BYTES = 64 * 1024;
 
 /**
- * POST { question, history } → text/event-stream of AskEvents (packages/core/src/schema/ask.ts).
+ * POST { question, history, uiLocale? } → text/event-stream of AskEvents (packages/core/src/schema/ask.ts).
  * Validates input, rate-limits live answers, and hands everything else to packages/core.
  */
 export async function POST(req: Request) {
@@ -34,19 +36,29 @@ export async function POST(req: Request) {
   }
   const parsed = AskRequestSchema.safeParse(json);
   if (!parsed.success) return jsonError(400, 'bad_request', 'That question could not be read.');
-  const request = { ...parsed.data, locale: parsed.data.locale ?? acceptedLocale(req) };
+  const request = {
+    ...parsed.data,
+    locale: parsed.data.locale ?? acceptedLocale(req),
+    uiLocale: parsed.data.uiLocale ?? uiLocaleFrom(req.headers.get('accept-language')),
+  };
+  const { uiLocale } = request;
+  const errors = MESSAGES[uiLocale].serverErrors;
 
   const config = readConfig();
   if (config.mode === 'demo') {
     // Even fixtures must not answer someone in crisis with a demo about procrastination (P6-11).
     const reply = safetyReply(routeQuestion(request.question, null), request.locale);
     if (reply) {
-      return sseResponse(async function* () {
-        yield* reply;
-      }, req.signal);
+      return sseResponse(
+        async function* () {
+          yield* reply;
+        },
+        req.signal,
+        uiLocale,
+      );
     }
     // Fixtures cost nothing, so demo mode is not rate limited.
-    return sseResponse((signal) => streamDemoAnswer(request.question, signal), req.signal);
+    return sseResponse((signal) => streamDemoAnswer(request, signal), req.signal, uiLocale);
   }
 
   const limit = takeToken('ask', clientKey(req));
@@ -58,13 +70,17 @@ export async function POST(req: Request) {
 
   // Past today's cap: an in-persona reply, and no OpenAI call at all (P6-08).
   if (overBudget(config)) {
-    return sseResponse(async function* () {
-      yield* restingAnswer();
-    }, req.signal);
+    return sseResponse(
+      async function* () {
+        yield* restingAnswer(uiLocale);
+      },
+      req.signal,
+      uiLocale,
+    );
   }
 
   const model = getAnswerModel(config);
-  if (!model) return jsonError(503, 'not_configured', 'No OpenAI key is configured.');
+  if (!model) return jsonError(503, 'not_configured', errors.noKey);
   let store: ReturnType<typeof getStore>;
   try {
     store = getStore(config);
@@ -73,13 +89,17 @@ export async function POST(req: Request) {
       '[ask] knowledge base unavailable',
       error instanceof Error ? error.message : error,
     );
-    return jsonError(503, 'not_configured', 'The knowledge base could not be opened.');
+    return jsonError(503, 'not_configured', errors.noKnowledgeBase);
   }
   if (!store) {
     // No database yet: the honest, in-persona empty answer (no model call is made).
-    return sseResponse(async function* () {
-      yield* emptyKnowledgeAnswer();
-    }, req.signal);
+    return sseResponse(
+      async function* () {
+        yield* emptyKnowledgeAnswer(uiLocale);
+      },
+      req.signal,
+      uiLocale,
+    );
   }
 
   const deps = {
@@ -89,7 +109,7 @@ export async function POST(req: Request) {
     moderate: getModerator(config),
     onComplete: answerLogger(config),
   };
-  return sseResponse((signal) => composeAnswer(deps, request, signal), req.signal);
+  return sseResponse((signal) => composeAnswer(deps, request, signal), req.signal, uiLocale);
 }
 
 /** The first Accept-Language tag, if it is a well-formed locale; it picks the crisis helpline. */

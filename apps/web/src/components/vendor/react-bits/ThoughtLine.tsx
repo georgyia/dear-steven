@@ -3,7 +3,8 @@
  * Component: ThoughtLine (TS + Tailwind variant), fetched 2026-10-10 from the @react-bits registry.
  * Copyright (c) 2026 David Haz. MIT + Commons Clause License Condition v1.0 — see ./LICENSE.md.
  * Used as part of this application only; these components are not redistributed on their own.
- * Local changes: none.
+ * Local changes: `formatElapsed` / `formatElapsedSpoken` props (seconds → text) so the timer and its
+ * announcement can be localised (P6-02); the defaults are the original English formatters.
  */
 'use client';
 
@@ -33,6 +34,8 @@ export interface ThoughtLineProps {
   working?: boolean;
   settleAfter?: number;
   elapsed?: number;
+  formatElapsed?: (seconds: number) => string;
+  formatElapsedSpoken?: (seconds: number) => string;
   showTimer?: boolean;
   onSettle?: (seconds: number) => void;
   className?: string;
@@ -44,12 +47,10 @@ const EASE_IN_OUT: [number, number, number, number] = [0.77, 0, 0.175, 1];
 const GLYPH_DONE = 0.55;
 const EMPTY_STEPS: string[] = [];
 
-const fmt = (ds: number) =>
-  ds < 600 ? `${(ds / 10).toFixed(1)}s` : `${Math.floor(ds / 600)}m ${((ds % 600) / 10).toFixed(1)}s`;
-const spoken = (ds: number) =>
-  ds < 600
-    ? `${(ds / 10).toFixed(1)} seconds`
-    : `${Math.floor(ds / 600)} minutes ${((ds % 600) / 10).toFixed(1)} seconds`;
+const fmt = (s: number) =>
+  s < 60 ? `${s.toFixed(1)}s` : `${Math.floor(s / 60)}m ${(s % 60).toFixed(1)}s`;
+const spoken = (s: number) =>
+  s < 60 ? `${s.toFixed(1)} seconds` : `${Math.floor(s / 60)} minutes ${(s % 60).toFixed(1)} seconds`;
 
 const STYLE = `
 @keyframes thought-line-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
@@ -76,6 +77,8 @@ const ThoughtLine: React.FC<ThoughtLineProps> = ({
   working = true,
   settleAfter = 0,
   elapsed,
+  formatElapsed = fmt,
+  formatElapsedSpoken = spoken,
   showTimer = true,
   onSettle,
   className = '',
@@ -100,8 +103,8 @@ const ThoughtLine: React.FC<ThoughtLineProps> = ({
   const doneRef = useRef<HTMLSpanElement>(null);
   const dsRef = useRef(0);
   const prevWorking = useRef(isWorking);
-  const latest = useRef<{ onSettle?: (seconds: number) => void }>({});
-  latest.current = { onSettle };
+  const latest = useRef({ onSettle, formatElapsed, formatElapsedSpoken });
+  latest.current = { onSettle, formatElapsed, formatElapsedSpoken };
   const [announce, setAnnounce] = useState(label);
 
   useEffect(() => {
@@ -151,7 +154,7 @@ const ThoughtLine: React.FC<ThoughtLineProps> = ({
 
   const paint = (ds: number) => {
     dsRef.current = ds;
-    if (timerRef.current) timerRef.current.textContent = fmt(ds);
+    if (timerRef.current) timerRef.current.textContent = latest.current.formatElapsed(ds / 10);
   };
   useLayoutEffect(() => {
     if (elapsed != null) {
@@ -197,7 +200,9 @@ const ThoughtLine: React.FC<ThoughtLineProps> = ({
       setAnnounce(label);
       return;
     }
-    setAnnounce(showTimer ? `${doneText} ${spoken(dsRef.current)}` : doneText);
+    setAnnounce(
+      showTimer ? `${doneText} ${latest.current.formatElapsedSpoken(dsRef.current / 10)}` : doneText
+    );
     latest.current.onSettle?.(dsRef.current / 10);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWorking]);
@@ -249,7 +254,7 @@ const ThoughtLine: React.FC<ThoughtLineProps> = ({
           data-done={isWorking ? undefined : ''}
           aria-hidden="true"
         >
-          0.0s
+          {formatElapsed(0)}
         </span>
       ) : null}
       {collapsible ? (

@@ -6,13 +6,13 @@ import { InformationCircleIcon, VoiceIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { LayoutGroup, MotionConfig } from 'motion/react';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { brand } from '@/brand';
 import { TurnView } from '@/components/answer/TurnView';
 import { Composer } from '@/components/composer/Composer';
 import { EvidenceDrawer, type EvidenceTarget } from '@/components/evidence/EvidenceDrawer';
 import { ToastProvider, ToastViewport, useToast } from '@/components/ui/Toasts';
 import { VoiceControl } from '@/components/voice/VoiceControl';
 import { VoiceSettings } from '@/components/voice/VoiceSettings';
+import { useI18n } from '@/i18n/I18nProvider';
 import { AskError, askStream, fetchStatus } from '@/lib/api';
 import {
   citationOrder,
@@ -80,6 +80,9 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
   const { toast, dismiss } = useToast();
+  const { t, locale } = useI18n();
+  const i18nRef = useRef({ t, locale });
+  i18nRef.current = { t, locale };
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -112,9 +115,8 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     onRestored: () =>
       toast({
         id: 'restored',
-        title: 'Picked up where you left off',
-        description:
-          'This conversation is remembered on this device. Forget it at the end of the page.',
+        title: i18nRef.current.t.stage.restoredTitle,
+        description: i18nRef.current.t.stage.restoredBody,
         duration: 6000,
       }),
   });
@@ -143,15 +145,15 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     if (dialog === null) {
       toast({
         id: 'demo',
-        title: brand.copy.demoNotice.title,
-        description: brand.copy.demoNotice.description,
-        actionLabel: brand.copy.demoNotice.action,
+        title: t.demoNotice.title,
+        description: t.demoNotice.description,
+        actionLabel: t.demoNotice.action,
         onAction: () => setDialog('setup'),
         duration: 0,
         tone: 'ember',
       });
     }
-  }, [status.mode, dialog, toast, dismiss]);
+  }, [status.mode, dialog, toast, dismiss, t]);
 
   const ask = useCallback<Ask>(async (raw, options = {}) => {
     const question = raw.trim().slice(0, LIMITS.questionChars);
@@ -177,7 +179,10 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     abortRef.current = ctrl;
     let settled = false;
     try {
-      for await (const event of askStream({ question, history }, ctrl.signal)) {
+      for await (const event of askStream(
+        { question, history, uiLocale: i18nRef.current.locale },
+        ctrl.signal,
+      )) {
         dispatch({ type: 'turn.event', id, event, at: performance.now() });
         if (event.type === 'sources' || (event.type === 'status' && event.step === 'found')) {
           send({ type: 'FOUND' });
@@ -192,7 +197,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
           // Spoken replies follow a spoken question, or any question with "always speak" on — both
           // start from a gesture that unlocked audio.
           if (spokenTurns.current.has(id) && event.answer.spoken) {
-            voiceRef.current.speak(id, event.answer.spoken);
+            voiceRef.current.speak(id, event.answer.spoken, event.answer.language);
           }
         } else if (event.type === 'error') {
           settled = true;
@@ -208,7 +213,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
             type: 'turn.failed',
             id,
             code: 'upstream',
-            message: 'The answer ended early.',
+            message: i18nRef.current.t.stage.endedEarly,
             at: performance.now(),
           });
           send({ type: 'FAILED', error: 'upstream' });
@@ -321,7 +326,11 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       onStop={stop}
       busy={busy}
       placeholder={
-        listening ? 'Listening…' : inConversation ? brand.followUpPlaceholder : brand.placeholder
+        listening
+          ? t.composer.listening
+          : inConversation
+            ? t.composer.followUp
+            : t.composer.placeholder
       }
       inputRef={inputRef}
       voice={
@@ -329,7 +338,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
           voice={voice}
           disabled={busy}
           onUnavailable={() =>
-            toast({ id: 'no-voice', title: brand.copy.errors.micUnsupported, duration: 4000 })
+            toast({ id: 'no-voice', title: t.errors.micUnsupported, duration: 4000 })
           }
         />
       }
@@ -341,11 +350,11 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     <button
       type="button"
       onClick={() => setDialog('voice')}
-      aria-label="Voice settings"
+      aria-label={t.stage.voiceSettings}
       className="inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[12.5px] whitespace-nowrap text-ivory-2 transition-colors hover:bg-ink-2 hover:text-ivory-0"
     >
       <HugeiconsIcon icon={VoiceIcon} size={15} strokeWidth={1.8} />
-      <span className="hidden sm:inline">Voice</span>
+      <span className="hidden sm:inline">{t.stage.voice}</span>
     </button>
   );
   const about = (
@@ -355,8 +364,8 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       className="inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[12.5px] whitespace-nowrap text-ivory-2 transition-colors hover:bg-ink-2 hover:text-ivory-0"
     >
       <HugeiconsIcon icon={InformationCircleIcon} size={15} strokeWidth={1.8} />
-      <span className="sm:hidden">About</span>
-      <span className="hidden sm:inline">How this works</span>
+      <span className="sm:hidden">{t.stage.about}</span>
+      <span className="hidden sm:inline">{t.stage.howItWorks}</span>
     </button>
   );
 

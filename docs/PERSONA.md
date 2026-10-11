@@ -134,8 +134,10 @@ the browser's — never an imitation of Steven Bartlett's voice.
 ## 8. Copy outside answers
 
 Empty, loading and error states speak in the same voice, briefly, and never blame the user
-("I lost the line for a second there. Try that again?"). All copy lives in `apps/web/src/brand.ts`
-and `packages/core/src/persona/copy.ts`.
+("I lost the line for a second there. Try that again?"). All copy lives in the message catalogues
+`apps/web/src/i18n/{en,de}.ts` and `packages/core/src/persona/copy.ts`, in English and German;
+the German is written in the same voice, not machine-literal. Crisis and safety replies stay
+English until a human has reviewed a translation.
 
 ## 9. Fixtures
 

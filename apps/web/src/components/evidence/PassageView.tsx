@@ -14,6 +14,7 @@ import { brand } from '@/brand';
 import { initials, speakerLabel } from '@/components/answer/speaker';
 import { useToast } from '@/components/ui/Toasts';
 import RubberSegment from '@/components/vendor/react-bits/RubberSegment';
+import { useI18n } from '@/i18n/I18nProvider';
 import { fetchPassage } from '@/lib/api';
 import { RelatedMoments } from './RelatedMoments';
 import { VideoTab } from './VideoTab';
@@ -70,22 +71,23 @@ export function PassageView({
   headingRef,
 }: PassageViewProps) {
   const [tab, setTab] = useState<Tab>('quote');
-  const who = speakerLabel(citation);
+  const { t, locale } = useI18n();
+  const who = speakerLabel(citation, t.speaker);
   const { toast } = useToast();
   const context = usePassageContext(citation.passageId);
 
   const copy = async () => {
     const parts = [
       `“${citation.excerpt}”`,
-      `— ${who.short}${citation.speaker === 'unverified' ? ' (conversation)' : ''}, ${brand.show}`,
+      `— ${who.short}${citation.speaker === 'unverified' ? t.inspector.copyConversation : ''}, ${brand.show}`,
       `“${citation.episode.title}”, ${formatTimestamp(citation.startMs)}`,
       citation.youtubeUrl ?? '',
     ];
     try {
       await navigator.clipboard.writeText(parts.filter(Boolean).join('\n'));
-      toast({ id: 'copied', title: brand.copy.toast.quoteCopied, tone: 'ember', duration: 2400 });
+      toast({ id: 'copied', title: t.inspector.copied, tone: 'ember', duration: 2400 });
     } catch {
-      toast({ id: 'copied', title: 'Couldn’t reach the clipboard', tone: 'error', duration: 2400 });
+      toast({ id: 'copied', title: t.errors.clipboard, tone: 'error', duration: 2400 });
     }
   };
 
@@ -99,19 +101,15 @@ export function PassageView({
               className="mr-1 font-mono text-[11px] whitespace-nowrap text-steel tabular"
               aria-live="polite"
             >
-              {position.index + 1} of {position.total}
+              {t.inspector.position(position.index + 1, position.total)}
             </span>
-            <IconButton
-              label="Previous source ( [ )"
-              onClick={onPrev}
-              disabled={position.total < 2}
-            >
+            <IconButton label={t.inspector.previous} onClick={onPrev} disabled={position.total < 2}>
               <HugeiconsIcon icon={ArrowLeft01Icon} size={16} strokeWidth={2} />
             </IconButton>
-            <IconButton label="Next source ( ] )" onClick={onNext} disabled={position.total < 2}>
+            <IconButton label={t.inspector.next} onClick={onNext} disabled={position.total < 2}>
               <HugeiconsIcon icon={ArrowRight01Icon} size={16} strokeWidth={2} />
             </IconButton>
-            <IconButton label="Close (Esc)" onClick={onClose}>
+            <IconButton label={t.inspector.close} onClick={onClose}>
               <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={2} />
             </IconButton>
           </div>
@@ -119,26 +117,27 @@ export function PassageView({
         <h2
           ref={headingRef}
           tabIndex={-1}
+          lang="en"
           className="mt-3 font-display text-[21px] leading-snug text-ivory-0 outline-none"
         >
           {citation.episode.title}
         </h2>
         <p className="mt-1.5 text-[13.5px] text-ivory-1">
           {citation.speaker === 'unverified'
-            ? `From the conversation with ${who.short}`
-            : `Said by ${who.short}`}
+            ? t.inspector.fromConversation(who.short)
+            : t.inspector.saidBy(who.short)}
         </p>
         <p className="mt-0.5 font-mono text-[12px] text-steel">
-          {formatDate(citation.episode.publishedAt)} · {formatTimestamp(citation.startMs)} in the
-          podcast
+          {formatDate(citation.episode.publishedAt, locale)} ·{' '}
+          {t.inspector.inPodcast(formatTimestamp(citation.startMs))}
         </p>
         <div className="mt-4">
           <RubberSegment
-            aria-label="Source view"
+            aria-label={t.inspector.tabsLabel}
             items={[
-              { value: 'quote', label: 'Quote' },
-              { value: 'context', label: 'Context' },
-              { value: 'video', label: 'Video' },
+              { value: 'quote', label: t.inspector.tabs.quote },
+              { value: 'context', label: t.inspector.tabs.context },
+              { value: 'video', label: t.inspector.tabs.video },
             ]}
             value={tab}
             onChange={(v) => setTab(v as Tab)}
@@ -163,14 +162,15 @@ export function PassageView({
 }
 
 function SpeakerBadge({ citation }: { citation: Citation }) {
-  const who = speakerLabel(citation);
+  const { t } = useI18n();
+  const who = speakerLabel(citation, t.speaker);
   const base =
     'inline-flex items-center gap-2 whitespace-nowrap rounded-full px-2.5 py-1 font-mono text-[11px]';
   if (citation.speaker === 'host') {
     return (
       <span className={`${base} bg-ember-tint text-ember-1`}>
         <span className="h-1.5 w-1.5 rounded-full bg-ember-0" aria-hidden="true" />
-        Verified host
+        {t.inspector.verifiedHost}
       </span>
     );
   }
@@ -183,21 +183,22 @@ function SpeakerBadge({ citation }: { citation: Citation }) {
         >
           {initials(who.short)}
         </span>
-        Verified guest
+        {t.inspector.verifiedGuest}
       </span>
     );
   }
   return (
     <span className={`${base} border border-dashed border-steel/60 text-steel`}>
-      Speaker not verified
+      {t.inspector.notVerified}
     </span>
   );
 }
 
 function QuoteTab({ citation, onCopy }: { citation: Citation; onCopy: () => void }) {
+  const { inspector } = useI18n().t;
   return (
     <div className="flex flex-col gap-5">
-      <blockquote className="font-display text-[20px] leading-[1.5] text-ivory-0 italic">
+      <blockquote lang="en" className="font-display text-[20px] leading-[1.5] text-ivory-0 italic">
         <span className="text-ember-0" aria-hidden="true">
           “
         </span>
@@ -207,19 +208,17 @@ function QuoteTab({ citation, onCopy }: { citation: Citation; onCopy: () => void
         </span>
       </blockquote>
       <p className="font-mono text-[11.5px] leading-relaxed text-steel">
-        Verbatim from the stored transcript
-        {citation.quality === 'asr' ? ' · automatic transcription, may contain errors' : ''}
-        {citation.speaker === 'unverified'
-          ? ' · this passage is real, but the transcript doesn’t say who was speaking'
-          : ''}
+        {inspector.verbatim}
+        {citation.quality === 'asr' ? inspector.asr : ''}
+        {citation.speaker === 'unverified' ? inspector.unverifiedNote : ''}
       </p>
       {citation.relevance ? (
         <section className="rounded-[var(--radius-card)] border border-ink-3 bg-ink-2/60 px-4 py-3">
           <h3 className="font-mono text-[10.5px] tracking-[0.14em] text-ember-0 uppercase">
-            Why I cited this
+            {inspector.whyCited}
           </h3>
           <p className="mt-1.5 text-[14.5px] leading-relaxed text-ivory-1">{citation.relevance}</p>
-          <p className="mt-2 text-[11.5px] text-ivory-2">An AI note, not part of the transcript.</p>
+          <p className="mt-2 text-[11.5px] text-ivory-2">{inspector.aiNote}</p>
         </section>
       ) : null}
       <button
@@ -228,7 +227,7 @@ function QuoteTab({ citation, onCopy }: { citation: Citation; onCopy: () => void
         className="inline-flex w-fit items-center gap-2 rounded-full border border-ink-3 px-3.5 py-2 text-[13px] text-ivory-1 transition-colors hover:border-ink-4 hover:bg-ink-2 hover:text-ivory-0"
       >
         <HugeiconsIcon icon={Copy01Icon} size={14} strokeWidth={2} />
-        Copy quote with attribution
+        {inspector.copy}
       </button>
       <RelatedMoments key={citation.passageId} passageId={citation.passageId} />
     </div>
@@ -242,8 +241,8 @@ function ContextTab({
   citation: Citation;
   context: { data: PassageContext | null; error: boolean };
 }) {
-  if (context.error)
-    return <p className="text-[14px] text-oxblood-1">{brand.copy.errors.passage}</p>;
+  const { t, locale } = useI18n();
+  if (context.error) return <p className="text-[14px] text-oxblood-1">{t.errors.passage}</p>;
   if (!context.data) {
     return (
       <div aria-busy="true" className="flex flex-col gap-3">
@@ -259,7 +258,7 @@ function ContextTab({
   const line = 'grid grid-cols-[3.25rem_1fr] gap-3 text-[14.5px] leading-[1.65]';
 
   return (
-    <div className="flex flex-col gap-4">
+    <div lang="en" className="flex flex-col gap-4">
       {before.map((b) => (
         <p key={`b-${b.startMs}`} className={`${line} text-ivory-2`}>
           <span className="pt-0.5 font-mono text-[11px] text-steel tabular">
@@ -276,13 +275,14 @@ function ContextTab({
             </span>
             <span>
               <span
+                lang={locale}
                 className={`mr-1.5 font-mono text-[11px] tracking-[0.06em] uppercase ${l.speaker === 'host' ? 'text-ember-1' : l.speaker === 'guest' ? 'text-ivory-1' : 'text-steel'}`}
               >
                 {l.speaker === 'host'
                   ? brand.host.firstName
                   : l.speaker === 'guest'
-                    ? (l.speakerName ?? 'Guest')
-                    : 'Unknown'}
+                    ? (l.speakerName ?? t.speaker.guest)
+                    : t.speaker.unknown}
               </span>
               {l.text}
             </span>

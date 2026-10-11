@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
-import { brand } from '@/brand';
+import { useI18n } from '@/i18n/I18nProvider';
 import { FirstVisitDisclosure } from './Disclosure';
 import { HeroWordmark } from './Wordmark';
 
@@ -18,6 +18,7 @@ const ease = [0.23, 1, 0.32, 1] as const;
 /** The first screen: wordmark, one line of voice, one input, three ways in. Nothing else. */
 export function HomeView({ composer, footerStart, footerEnd, onExample }: HomeViewProps) {
   const reduce = useReducedMotion();
+  const { t } = useI18n();
   const rise = (delay: number) =>
     reduce
       ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.3, delay } }
@@ -35,7 +36,7 @@ export function HomeView({ composer, footerStart, footerEnd, onExample }: HomeVi
           {...rise(0.55)}
           className="mt-6 max-w-[33rem] text-[17px] leading-relaxed text-balance text-ivory-1 sm:text-[18px]"
         >
-          {brand.intro}
+          {t.home.intro}
         </motion.p>
 
         <motion.div {...rise(0.75)} className="mt-10 w-full max-w-[40rem]">
@@ -49,10 +50,10 @@ export function HomeView({ composer, footerStart, footerEnd, onExample }: HomeVi
 
         <motion.ul
           {...rise(0.95)}
-          aria-label="Example questions"
+          aria-label={t.home.examplesLabel}
           className="mt-5 flex max-w-[44rem] flex-wrap justify-center gap-2"
         >
-          {brand.examples.map((q) => (
+          {t.home.examples.map((q) => (
             <li key={q}>
               <button
                 type="button"
@@ -70,9 +71,7 @@ export function HomeView({ composer, footerStart, footerEnd, onExample }: HomeVi
           className="mt-8 flex max-w-[30rem] flex-col items-center gap-1.5 text-[12px] leading-relaxed text-ivory-2 [text-shadow:0_0_14px_var(--ink-0),0_0_4px_var(--ink-0)]"
         >
           <FirstVisitDisclosure />
-          <p className="hidden font-mono text-[11px] text-steel lg:block">
-            ↵ ask · ⇧↵ new line · / to type · [ ] sources
-          </p>
+          <p className="hidden font-mono text-[11px] text-steel lg:block">{t.home.shortcuts}</p>
         </motion.div>
       </main>
 

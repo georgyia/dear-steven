@@ -2,7 +2,7 @@
 
 import { formatTimestamp } from '@dear-steven/core/format';
 import type { Citation } from '@dear-steven/core/schema';
-import { brand } from '@/brand';
+import { useI18n } from '@/i18n/I18nProvider';
 import { speakerLabel } from './speaker';
 
 interface PullQuoteProps {
@@ -21,12 +21,13 @@ interface PullQuoteProps {
  * draws down beside it. The attribution says plainly who said it — or that we don't know.
  */
 export function PullQuote({ citation, text, translation, lead, active, onOpen }: PullQuoteProps) {
-  const who = speakerLabel(citation);
+  const { t } = useI18n();
+  const who = speakerLabel(citation, t.speaker);
   const attribution =
     citation.speaker === 'unverified'
-      ? `From my conversation with ${who.short}`
+      ? t.answer.fromMyConversation(who.short)
       : citation.speaker === 'host'
-        ? `${who.short}, on the show`
+        ? t.answer.onTheShow(who.short)
         : who.short;
 
   return (
@@ -47,17 +48,17 @@ export function PullQuote({ citation, text, translation, lead, active, onOpen }:
           <span aria-hidden="true" className="mr-0.5 text-ember-0">
             “
           </span>
-          {text}
+          <span lang="en">{text}</span>
           <span aria-hidden="true" className="ml-0.5 text-ember-0">
             ”
           </span>
-          <span className="sr-only">. Open the source.</span>
+          <span className="sr-only">{t.answer.openSource}</span>
         </button>
       </blockquote>
       {translation ? (
         <p className="mt-3 text-[15px] leading-relaxed text-ivory-1">
           <span className="mr-2 font-mono text-[11px] tracking-[0.16em] text-steel uppercase">
-            {brand.copy.translation}
+            {t.answer.translation}
           </span>
           {translation}
         </p>
@@ -67,10 +68,10 @@ export function PullQuote({ citation, text, translation, lead, active, onOpen }:
         <span aria-hidden="true">·</span>
         <span className="tabular">{formatTimestamp(citation.startMs)}</span>
         <span aria-hidden="true">·</span>
-        <span>verbatim from the transcript</span>
+        <span>{t.answer.verbatim}</span>
         {citation.speaker === 'unverified' ? (
           <span className="rounded-full border border-dashed border-steel/60 px-2 py-0.5 text-[10.5px]">
-            speaker not verified
+            {t.answer.notVerified}
           </span>
         ) : null}
       </figcaption>

@@ -175,7 +175,8 @@ const quoteOf = (key: PassageKey, sentence: string) => {
 
 const procrastination: DemoAnswer = {
   key: 'procrastination',
-  matches: /procrastinat|putting (it|things) off|avoid|delay|stuck/i,
+  matches:
+    /procrastinat|putting (it|things) off|avoid|delay|stuck|aufschieb|aufgeschoben|vor (mir|sich) her|prokrastin|vermeide/i,
   mode: 'grounded',
   searched: { passages: 9, episodes: 3 },
   citations: [
@@ -265,7 +266,7 @@ const procrastination: DemoAnswer = {
 
 const discipline: DemoAnswer = {
   key: 'discipline',
-  matches: /disciplin|motivat|habit|consisten|willpower|routine/i,
+  matches: /disciplin|motivat|habit|consisten|willpower|routine|diszipl|gewohnheit|willenskraft/i,
   mode: 'partial',
   searched: { passages: 6, episodes: 2 },
   citations: [
@@ -323,7 +324,8 @@ const discipline: DemoAnswer = {
 
 const business: DemoAnswer = {
   key: 'business',
-  matches: /business|start-?up|founder|company|entrepreneur|side project/i,
+  matches:
+    /business|start-?up|founder|company|entrepreneur|side project|unternehm|gründer|gründung|firma|selbstständig/i,
   mode: 'grounded',
   searched: { passages: 11, episodes: 3 },
   citations: [

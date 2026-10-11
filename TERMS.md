@@ -26,6 +26,6 @@ TODO (owner): a contact address for takedown and privacy requests will be publis
 
 ## Changes
 
-These terms may change; the date at the end says when they last did. Last updated 2026-10-10.
+These terms may change; the date at the end says when they last did. Last updated 2026-10-11.
 
-Last updated 2026-10-10. This is plain-language text, not legal advice; it has not yet been reviewed by a lawyer.
+Last updated 2026-10-11. This is plain-language text, not legal advice; it has not yet been reviewed by a lawyer.

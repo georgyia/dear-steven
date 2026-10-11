@@ -1,4 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
+import { de } from '../src/i18n/de';
 import { expect, type Page, test } from './fixtures';
 
 /**
@@ -98,5 +99,20 @@ test.describe('interactive states', () => {
     await page.getByRole('button', { name: 'Voice settings' }).click();
     await expect(page.getByRole('dialog', { name: 'Voice' })).toBeVisible();
     await audit(page, 'voice settings');
+  });
+});
+
+test.describe('in German (P6-02)', () => {
+  test.use({ locale: 'de-DE' });
+
+  test('home, an answer and the language settings', async ({ page }) => {
+    await page.goto('/');
+    await audit(page, 'the German home page');
+    await page.getByRole('button', { name: de.home.examples[1] }).click();
+    await expect(page.getByText(de.turn.complete).last()).toBeAttached({ timeout: 15_000 });
+    await audit(page, 'a German answer');
+    await page.getByRole('button', { name: de.stage.voiceSettings }).click();
+    await expect(page.getByRole('dialog', { name: de.voice.title })).toBeVisible();
+    await audit(page, 'the German voice and language settings');
   });
 });

@@ -2,6 +2,7 @@
 
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 import SwipeToast from '@/components/vendor/react-bits/SwipeToast';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export interface ToastInput {
   /** Re-using an id replaces the toast instead of stacking a duplicate. */
@@ -76,9 +77,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 /** Renders the stack. `className` positions it (it is always fixed). */
 export function ToastViewport({ className }: { className: string }) {
   const { toasts, remove } = useContext(EntriesContext);
+  const { ui } = useI18n().t;
   return (
     <section
-      aria-label="Notifications"
+      aria-label={ui.notifications}
       className={`pointer-events-none fixed z-50 flex w-[min(380px,calc(100vw-32px))] flex-col items-end transition-[bottom,right] duration-300 ${className}`}
     >
       {toasts.map((t) => (
@@ -92,6 +94,7 @@ export function ToastViewport({ className }: { className: string }) {
             onAction={t.onAction}
             duration={t.duration ?? 3200}
             closeButton={t.duration === 0}
+            closeLabel={ui.close}
             fuse={t.duration === 0 ? 'none' : 'bottom'}
             background="var(--ink-2)"
             color="var(--ivory-0)"

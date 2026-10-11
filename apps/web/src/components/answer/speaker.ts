@@ -1,25 +1,26 @@
 import { episodeLabel } from '@dear-steven/core/format';
 import type { Citation } from '@dear-steven/core/schema';
 import { brand } from '@/brand';
+import type { Messages } from '@/i18n';
 
 /** Who said a cited passage, in the UI's words. One source of truth for chips, quotes and drawer. */
-export function speakerLabel(c: Pick<Citation, 'speaker' | 'speakerName' | 'episode'>): {
+export function speakerLabel(
+  c: Pick<Citation, 'speaker' | 'speakerName' | 'episode'>,
+  copy: Messages['speaker'],
+): {
   short: string;
   long: string;
 } {
   const guest = episodeLabel(c.episode);
   switch (c.speaker) {
     case 'host':
-      return {
-        short: brand.host.firstName,
-        long: `${brand.host.fullName} (host) — verified speaker`,
-      };
+      return { short: brand.host.firstName, long: copy.hostLong };
     case 'guest': {
       const name = c.speakerName ?? guest;
-      return { short: name, long: `${name} — verified speaker` };
+      return { short: name, long: copy.guestLong(name) };
     }
     case 'unverified':
-      return { short: guest, long: `From the conversation with ${guest} — speaker not verified` };
+      return { short: guest, long: copy.unverifiedLong(guest) };
   }
 }
 

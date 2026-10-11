@@ -1,7 +1,9 @@
+'use client';
+
 import { LinkSquare02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import type { ReactNode } from 'react';
-import { brand } from '@/brand';
+import { useI18n } from '@/i18n/I18nProvider';
 
 /**
  * The one way to send someone to YouTube (P6-14): a quiet ink pill, or an inline link inside a
@@ -11,13 +13,14 @@ import { brand } from '@/brand';
  */
 export function YouTubeLink({
   href,
-  children = brand.copy.youtube.watch,
+  children,
   variant = 'pill',
 }: {
   href: string;
   children?: ReactNode;
   variant?: 'pill' | 'inline';
 }) {
+  const { youtube } = useI18n().t;
   return (
     <a
       href={href}
@@ -30,17 +33,18 @@ export function YouTubeLink({
       }
     >
       <HugeiconsIcon icon={LinkSquare02Icon} size={12} strokeWidth={2} />
-      {children}
-      <span className="sr-only">{brand.copy.youtube.newTab}</span>
+      {children ?? youtube.watch}
+      <span className="sr-only">{youtube.newTab}</span>
     </a>
   );
 }
 
 /** Said where a link would be, so a missing video is never silent. */
 export function NoVideo({ demo }: { demo: boolean }) {
+  const { youtube } = useI18n().t;
   return (
     <span className="font-mono text-[11px] text-steel">
-      {demo ? brand.copy.youtube.fixture : brand.copy.youtube.unmatched}
+      {demo ? youtube.fixture : youtube.unmatched}
     </span>
   );
 }

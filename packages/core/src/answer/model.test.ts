@@ -2,7 +2,7 @@ import type OpenAI from 'openai';
 import { describe, expect, it } from 'vitest';
 import type { TokenUsage } from '../config/models.ts';
 import { openAIEmbedder } from '../openai/embedder.ts';
-import { type TranscriptionUsage, transcribeSpeech } from '../openai/voice.ts';
+import { speechInstructions, type TranscriptionUsage, transcribeSpeech } from '../openai/voice.ts';
 import { personaLint } from '../persona/persona.ts';
 import { restingAnswer } from './compose.ts';
 import { openAIAnswerModel } from './model.ts';
@@ -84,7 +84,7 @@ describe('usage reporting for the spend cap', () => {
 
 describe('restingAnswer', () => {
   it('answers in character, with no sources and nothing for the validator to doubt', () => {
-    const events = [...restingAnswer(0, () => 5)];
+    const events = [...restingAnswer('en', 0, () => 5)];
     const final = events.at(-1);
     expect(final?.type).toBe('final');
     if (final?.type !== 'final') return;
@@ -93,5 +93,21 @@ describe('restingAnswer', () => {
     const text = JSON.stringify(final.answer.blocks) + final.answer.spoken;
     expect(personaLint(text)).toEqual([]);
     expect(text).toMatch(/daily limit/);
+  });
+
+  it('rests in the interface language, and says which language it is in (P6-02)', () => {
+    const final = [...restingAnswer('de', 0, () => 5)].at(-1);
+    if (final?.type !== 'final') throw new Error('no final answer');
+    expect(final.answer.language).toBe('de');
+    expect(JSON.stringify(final.answer.blocks)).toMatch(/Tageslimit/);
+  });
+});
+
+describe('speechInstructions (P6-02)', () => {
+  it('keeps the style, and names the language when the text is not English', () => {
+    expect(speechInstructions()).toMatch(/^Warm, relaxed/);
+    expect(speechInstructions('en')).toBe(speechInstructions());
+    expect(speechInstructions('de')).toMatch(/The text is in German/);
+    expect(speechInstructions('zz')).toBe(speechInstructions());
   });
 });

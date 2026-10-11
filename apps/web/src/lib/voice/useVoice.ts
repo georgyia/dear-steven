@@ -10,11 +10,11 @@ import {
   useRef,
   useState,
 } from 'react';
-import { brand } from '@/brand';
 import type {
   VoicePillHandle,
   VoicePillStopReason,
 } from '@/components/vendor/react-bits/VoicePill';
+import { useI18n } from '@/i18n/I18nProvider';
 import type { StageEvent } from '@/lib/stage-machine';
 import {
   chooseVoiceInput,
@@ -31,6 +31,7 @@ import {
   type OnDeviceStatus,
   onDeviceStatus,
   type Recognizer,
+  recognitionLang,
 } from './recognition';
 import { MicDeniedError, type Recording, startRecording, transcribe } from './recorder';
 import { createSpeaker, unlockAudio } from './speaker';
@@ -43,7 +44,7 @@ export interface VoiceApi {
   onPillStart: () => void;
   onPillStop: (info: { reason: VoicePillStopReason }) => void;
   /** Must be called from a user gesture (or after one already unlocked audio). */
-  speak: (turnId: string, text: string) => void;
+  speak: (turnId: string, text: string, language: string) => void;
   stopSpeaking: () => void;
   speakingTurnId: string | null;
   /** Chrome on-device recognition for this browser; `unknown` until checked. */
@@ -52,7 +53,7 @@ export interface VoiceApi {
   checkOnDevice: () => void;
   /** Download the on-device model; resolves to whether it is now available. */
   installOnDevice: () => Promise<boolean>;
-  /** Say a sample line in the chosen voice. Call from a click. */
+  /** Say a sample line, in the interface language, in the chosen voice. Call from a click. */
   preview: (text: string) => void;
 }
 
@@ -91,8 +92,10 @@ export function useVoice({
   const pillRef = useRef<VoicePillHandle | null>(null);
   const session = useRef<Session | null>(null);
   const cancelled = useRef(false);
-  const latest = useRef({ send, setDraft, onTranscript, notify });
-  latest.current = { send, setDraft, onTranscript, notify };
+  const { t, locale } = useI18n();
+  const listenFor = recognitionLang(locale);
+  const latest = useRef({ send, setDraft, onTranscript, notify, t });
+  latest.current = { send, setDraft, onTranscript, notify, t };
 
   useEffect(
     () => setEnv(detectEnvironment(serverVoice, browserFailed)),
@@ -130,28 +133,20 @@ export function useVoice({
   useEffect(() => {
     if (input !== 'browser' || !(probe || wantOnDevice)) return;
     let live = true;
-    void onDeviceStatus().then((s) => live && setOnDevice(s));
+    void onDeviceStatus(listenFor).then((s) => live && setOnDevice(s));
     return () => {
       live = false;
     };
-  }, [input, probe, wantOnDevice]);
+  }, [input, probe, wantOnDevice, listenFor]);
   const checkOnDevice = useCallback(() => setProbe(true), []);
   const processLocally = preferences.onDevice && onDevice === 'available';
 
-  const { errors } = brand.copy;
-
-  const fail = useCallback(
-    (kind: 'micDenied' | 'micUnsupported', detail?: string) => {
-      session.current = null;
-      latest.current.send({ type: 'MIC_FAILED', error: kind });
-      latest.current.notify(
-        kind === 'micDenied' ? errors.micDenied : errors.micUnsupported,
-        detail,
-      );
-      pillRef.current?.cancel();
-    },
-    [errors],
-  );
+  const fail = useCallback((kind: 'micDenied' | 'micUnsupported', detail?: string) => {
+    session.current = null;
+    latest.current.send({ type: 'MIC_FAILED', error: kind });
+    latest.current.notify(latest.current.t.errors[kind], detail);
+    pillRef.current?.cancel();
+  }, []);
 
   const finish = useCallback((text: string) => {
     session.current = null;
@@ -161,17 +156,15 @@ export function useVoice({
     if (clean) latest.current.onTranscript(clean);
     else {
       latest.current.setDraft('');
-      latest.current.notify(
-        'I didn’t catch that.',
-        'Try again a little closer to the mic — or type instead.',
-      );
+      const { voiceErrors } = latest.current.t;
+      latest.current.notify(voiceErrors.noSpeech, voiceErrors.noSpeechHint);
     }
   }, []);
 
   const transcribeFailed = useCallback((detail: string) => {
     session.current = null;
     latest.current.send({ type: 'TRANSCRIBE_FAILED' });
-    latest.current.notify('I couldn’t make that out.', detail);
+    latest.current.notify(latest.current.t.voiceErrors.unclear, detail);
   }, []);
 
   const onPillStart = useCallback(() => {
@@ -195,16 +188,14 @@ export function useVoice({
             } else if (e === 'network' && serverVoice) {
               setBrowserFailed(true);
               pillRef.current?.cancel();
-              transcribeFailed(
-                'Your browser’s speech service is unreachable, so I’ve switched to server transcription. Try once more.',
-              );
+              transcribeFailed(latest.current.t.voiceErrors.serviceDown);
             } else {
               pillRef.current?.cancel();
-              transcribeFailed('Speech recognition stopped unexpectedly.');
+              transcribeFailed(latest.current.t.voiceErrors.stopped);
             }
           },
         },
-        { processLocally },
+        { lang: listenFor, processLocally },
       );
       if (!recognizer) return fail('micUnsupported');
       session.current = { kind: 'browser', recognizer };
@@ -223,7 +214,7 @@ export function useVoice({
     }
 
     fail('micUnsupported');
-  }, [input, serverVoice, speaker, processLocally, finish, fail, transcribeFailed]);
+  }, [input, serverVoice, speaker, listenFor, processLocally, finish, fail, transcribeFailed]);
 
   const onPillStop = useCallback(
     ({ reason }: { reason: VoicePillStopReason }) => {
@@ -246,7 +237,7 @@ export function useVoice({
           s.recording
             .then((r) => r.stop())
             .then((blob) => (blob.size > 0 ? transcribe(blob) : ''))
-            .then(finish, () => transcribeFailed('The recording couldn’t be transcribed.'));
+            .then(finish, () => transcribeFailed(latest.current.t.voiceErrors.recording));
         }
         return;
       }
@@ -266,8 +257,8 @@ export function useVoice({
   );
 
   const speak = useCallback(
-    (turnId: string, text: string) => {
-      void speaker.speak(text, {
+    (turnId: string, text: string, language: string) => {
+      void speaker.speak(text, language, {
         onStart: () => {
           setSpeakingTurnId(turnId);
           latest.current.send({ type: 'SPEAK_STARTED' });
@@ -285,17 +276,17 @@ export function useVoice({
     (text: string) => {
       unlockAudio();
       setSpeakingTurnId(null);
-      void speaker.speak(text);
+      void speaker.speak(text, locale);
     },
-    [speaker],
+    [speaker, locale],
   );
 
   const install = useCallback(async () => {
-    const ok = await installOnDevice();
-    const status = await onDeviceStatus();
+    const ok = await installOnDevice(listenFor);
+    const status = await onDeviceStatus(listenFor);
     setOnDevice(status);
     return ok && status === 'available';
-  }, []);
+  }, [listenFor]);
 
   const stopSpeaking = useCallback(() => {
     speaker.stop();

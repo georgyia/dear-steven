@@ -5,9 +5,9 @@ import type { PassageCitation, RelatedMoments as Related } from '@dear-steven/co
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useId, useState } from 'react';
-import { brand } from '@/brand';
 import { speakerLabel } from '@/components/answer/speaker';
 import { YouTubeLink } from '@/components/ui/YouTubeLink';
+import { useI18n } from '@/i18n/I18nProvider';
 import { fetchRelated } from '@/lib/api';
 
 const cache = new Map<string, Related>();
@@ -44,15 +44,14 @@ function useRelated(passageId: string): Related | null {
 export function RelatedMoments({ passageId }: { passageId: string }) {
   const related = useRelated(passageId);
   const headingId = useId();
+  const { related: copy } = useI18n().t;
   if (!related || related.passages.length === 0) return null;
   return (
     <section aria-labelledby={headingId} className="border-t border-ink-3 pt-5">
       <h3 id={headingId} className="font-mono text-[10.5px] tracking-[0.14em] text-steel uppercase">
-        Related moments
+        {copy.heading}
       </h3>
-      <p className="mt-1 text-[12.5px] leading-relaxed text-ivory-2">
-        From other conversations. Related, not cited — they don’t support this answer.
-      </p>
+      <p className="mt-1 text-[12.5px] leading-relaxed text-ivory-2">{copy.note}</p>
       <ul className="mt-3 flex flex-col gap-2.5">
         {related.passages.map((p) => (
           <RelatedItem key={p.passageId} passage={p} />
@@ -65,7 +64,8 @@ export function RelatedMoments({ passageId }: { passageId: string }) {
 function RelatedItem({ passage: p }: { passage: PassageCitation }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
-  const who = speakerLabel(p);
+  const { t, locale } = useI18n();
+  const who = speakerLabel(p, t.speaker);
   return (
     <li className="rounded-[var(--radius-card)] border border-dashed border-ink-4">
       <button
@@ -77,10 +77,13 @@ function RelatedItem({ passage: p }: { passage: PassageCitation }) {
       >
         <span className="min-w-0 flex-1">
           <span className="block font-mono text-[11px] text-steel">
-            {formatDate(p.episode.publishedAt)} · {formatTimestamp(p.startMs)} ·{' '}
-            {p.speaker === 'unverified' ? 'speaker not verified' : who.short}
+            {formatDate(p.episode.publishedAt, locale)} · {formatTimestamp(p.startMs)} ·{' '}
+            {p.speaker === 'unverified' ? t.answer.notVerified : who.short}
           </span>
-          <span className="mt-1 block font-display text-[15.5px] leading-snug text-ivory-0">
+          <span
+            lang="en"
+            className="mt-1 block font-display text-[15.5px] leading-snug text-ivory-0"
+          >
             {p.episode.title}
           </span>
         </span>
@@ -93,20 +96,22 @@ function RelatedItem({ passage: p }: { passage: PassageCitation }) {
         />
       </button>
       <div id={panelId} className="px-4 pb-3.5">
-        <p className="text-[14px] leading-relaxed text-ivory-1">{open ? p.text : p.excerpt}</p>
+        <p lang="en" className="text-[14px] leading-relaxed text-ivory-1">
+          {open ? p.text : p.excerpt}
+        </p>
         {open ? (
           <p className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-steel">
             <span>
               {p.speaker === 'unverified'
-                ? `From the conversation with ${who.short}`
-                : `Said by ${who.short}`}{' '}
-              · {formatTimestamp(p.startMs)} in the podcast
+                ? t.inspector.fromConversation(who.short)
+                : t.inspector.saidBy(who.short)}{' '}
+              · {t.inspector.inPodcast(formatTimestamp(p.startMs))}
             </span>
             {p.youtubeUrl ? (
               <YouTubeLink href={p.youtubeUrl} variant="inline">
                 {p.timestamp.state === 'unknown'
-                  ? brand.copy.youtube.watch
-                  : brand.copy.youtube.watchFrom(formatMoment(p.timestamp.ms, p.timestamp.state))}
+                  ? t.youtube.watch
+                  : t.youtube.watchFrom(formatMoment(p.timestamp.ms, p.timestamp.state))}
               </YouTubeLink>
             ) : null}
           </p>

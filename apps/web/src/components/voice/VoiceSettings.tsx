@@ -1,11 +1,14 @@
 'use client';
 
+import { isUiLocale, UI_LOCALES } from '@dear-steven/core/copy';
 import { DEFAULT_STOCK_VOICE, STOCK_VOICES, type StockVoice } from '@dear-steven/core/schema';
 import { VolumeHighIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { type ReactNode, useEffect, useId, useState } from 'react';
 import { Dialog } from '@/components/ui/Dialog';
 import SquishSwitch from '@/components/vendor/react-bits/SquishSwitch';
+import { LOCALE_NAMES } from '@/i18n';
+import { useI18n } from '@/i18n/I18nProvider';
 import type { VoicePreferences } from '@/lib/voice/preferences';
 import type { VoiceApi } from '@/lib/voice/useVoice';
 
@@ -19,10 +22,12 @@ interface VoiceSettingsProps {
   voice: VoiceApi;
 }
 
-const SAMPLE = 'This is how I’ll sound when I answer you.';
 const titleCase = (v: string) => v.charAt(0).toUpperCase() + v.slice(1);
 
-/** Voice settings (P5-07): always speak, on-device recognition, and a stock-voice picker. */
+/**
+ * Voice and language settings (P5-07, P6-02): the interface language, always speak, on-device
+ * recognition, and a voice picker.
+ */
 export function VoiceSettings({
   open,
   onClose,
@@ -33,6 +38,9 @@ export function VoiceSettings({
 }: VoiceSettingsProps) {
   const [installing, setInstalling] = useState(false);
   const [installFailed, setInstallFailed] = useState(false);
+  const { t } = useI18n();
+  const copy = t.voice;
+  const notes = copy.onDeviceNotes;
   const { checkOnDevice } = voice;
   useEffect(() => {
     if (open) checkOnDevice();
@@ -53,26 +61,18 @@ export function VoiceSettings({
     (voice.onDevice === 'available' || voice.onDevice === 'downloadable');
   const onDeviceNote =
     voice.input !== 'browser'
-      ? 'This browser has no built-in speech recognition, so your voice is transcribed on the server instead.'
+      ? notes.server
       : installing
-        ? 'Downloading the speech model…'
+        ? notes.installing
         : installFailed
-          ? 'The speech model didn’t finish downloading. Try again later.'
-          : voice.onDevice === 'available'
-            ? 'Recognise your voice on this device, so the audio never leaves it.'
-            : voice.onDevice === 'downloadable'
-              ? 'Chrome downloads a speech model once, then recognises your voice on this device.'
-              : voice.onDevice === 'unknown'
-                ? 'Checking what this browser can do…'
-                : 'Not available in this browser — it uses its own speech service.';
+          ? notes.failed
+          : notes[voice.onDevice];
 
   return (
-    <Dialog open={open} onClose={onClose} eyebrow="Settings" title="Voice">
+    <Dialog open={open} onClose={onClose} eyebrow={copy.eyebrow} title={copy.title}>
       <div className="flex flex-col divide-y divide-ink-3">
-        <SettingRow
-          title="Always speak replies"
-          note="Read every answer aloud, typed or spoken. Nothing plays until you’ve asked something during this visit."
-        >
+        <LanguagePicker />
+        <SettingRow title={copy.alwaysSpeak} note={copy.alwaysSpeakNote}>
           {(ids) => (
             <SquishSwitch
               id={ids.control}
@@ -83,7 +83,7 @@ export function VoiceSettings({
             />
           )}
         </SettingRow>
-        <SettingRow title="On-device speech recognition" note={onDeviceNote}>
+        <SettingRow title={copy.onDevice} note={onDeviceNote}>
           {(ids) => (
             <SquishSwitch
               id={ids.control}
@@ -98,9 +98,7 @@ export function VoiceSettings({
         <VoicePicker prefs={prefs} update={update} voice={voice} />
       </div>
       {persisted ? null : (
-        <p className="mt-4 text-[12.5px] leading-relaxed text-oxblood-1">
-          This browser isn’t letting me save settings, so these last until you close the tab.
-        </p>
+        <p className="mt-4 text-[12.5px] leading-relaxed text-oxblood-1">{copy.notPersisted}</p>
       )}
     </Dialog>
   );
@@ -142,6 +140,40 @@ function SettingRow({
   );
 }
 
+const SELECT =
+  'h-10 w-full max-w-xs rounded-[12px] border border-ink-3 bg-ink-2 px-3 text-[14px] text-ivory-0 transition-colors hover:border-ink-4';
+
+function LanguagePicker() {
+  const { t, locale, setLocale } = useI18n();
+  const selectId = useId();
+  const noteId = useId();
+  return (
+    <div className="flex flex-col gap-2 py-4 first:pt-0">
+      <label htmlFor={selectId} className="text-[15px] text-ivory-0">
+        {t.voice.language}
+      </label>
+      <select
+        id={selectId}
+        aria-describedby={noteId}
+        value={locale}
+        onChange={(e) => {
+          if (isUiLocale(e.target.value)) setLocale(e.target.value);
+        }}
+        className={SELECT}
+      >
+        {UI_LOCALES.map((l) => (
+          <option key={l} value={l} lang={l}>
+            {LOCALE_NAMES[l]}
+          </option>
+        ))}
+      </select>
+      <p id={noteId} className="text-[13px] leading-relaxed text-ivory-2">
+        {t.voice.languageNote}
+      </p>
+    </div>
+  );
+}
+
 function useSystemVoices(enabled: boolean): SpeechSynthesisVoice[] {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   useEffect(() => {
@@ -161,29 +193,26 @@ function VoicePicker({
 }: Pick<VoiceSettingsProps, 'prefs' | 'update' | 'voice'>) {
   const selectId = useId();
   const noteId = useId();
+  const { t, locale } = useI18n();
+  const copy = t.voice;
   const system = useSystemVoices(voice.output === 'browser');
-  const english = system
-    .filter((v) => v.lang.toLowerCase().startsWith('en') || v.voiceURI === prefs.browserVoice)
+  const speaksLocale = system
+    .filter((v) => v.lang.toLowerCase().startsWith(locale) || v.voiceURI === prefs.browserVoice)
     .sort((a, b) => a.name.localeCompare(b.name));
 
   if (voice.output === 'none') {
     return (
       <div className="py-4">
-        <p className="text-[15px] text-ivory-0">Voice</p>
-        <p className="mt-1 text-[13px] leading-relaxed text-ivory-2">
-          This browser can’t speak replies aloud.
-        </p>
+        <p className="text-[15px] text-ivory-0">{copy.voice}</p>
+        <p className="mt-1 text-[13px] leading-relaxed text-ivory-2">{copy.cannotSpeak}</p>
       </div>
     );
   }
 
-  const select =
-    'h-10 w-full max-w-xs rounded-[12px] border border-ink-3 bg-ink-2 px-3 text-[14px] text-ivory-0 transition-colors hover:border-ink-4';
-
   return (
     <div className="flex flex-col gap-2 py-4 last:pb-0">
       <label htmlFor={selectId} className="text-[15px] text-ivory-0">
-        Voice
+        {copy.voice}
       </label>
       <div className="flex flex-wrap items-center gap-2">
         {voice.output === 'server' ? (
@@ -195,12 +224,12 @@ function VoicePicker({
               const v = e.target.value as StockVoice;
               update({ serverVoice: v === DEFAULT_STOCK_VOICE ? null : v });
             }}
-            className={select}
+            className={SELECT}
           >
             {STOCK_VOICES.map((v) => (
               <option key={v} value={v}>
                 {titleCase(v)}
-                {v === DEFAULT_STOCK_VOICE ? ' (default)' : ''}
+                {v === DEFAULT_STOCK_VOICE ? copy.defaultVoice : ''}
               </option>
             ))}
           </select>
@@ -210,10 +239,10 @@ function VoicePicker({
             aria-describedby={noteId}
             value={prefs.browserVoice ?? ''}
             onChange={(e) => update({ browserVoice: e.target.value || null })}
-            className={select}
+            className={SELECT}
           >
-            <option value="">Automatic</option>
-            {english.map((v) => (
+            <option value="">{copy.automatic}</option>
+            {speaksLocale.map((v) => (
               <option key={v.voiceURI} value={v.voiceURI}>
                 {v.name} · {v.lang}
               </option>
@@ -222,17 +251,15 @@ function VoicePicker({
         )}
         <button
           type="button"
-          onClick={() => voice.preview(SAMPLE)}
+          onClick={() => voice.preview(copy.sample)}
           className="inline-flex h-10 items-center gap-2 rounded-full border border-ink-3 px-3.5 text-[13px] text-ivory-1 transition-colors hover:border-ink-4 hover:bg-ink-2 hover:text-ivory-0"
         >
           <HugeiconsIcon icon={VolumeHighIcon} size={15} strokeWidth={1.8} />
-          Hear it
+          {copy.hearIt}
         </button>
       </div>
       <p id={noteId} className="text-[13px] leading-relaxed text-ivory-2">
-        {voice.output === 'server'
-          ? 'Stock OpenAI voices only — never an imitation of a real person.'
-          : 'Your device’s own voices. With an OpenAI key, stock OpenAI voices are offered instead.'}
+        {voice.output === 'server' ? copy.serverNote : copy.browserNote}
       </p>
     </div>
   );

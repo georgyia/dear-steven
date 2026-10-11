@@ -18,6 +18,13 @@ describe('describeFailure', () => {
     expect(describeFailure(new Error('fetch failed')).code).toBe('upstream');
   });
 
+  it('words the message in the visitor’s interface language', () => {
+    expect(describeFailure(apiError(500), 'de').message).toBe(
+      'OpenAI hatte gerade ein Problem beim Antworten.',
+    );
+    expect(describeFailure(apiError(401), 'de').message).toMatch(/OPENAI_API_KEY/);
+  });
+
   it('falls back to a generic internal error', () => {
     expect(describeFailure(new TypeError('x is undefined'))).toEqual({
       code: 'internal',

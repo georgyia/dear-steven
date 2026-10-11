@@ -1,9 +1,13 @@
 'use client';
 
+import { LOCALE_TAG, type UiLocale } from '@dear-steven/core/copy';
 import type { KnowledgeStatus } from '@dear-steven/core/schema';
 import type { ReactNode } from 'react';
 import { Dialog } from '@/components/ui/Dialog';
+import { Rich } from '@/components/ui/Rich';
 import StatusMark, { type StatusMarkStatus } from '@/components/vendor/react-bits/StatusMark';
+import type { Messages } from '@/i18n';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface SetupDialogProps {
   open: boolean;
@@ -21,27 +25,29 @@ interface Item {
   optional?: boolean;
 }
 
-const n = (x: number) => x.toLocaleString('en-GB');
-const usd = (x: number) => `$${x.toFixed(x < 1 ? 3 : 2)}`;
+const usd = (x: number, locale: UiLocale) => {
+  const digits = x < 1 ? 3 : 2;
+  return `$${x.toLocaleString(LOCALE_TAG[locale], { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
+};
 
-function items(s: KnowledgeStatus): Item[] {
+function items(s: KnowledgeStatus, copy: Messages['setup'], locale: UiLocale): Item[] {
   const demo = s.mode === 'demo';
+  const money = (x: number) => usd(x, locale);
   return [
     {
       key: 'openai',
       status: s.setup.openaiKey ? 'done' : 'failed',
-      title: 'OpenAI API key',
-      detail: s.setup.openaiKey ? (
-        s.demoReason === 'forced' ? (
-          'Found, but DEAR_STEVEN_DEMO=1 is forcing demo mode.'
-        ) : (
-          'Found on the server. It never reaches the browser.'
-        )
-      ) : (
-        <>
-          Missing — answers are demo fixtures until you add <Code>OPENAI_API_KEY</Code> to{' '}
-          <Code>.env</Code> at the repository root and restart.
-        </>
+      title: copy.openai.title,
+      detail: (
+        <Rich
+          text={
+            !s.setup.openaiKey
+              ? copy.openai.missing
+              : s.demoReason === 'forced'
+                ? copy.openai.forced
+                : copy.openai.found
+          }
+        />
       ),
     },
     {
@@ -51,47 +57,38 @@ function items(s: KnowledgeStatus): Item[] {
         : !s.setup.database || (!demo && s.passages === 0)
           ? 'pending'
           : 'done',
-      title: 'Knowledge base',
+      title: copy.kb.title,
       detail: s.storeError ? (
-        `The database could not be opened: ${s.storeError}`
+        copy.kb.error(s.storeError)
       ) : !s.setup.database ? (
-        <>
-          No database yet. Start with <Code>pnpm ingest discover</Code>, then{' '}
-          <Code>pnpm ingest transcribe --from vtt --limit 20</Code>.
-        </>
+        <Rich text={copy.kb.none} />
       ) : (
-        `${n(s.episodes)} episodes · ${n(s.passages)} passages indexed${s.lastIndexedAt ? ` · last run ${s.lastIndexedAt.slice(0, 10)}` : ''}.`
+        copy.kb.ready(s.episodes, s.passages, s.lastIndexedAt?.slice(0, 10) ?? null)
       ),
     },
     {
       key: 'embeddings',
       status: s.passages === 0 ? 'pending' : s.embeddedPassages >= s.passages ? 'done' : 'running',
-      title: 'Semantic search',
+      title: copy.embeddings.title,
       detail:
         s.passages === 0 ? (
-          'Waiting for passages.'
+          copy.embeddings.waiting
         ) : s.embeddedPassages >= s.passages ? (
-          'Every passage has an embedding; search is hybrid (meaning + keywords).'
+          copy.embeddings.done
         ) : (
-          <>
-            {n(s.embeddedPassages)} of {n(s.passages)} passages embedded — keyword search covers the
-            rest. Run <Code>pnpm ingest index</Code>.
-          </>
+          <Rich text={copy.embeddings.partial(s.embeddedPassages, s.passages)} />
         ),
     },
     {
       key: 'youtube',
       optional: true,
       status: s.youtubeLinkedEpisodes > 0 ? 'done' : 'pending',
-      title: 'YouTube moments',
+      title: copy.youtube.title,
       detail:
         s.youtubeLinkedEpisodes > 0 ? (
-          `${n(s.youtubeLinkedEpisodes)} episodes linked to their videos.`
+          copy.youtube.done(s.youtubeLinkedEpisodes)
         ) : (
-          <>
-            Optional. Add <Code>YOUTUBE_API_KEY</Code> and run{' '}
-            <Code>pnpm ingest match-youtube</Code> so citations open the video at the right moment.
-          </>
+          <Rich text={copy.youtube.missing} />
         ),
     },
     {
@@ -103,32 +100,26 @@ function items(s: KnowledgeStatus): Item[] {
           : s.spend.todayUsd >= s.spend.capUsd
             ? 'failed'
             : 'done',
-      title: 'Daily spend cap',
+      title: copy.spend.title,
       detail:
         s.spend.capUsd === null ? (
-          <>
-            No cap: {usd(s.spend.todayUsd)} spent today (estimated). Set{' '}
-            <Code>DEAR_STEVEN_DAILY_BUDGET_USD</Code> before anyone else can reach this.
-          </>
+          <Rich text={copy.spend.none(money(s.spend.todayUsd))} />
         ) : s.spend.todayUsd >= s.spend.capUsd ? (
-          `Resting until midnight UTC: today’s ${usd(s.spend.capUsd)} is spent, so I answer without calling OpenAI.`
+          copy.spend.resting(money(s.spend.capUsd))
         ) : (
-          `${usd(s.spend.todayUsd)} of ${usd(s.spend.capUsd)} spent today (estimated from token use).`
+          copy.spend.within(money(s.spend.todayUsd), money(s.spend.capUsd))
         ),
     },
     {
       key: 'speakers',
       optional: true,
       status: s.diarizedEpisodes > 0 ? 'done' : 'pending',
-      title: 'Verified speakers',
+      title: copy.speakers.title,
       detail:
         s.diarizedEpisodes > 0 ? (
-          `${n(s.diarizedEpisodes)} episodes have speaker labels, so I can say who said what.`
+          copy.speakers.done(s.diarizedEpisodes)
         ) : (
-          <>
-            Optional, paid. Without speaker labels I cite the conversation, never a person. See{' '}
-            <Code>plan/human/transcription-budget.md</Code>.
-          </>
+          <Rich text={copy.speakers.missing} />
         ),
     },
   ];
@@ -136,13 +127,16 @@ function items(s: KnowledgeStatus): Item[] {
 
 /** "What's set up, and what to run next" — the helpful alternative to crashing on missing config. */
 export function SetupDialog({ open, onClose, status, onBrowse }: SetupDialogProps) {
+  const { t, locale } = useI18n();
+  const copy = t.setup;
   return (
-    <Dialog open={open} onClose={onClose} eyebrow="Setup" title="What I have to work with">
+    <Dialog open={open} onClose={onClose} eyebrow={copy.eyebrow} title={copy.title}>
       <ul className="flex flex-col gap-4">
-        {items(status).map((item) => (
+        {items(status, copy, locale).map((item) => (
           <li key={item.key} className="flex gap-3">
             <StatusMark
               status={item.status}
+              statusLabels={copy.marks}
               size={20}
               color="var(--ivory-2)"
               doneColor="var(--ember-0)"
@@ -154,7 +148,7 @@ export function SetupDialog({ open, onClose, status, onBrowse }: SetupDialogProp
               <p className="text-[15px] font-medium text-ivory-0">
                 {item.title}
                 {item.optional ? (
-                  <span className="ml-2 font-mono text-[11px] text-steel">optional</span>
+                  <span className="ml-2 font-mono text-[11px] text-steel">{copy.optional}</span>
                 ) : null}
               </p>
               <p className="mt-0.5 text-[14px] leading-relaxed text-ivory-2">{item.detail}</p>
@@ -168,22 +162,12 @@ export function SetupDialog({ open, onClose, status, onBrowse }: SetupDialogProp
           onClick={onBrowse}
           className="mt-5 inline-flex items-center gap-2 rounded-full border border-ink-3 px-4 py-2 text-[13.5px] text-ivory-0 transition-colors hover:border-ember-0/60 hover:text-ember-1"
         >
-          Browse the {status.episodes.toLocaleString('en-GB')} conversation
-          {status.episodes === 1 ? '' : 's'}
+          {copy.browse(status.episodes)}
         </button>
       ) : null}
       <p className="mt-6 border-t border-ink-3 pt-4 text-[13px] leading-relaxed text-ivory-2">
-        Full instructions: <Code>README.md</Code> and <Code>docs/INGESTION.md</Code>. Nothing you
-        ask is stored.
+        <Rich text={copy.footer} />
       </p>
     </Dialog>
-  );
-}
-
-function Code({ children }: { children: ReactNode }) {
-  return (
-    <code className="rounded bg-ink-3 px-1.5 py-0.5 font-mono text-[12px] text-ivory-1">
-      {children}
-    </code>
   );
 }

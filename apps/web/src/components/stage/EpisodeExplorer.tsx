@@ -5,9 +5,9 @@ import type { EpisodePage, EpisodeSummary } from '@dear-steven/core/schema';
 import { Cancel01Icon, Search01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useId, useRef, useState } from 'react';
-import { brand } from '@/brand';
 import { Dialog } from '@/components/ui/Dialog';
 import { NoVideo, YouTubeLink } from '@/components/ui/YouTubeLink';
+import { useI18n } from '@/i18n/I18nProvider';
 import { fetchEpisodes } from '@/lib/api';
 
 interface EpisodeExplorerProps {
@@ -28,11 +28,13 @@ export function EpisodeExplorer({ open, onClose }: EpisodeExplorerProps) {
   const [loadingMore, setLoadingMore] = useState(false);
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { t } = useI18n();
+  const copy = t.explorer;
 
   useEffect(() => {
     if (!open) return;
     const ctrl = new AbortController();
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       setLoad({ state: 'loading' });
       setMore([]);
       fetchEpisodes(query, 0, ctrl.signal)
@@ -40,7 +42,7 @@ export function EpisodeExplorer({ open, onClose }: EpisodeExplorerProps) {
         .catch(() => !ctrl.signal.aborted && setLoad({ state: 'error' }));
     }, 180);
     return () => {
-      clearTimeout(t);
+      clearTimeout(timer);
       ctrl.abort();
     };
   }, [open, query]);
@@ -59,15 +61,9 @@ export function EpisodeExplorer({ open, onClose }: EpisodeExplorerProps) {
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      eyebrow="Knowledge base"
-      title="The conversations I know"
-      width="lg"
-    >
+    <Dialog open={open} onClose={onClose} eyebrow={copy.eyebrow} title={copy.title} width="lg">
       <label htmlFor={inputId} className="sr-only">
-        Search by guest or title
+        {copy.search}
       </label>
       <div className="flex items-center gap-2 rounded-[var(--radius-field)] border border-ink-3 bg-ink-2 px-4 focus-within:border-ember-0/60">
         <HugeiconsIcon
@@ -82,7 +78,7 @@ export function EpisodeExplorer({ open, onClose }: EpisodeExplorerProps) {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by guest or title"
+          placeholder={copy.search}
           maxLength={100}
           className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-ivory-0 outline-none placeholder:text-ivory-2 [&::-webkit-search-cancel-button]:hidden"
         />
@@ -93,7 +89,7 @@ export function EpisodeExplorer({ open, onClose }: EpisodeExplorerProps) {
               setQuery('');
               inputRef.current?.focus();
             }}
-            aria-label="Clear search"
+            aria-label={copy.clear}
             className="-mr-2 grid h-8 w-8 flex-none place-items-center rounded-full text-ivory-2 transition-colors hover:bg-ink-3 hover:text-ivory-0"
           >
             <HugeiconsIcon icon={Cancel01Icon} size={14} strokeWidth={2} />
@@ -103,22 +99,20 @@ export function EpisodeExplorer({ open, onClose }: EpisodeExplorerProps) {
       <p className="mt-3 font-mono text-[11.5px] text-steel" aria-live="polite">
         {load.state === 'ready'
           ? query.trim()
-            ? `${total.toLocaleString('en-GB')} match${total === 1 ? '' : 'es'}`
-            : `${total.toLocaleString('en-GB')} conversation${total === 1 ? '' : 's'} indexed`
+            ? copy.matches(total)
+            : copy.indexed(total)
           : load.state === 'loading'
-            ? 'Looking…'
+            ? copy.looking
             : ''}
       </p>
 
       {load.state === 'error' ? (
-        <p className="mt-4 text-[14px] text-oxblood-1">I couldn’t load the list just now.</p>
+        <p className="mt-4 text-[14px] text-oxblood-1">{copy.loadError}</p>
       ) : null}
 
       {load.state === 'ready' && shown.length === 0 ? (
         <p className="mt-6 text-[14.5px] leading-relaxed text-ivory-1">
-          {query.trim()
-            ? `No conversation matches “${query.trim()}”.`
-            : brand.copy.empty.noKnowledge}
+          {query.trim() ? copy.noMatch(query.trim()) : t.empty.noKnowledge}
         </p>
       ) : null}
 
@@ -135,9 +129,7 @@ export function EpisodeExplorer({ open, onClose }: EpisodeExplorerProps) {
           disabled={loadingMore}
           className="mt-4 rounded-full border border-ink-3 px-4 py-2 text-[13px] text-ivory-1 transition-colors hover:border-ink-4 hover:text-ivory-0 disabled:opacity-50"
         >
-          {loadingMore
-            ? 'Loading…'
-            : `Show more (${(total - shown.length).toLocaleString('en-GB')} left)`}
+          {loadingMore ? copy.loading : copy.more(total - shown.length)}
         </button>
       ) : null}
     </Dialog>
@@ -145,25 +137,29 @@ export function EpisodeExplorer({ open, onClose }: EpisodeExplorerProps) {
 }
 
 function EpisodeRow({ episode }: { episode: EpisodeSummary }) {
+  const { t, locale } = useI18n();
+  const copy = t.explorer;
   return (
     <li className="flex flex-col gap-1.5 py-4 sm:flex-row sm:items-start sm:gap-5">
       <span className="w-24 flex-none pt-0.5 font-mono text-[11.5px] text-steel">
-        {formatDate(episode.publishedAt)}
+        {formatDate(episode.publishedAt, locale)}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-display text-[17px] leading-snug text-ivory-0">{episode.title}</p>
+        <p lang="en" className="font-display text-[17px] leading-snug text-ivory-0">
+          {episode.title}
+        </p>
         <p className="mt-0.5 text-[13px] text-ivory-2">
-          {episode.guestNames.join(', ') || 'Guest not named'}
+          {episode.guestNames.join(', ') || copy.guestNotNamed}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-[11px]">
-          <span className="text-steel">{episode.passages} passages</span>
+          <span className="text-steel">{copy.passages(episode.passages)}</span>
           {episode.speakers === 'verified' ? (
             <span className="rounded-full bg-ember-tint px-2 py-0.5 text-ember-1">
-              speakers verified
+              {copy.verified}
             </span>
           ) : (
             <span className="rounded-full border border-dashed border-steel/60 px-2 py-0.5 text-steel">
-              speakers not verified
+              {copy.notVerified}
             </span>
           )}
           {episode.youtubeUrl ? (

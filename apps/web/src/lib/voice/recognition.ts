@@ -1,5 +1,7 @@
 'use client';
 
+import { DEFAULT_UI_LOCALE, LOCALE_TAG, type UiLocale } from '@dear-steven/core/copy';
+
 /**
  * A thin wrapper over the Web Speech API (`SpeechRecognition` / `webkitSpeechRecognition`):
  * one utterance per press, interim text while speaking, the final transcript on end.
@@ -52,8 +54,16 @@ function recognitionImpl(): Ctor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-export const recognitionLang = () =>
-  (typeof navigator !== 'undefined' && navigator.language) || 'en-GB';
+/**
+ * The language to listen for: the interface language, in the browser's own regional form when it
+ * matches (so an Austrian browser hears de-AT), else that language's default tag.
+ */
+export function recognitionLang(
+  locale: UiLocale = DEFAULT_UI_LOCALE,
+  browser: string | undefined = typeof navigator === 'undefined' ? undefined : navigator.language,
+): string {
+  return browser?.toLowerCase().split('-')[0] === locale ? browser : LOCALE_TAG[locale];
+}
 
 export type OnDeviceStatus = 'available' | 'downloadable' | 'unavailable';
 

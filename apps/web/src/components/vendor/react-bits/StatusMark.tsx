@@ -3,7 +3,8 @@
  * Component: StatusMark (TS + Tailwind variant), fetched 2026-10-10 from the @react-bits registry.
  * Copyright (c) 2026 David Haz. MIT + Commons Clause License Condition v1.0 — see ./LICENSE.md.
  * Used as part of this application only; these components are not redistributed on their own.
- * Local changes: none.
+ * Local changes: a `statusLabels` prop (the spoken status when there is no visible label) so it
+ * can be localised (P6-02); the default is the original English.
  */
 'use client';
 
@@ -16,6 +17,7 @@ export interface StatusMarkProps {
   status?: StatusMarkStatus;
   progress?: number;
   label?: ReactNode;
+  statusLabels?: Record<StatusMarkStatus, string>;
   color?: string;
   doneColor?: string;
   errorColor?: string;
@@ -53,6 +55,7 @@ const StatusMark: React.FC<StatusMarkProps> = ({
   status = 'pending',
   progress,
   label,
+  statusLabels = TEXT,
   color = 'currentColor',
   doneColor = '#22c55e',
   errorColor = '#ef4444',
@@ -138,7 +141,7 @@ const StatusMark: React.FC<StatusMarkProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, determinate, targetArc, reduce, C, P, spinDuration]);
 
-  const spoken = TEXT[status] + (determinate ? `, ${Math.round(clamp01(progress as number) * 100)}%` : '');
+  const spoken = statusLabels[status] + (determinate ? `, ${Math.round(clamp01(progress as number) * 100)}%` : '');
   const hasLabel = label !== undefined && label !== null;
 
   return (

@@ -21,7 +21,8 @@ Source of truth: `docs/ARCHITECTURE.md` (current) and `plan/12-adr/` (why).
    store and the fake embedder; script the model with an `AnswerModel` fake (see `compose.test.ts`).
 3. A route in `apps/web/src/app/api/*` that validates input, applies `takeToken`, and calls core.
 4. UI: client components under `components/`, state through `lib/stage-machine.ts` /
-   `lib/conversation.ts`, tokens from `docs/DESIGN.md`, copy in `src/brand.ts`.
+   `lib/conversation.ts`, tokens from `docs/DESIGN.md`, copy in `src/i18n/{en,de}.ts` via `useI18n()`
+   (original words marked `lang="en"`).
 5. E2E in `apps/web/e2e/` against demo mode; extend `lib/demo-fixtures.ts` if the UI needs data
    (fixtures stay fictional and labelled).
 6. Docs: update `docs/*` for behaviour, `plan/STATUS.md` for progress — in the same PR.

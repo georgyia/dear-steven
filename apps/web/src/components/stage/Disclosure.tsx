@@ -1,25 +1,29 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { brand } from '@/brand';
+import { useI18n } from '@/i18n/I18nProvider';
 
 const NOTICE_KEY = 'dear-steven:first-visit-notice';
 const NOTICE_VERSION = 'v1';
 
-const TermsLink = () => (
-  <a
-    href="/terms"
-    className="text-ivory-1 underline decoration-ink-4 underline-offset-2 hover:text-ivory-0 hover:decoration-ember-0"
-  >
-    {brand.copy.terms.link}
-  </a>
-);
+function TermsLink() {
+  const { t } = useI18n();
+  return (
+    <a
+      href="/terms"
+      className="text-ivory-1 underline decoration-ink-4 underline-offset-2 hover:text-ivory-0 hover:decoration-ember-0"
+    >
+      {t.terms.link}
+    </a>
+  );
+}
 
 /** The AI-persona disclosure with the terms one click away — under every composer (P6-12). */
 export function Disclosure({ className }: { className?: string }) {
+  const { t } = useI18n();
   return (
     <p className={className}>
-      {brand.disclosure} <TermsLink />
+      {t.disclosure} <TermsLink />
     </p>
   );
 }
@@ -40,6 +44,7 @@ function seen(): boolean {
  */
 export function FirstVisitDisclosure({ className }: { className?: string }) {
   const [show, setShow] = useState(false);
+  const { t } = useI18n();
   useEffect(() => setShow(!seen()), []);
 
   if (!show) return <Disclosure className={className} />;
@@ -53,10 +58,10 @@ export function FirstVisitDisclosure({ className }: { className?: string }) {
   };
   return (
     <section
-      aria-label={brand.copy.terms.noticeLabel}
+      aria-label={t.terms.noticeLabel}
       className="flex max-w-[30rem] flex-col items-center gap-2.5 rounded-[var(--radius-card)] border border-ink-3 bg-ink-1/80 px-4 py-3 text-[12.5px] leading-relaxed text-ivory-1 backdrop-blur"
     >
-      <p>{brand.copy.terms.notice}</p>
+      <p>{t.terms.notice}</p>
       <div className="flex items-center gap-3">
         <TermsLink />
         <button
@@ -64,7 +69,7 @@ export function FirstVisitDisclosure({ className }: { className?: string }) {
           onClick={dismiss}
           className="rounded-full border border-ink-3 px-3 py-1 font-mono text-[11px] text-ivory-0 transition-colors hover:border-ink-4 hover:bg-ink-2"
         >
-          {brand.copy.terms.dismiss}
+          {t.terms.dismiss}
         </button>
       </div>
     </section>

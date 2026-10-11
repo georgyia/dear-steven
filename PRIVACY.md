@@ -18,10 +18,10 @@ The hosting platform a copy runs on may keep its own standard access logs.
 
 ## What stays in your browser
 
-Your voice settings and whether you have seen the first-visit notice are kept in this browser only. If you switch on conversation memory, the conversation is kept in this browser’s storage on this device, until you press Forget or switch it off. If this copy has an access code, a cookie records that you entered it. There are no tracking cookies and no analytics.
+Your voice settings and whether you have seen the first-visit notice are kept in this browser only. If you switch on conversation memory, the conversation is kept in this browser’s storage on this device, until you press Forget or switch it off. If you choose a language, a cookie remembers it so the page opens in that language. If this copy has an access code, a cookie records that you entered it. There are no tracking cookies and no analytics.
 
 ## Questions and requests
 
 TODO (owner): a contact address for takedown and privacy requests will be published here.
 
-Last updated 2026-10-10. This is plain-language text, not legal advice; it has not yet been reviewed by a lawyer.
+Last updated 2026-10-11. This is plain-language text, not legal advice; it has not yet been reviewed by a lawyer.

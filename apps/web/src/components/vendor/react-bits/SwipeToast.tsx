@@ -3,7 +3,8 @@
  * Component: SwipeToast (TS + Tailwind variant), fetched 2026-10-10 from the @react-bits registry.
  * Copyright (c) 2026 David Haz. MIT + Commons Clause License Condition v1.0 — see ./LICENSE.md.
  * Used as part of this application only; these components are not redistributed on their own.
- * Local changes: none.
+ * Local changes: a `closeLabel` prop for the close button so it can be localised (P6-02); the
+ * default is the original English.
  */
 'use client';
 
@@ -36,6 +37,7 @@ export interface SwipeToastProps {
   fuse?: SwipeToastFuse;
   pauseOnHover?: boolean;
   closeButton?: boolean;
+  closeLabel?: string;
   inline?: boolean;
   dismissible?: boolean;
   className?: string;
@@ -95,6 +97,7 @@ const SwipeToast: React.FC<SwipeToastProps> = ({
   fuse = 'bottom',
   pauseOnHover = true,
   closeButton = false,
+  closeLabel = 'Close',
   inline = false,
   dismissible = true,
   className = ''
@@ -375,7 +378,7 @@ const SwipeToast: React.FC<SwipeToastProps> = ({
               <button
                 type="button"
                 className="relative grid h-6 w-6 flex-none cursor-pointer touch-manipulation place-items-center rounded-[5px] border-0 bg-transparent text-inherit outline-none [-webkit-tap-highlight-color:transparent] [font-family:inherit] [transition:transform_160ms_cubic-bezier(0.23,1,0.32,1),background-color_160ms_ease] before:absolute before:-inset-2 before:content-[''] active:[transform:scale(0.97)] motion-reduce:active:[transform:none] [@media(hover:hover)_and_(pointer:fine)]:hover:[background:color-mix(in_srgb,var(--st-ink)_10%,transparent)]"
-                aria-label="Close"
+                aria-label={closeLabel}
                 onClick={() => close('close')}
               >
                 <HugeiconsIcon icon={Cancel01Icon} size={12} strokeWidth={2.5} />

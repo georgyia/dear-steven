@@ -34,12 +34,23 @@ describe('spokenTimestamp', () => {
     expect(spokenTimestamp(3_600_000)).toBe('1 hour');
     expect(spokenTimestamp(0)).toBe('0 seconds');
   });
+
+  it('reads naturally in German (P6-02)', () => {
+    expect(spokenTimestamp(1_934_000, 'de')).toBe('32 Minuten 14 Sekunden');
+    expect(spokenTimestamp(3_661_000, 'de')).toBe('1 Stunde 1 Minute 1 Sekunde');
+  });
 });
 
 describe('formatDate', () => {
   it('formats in UTC', () => {
     expect(formatDate('2026-10-08T23:30:00Z')).toBe('8 Oct 2026');
     expect(formatDate('nope')).toBe('');
+  });
+
+  it('formats German dates the German way (P6-02)', () => {
+    expect(formatDate('2026-10-08T23:30:00Z', 'de')).toBe('8. Okt. 2026');
+    expect(formatDate('2026-03-01T00:00:00Z', 'de')).toBe('1. März 2026');
+    expect(formatDate('2026-09-01T00:00:00Z', 'en')).toBe('1 Sep 2026');
   });
 });
 
