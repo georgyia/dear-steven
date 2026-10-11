@@ -69,6 +69,8 @@ test.describe('in a German browser (P6-02)', () => {
   test('the whole interface is German, and only the original words are English', async ({
     page,
   }, testInfo) => {
+    // A full answer and every dialog.
+    test.slow();
     // Screenshots for the 375 px review (German runs ~30% longer); not committed.
     const shoot = async (name: string, fullPage = false) => {
       if (testInfo.project.name !== 'mobile') return;
