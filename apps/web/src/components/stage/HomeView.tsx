@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { brand } from '@/brand';
+import { FirstVisitDisclosure } from './Disclosure';
 import { HeroWordmark } from './Wordmark';
 
 interface HomeViewProps {
@@ -68,7 +69,7 @@ export function HomeView({ composer, footerStart, footerEnd, onExample }: HomeVi
           {...rise(1.1)}
           className="mt-8 flex max-w-[30rem] flex-col items-center gap-1.5 text-[12px] leading-relaxed text-ivory-2 [text-shadow:0_0_14px_var(--ink-0),0_0_4px_var(--ink-0)]"
         >
-          <p>{brand.disclosure}</p>
+          <FirstVisitDisclosure />
           <p className="hidden font-mono text-[11px] text-steel lg:block">
             ↵ ask · ⇧↵ new line · / to type · [ ] sources
           </p>

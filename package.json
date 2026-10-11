@@ -20,7 +20,8 @@
     "e2e": "pnpm --filter @dear-steven/web e2e",
     "arch": "depcruise --config .dependency-cruiser.cjs packages apps/web/src eval",
     "ingest": "node packages/ingest/src/cli.ts",
-    "eval": "node eval/run.ts"
+    "eval": "node eval/run.ts",
+    "policies": "node scripts/write-policies.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

@@ -101,12 +101,23 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
             Your data
           </h3>
           <p>
-            Questions are sent to the server and to OpenAI to compose an answer, and are not stored.
-            The microphone is only used while you hold or toggle it. Short, attributed quotations
-            link back to the original episodes; full transcripts are never published. The video
-            player and the podcast audio load from YouTube and the podcast’s host only when you
-            press play. Voice settings — and, only if you switch it on, the conversation itself —
-            are kept in this browser only, until you forget them.
+            Questions are sent to the server and to OpenAI to compose an answer, and are not stored
+            unless whoever runs this copy switches on answer logging for evaluation. The microphone
+            is only used while you hold or toggle it. Short, attributed quotations link back to the
+            original episodes; full transcripts are never published. The video player and the
+            podcast audio load from YouTube and the podcast’s host only when you press play. Voice
+            settings — and, only if you switch it on, the conversation itself — are kept in this
+            browser only, until you forget them.
+          </p>
+          <p className="mt-3">
+            The full version, with what is and isn’t promised:{' '}
+            <a
+              href="/terms"
+              className="text-ivory-0 underline decoration-ink-4 underline-offset-2 hover:decoration-ember-0"
+            >
+              {brand.copy.terms.link}
+            </a>
+            .
           </p>
         </section>
       </div>

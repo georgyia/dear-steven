@@ -2,8 +2,8 @@
 
 import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
-import { brand } from '@/brand';
 import GradualBlur from '@/components/vendor/react-bits/GradualBlur';
+import { Disclosure } from './Disclosure';
 
 interface ConversationViewProps {
   header: ReactNode;
@@ -58,9 +58,7 @@ export function ConversationView({
           >
             {composer}
           </motion.div>
-          <p className="mt-2 text-center text-[11.5px] leading-snug text-ivory-2">
-            {brand.disclosure}
-          </p>
+          <Disclosure className="mt-2 text-center text-[11.5px] leading-snug text-ivory-2" />
         </div>
       </div>
     </>
