@@ -87,6 +87,7 @@ describe('conversationReducer', () => {
     s = send(s, {
       type: 'final',
       answer: {
+        language: 'en',
         mode: 'partial',
         blocks: [paragraph([])],
         citations: [],
@@ -123,7 +124,7 @@ describe('citationOrder', () => {
     const order = citationOrder({
       blocks: [
         paragraph(['c2', 'c1']),
-        { kind: 'quote', citationId: 'c3', lead: null, text: 'q' },
+        { kind: 'quote', citationId: 'c3', lead: null, text: 'q', translation: null },
         paragraph(['c1']),
       ],
       citations: { c1: citation('c1'), c2: citation('c2'), c3: citation('c3') },
@@ -142,8 +143,10 @@ describe('historyFor', () => {
   });
 
   it('renders quotes in quotation marks', () => {
-    expect(answerText([{ kind: 'quote', citationId: 'c', lead: null, text: 'Do the work.' }])).toBe(
-      '“Do the work.”',
-    );
+    expect(
+      answerText([
+        { kind: 'quote', citationId: 'c', lead: null, text: 'Do the work.', translation: null },
+      ]),
+    ).toBe('“Do the work.”');
   });
 });

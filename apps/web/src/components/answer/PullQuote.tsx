@@ -2,12 +2,15 @@
 
 import { formatTimestamp } from '@dear-steven/core/format';
 import type { Citation } from '@dear-steven/core/schema';
+import { brand } from '@/brand';
 import { speakerLabel } from './speaker';
 
 interface PullQuoteProps {
   citation: Citation;
   /** The stored transcript span — never model text. */
   text: string;
+  /** Model-written, in the answer's language (P6-01): labelled, and never inside the marks. */
+  translation: string | null;
   lead: string | null;
   active: boolean;
   onOpen: (citationId: string) => void;
@@ -17,7 +20,7 @@ interface PullQuoteProps {
  * The memorable moment: a verbatim line set large in Fraunces italic, with an ember hairline that
  * draws down beside it. The attribution says plainly who said it — or that we don't know.
  */
-export function PullQuote({ citation, text, lead, active, onOpen }: PullQuoteProps) {
+export function PullQuote({ citation, text, translation, lead, active, onOpen }: PullQuoteProps) {
   const who = speakerLabel(citation);
   const attribution =
     citation.speaker === 'unverified'
@@ -51,6 +54,14 @@ export function PullQuote({ citation, text, lead, active, onOpen }: PullQuotePro
           <span className="sr-only">. Open the source.</span>
         </button>
       </blockquote>
+      {translation ? (
+        <p className="mt-3 text-[15px] leading-relaxed text-ivory-1">
+          <span className="mr-2 font-mono text-[11px] tracking-[0.16em] text-steel uppercase">
+            {brand.copy.translation}
+          </span>
+          {translation}
+        </p>
+      ) : null}
       <figcaption className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[12px] text-steel">
         <span className="text-ivory-1">— {attribution}</span>
         <span aria-hidden="true">·</span>

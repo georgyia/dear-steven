@@ -201,6 +201,7 @@ describe('validateBlock — quotes', () => {
         passageId: vtt,
         quote: 'Procrastination is really about avoiding a bad feeling',
         lead: null,
+        translation: null,
       },
       0,
       ctx,
@@ -212,13 +213,20 @@ describe('validateBlock — quotes', () => {
         passageId: vtt,
         quote: 'Discipline beats motivation every single day of the week',
         lead: null,
+        translation: null,
       },
       0,
       ctx,
     );
     expect(bad.violations.map((v) => v.kind)).toEqual(['quote_not_found']);
     const unknown = validateBlock(
-      { kind: 'quote', passageId: 'p77', quote: 'Anything at all goes here', lead: null },
+      {
+        kind: 'quote',
+        passageId: 'p77',
+        quote: 'Anything at all goes here',
+        lead: null,
+        translation: null,
+      },
       0,
       ctx,
     );
@@ -244,7 +252,7 @@ describe('downgradeBlock', () => {
 
   it('drops a quote that could not be matched', () => {
     const { block, notes } = downgradeBlock(
-      { kind: 'quote', passageId: 'p1', quote: 'x', lead: null },
+      { kind: 'quote', passageId: 'p1', quote: 'x', lead: null, translation: null },
       [{ blockIndex: 0, segmentIndex: null, kind: 'quote_not_found', message: '' }],
     );
     expect(block).toBe(null);

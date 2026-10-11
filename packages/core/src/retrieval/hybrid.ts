@@ -8,6 +8,8 @@ export interface RetrievalOptions {
   rrfK: number;
   perEpisode: number;
   take: number;
+  /** More texts to search by meaning alongside the query — the question in its own language. */
+  alsoSemantic?: string[];
 }
 
 export const DEFAULT_RETRIEVAL: RetrievalOptions = {
@@ -49,9 +51,11 @@ export async function hybridSearch(
   lists.push({ source: 'keyword', hits: keyword });
 
   if (embedder && store.hasEmbeddings()) {
-    const [vector] = await embedder.embed([query], signal);
-    if (vector)
+    // The question in its own language too (P6-01): meaning survives where a translation slips.
+    const texts = [query, ...(opts.alsoSemantic ?? []).filter((t) => t && t !== query)];
+    for (const vector of await embedder.embed(texts, signal)) {
       lists.push({ source: 'semantic', hits: store.vectorSearch(vector, opts.candidates) });
+    }
   }
 
   const picked = diversify(reciprocalRankFusion(lists, opts.rrfK), opts.perEpisode, opts.take);

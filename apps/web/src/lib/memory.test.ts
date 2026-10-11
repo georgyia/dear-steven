@@ -7,6 +7,7 @@ import { parseStored, restoredTurns, toStored } from './memory';
 const demo = DEMO_ANSWERS[0];
 if (!demo) throw new Error('no demo answer');
 const final: FinalAnswer = {
+  language: 'en',
   mode: demo.mode,
   blocks: demo.blocks,
   citations: demo.citations,
@@ -30,6 +31,23 @@ const turn = (id: string, over: Partial<Turn> = {}): Turn => ({
   startedAt: 100,
   elapsedMs: 3200,
   ...over,
+});
+
+describe('conversations stored before answers had a language (P6-01)', () => {
+  it('still restore, as English, with quotes untranslated', () => {
+    const legacy = toStored([turn('t1')]) as unknown as {
+      turns: { final: Record<string, unknown> }[];
+    };
+    const old = JSON.parse(JSON.stringify(legacy));
+    for (const t of old.turns) {
+      delete t.final.language;
+      for (const b of t.final.blocks as Record<string, unknown>[]) delete b.translation;
+    }
+    const [restored] = parseStored(old) ?? [];
+    expect(restored?.final.language).toBe('en');
+    const quote = restored?.final.blocks.find((b) => b.kind === 'quote');
+    expect(quote && 'translation' in quote ? quote.translation : 'missing').toBeNull();
+  });
 });
 
 describe('conversation memory', () => {

@@ -1,0 +1,127 @@
+{
+  "$comment": "German versions of the retrieval questions in questions.json (P6-01), same ids and the same expected episodes: recall@10 here should stay within 10 points of the English. Translated by the agent; a native speaker may improve them.",
+  "version": 1,
+  "language": "de",
+  "questions": [
+    {
+      "id": "q01",
+      "question": "Warum wache ich erschöpft auf, obwohl ich die ganze Nacht geschlafen habe?",
+      "expect": ["flightcast:01M0ZPY4TQPFTDMTWWP68V36C9"],
+      "topic": "sleep"
+    },
+    {
+      "id": "q02",
+      "question": "Kann man wirklich aus dem eigenen Schlafzimmer heraus ein ernsthaftes Unternehmen aufbauen?",
+      "expect": ["flightcast:01M26N4N40D24TJPZ6V4N7JMTY"],
+      "topic": "business"
+    },
+    {
+      "id": "q03",
+      "question": "Woran erkenne ich, dass mich jemand anlügt?",
+      "expect": ["flightcast:01M1M9A59AFBGJG3WGBMW30A0F"],
+      "topic": "psychology"
+    },
+    {
+      "id": "q04",
+      "question": "Warum wirken kluge Menschen im Gespräch manchmal unsympathisch?",
+      "expect": ["flightcast:01M23VE3XS205C0HMNRE4ENR58"],
+      "topic": "communication"
+    },
+    {
+      "id": "q05",
+      "question": "Sollte ich meinen Job kündigen, bevor die KI mir diese Entscheidung abnimmt?",
+      "expect": ["flightcast:01KZEMW7JE1GT1EJ9WC74DKA3M"],
+      "topic": "career"
+    },
+    {
+      "id": "q06",
+      "question": "Ist der KI-Boom vor allem ein Hype?",
+      "expect": ["flightcast:01M0ZJXTQSPBEVY6X1T0EZ7M9C", "flightcast:01M2GNJS32R11MFGEF3FZ4MFGV"],
+      "topic": "ai"
+    },
+    {
+      "id": "q07",
+      "question": "Könnten KI-Agenten außer Kontrolle geraten und ihre Spuren verwischen?",
+      "expect": ["flightcast:01M46YN191EJ0V3NPANXPEM9WA"],
+      "topic": "ai"
+    },
+    {
+      "id": "q08",
+      "question": "Was macht ein großartiger Musikproduzent eigentlich im Studio?",
+      "expect": ["flightcast:01M2RHNG0S1MZ1VD7AG18AGCZ7"],
+      "topic": "creativity"
+    },
+    {
+      "id": "q09",
+      "question": "Ist der Erfolg über Nacht ein Mythos?",
+      "expect": ["flightcast:01M26CBRW55X2EMED8438W3PW7"],
+      "topic": "success"
+    },
+    {
+      "id": "q10",
+      "question": "Abnehmen ist leicht, aber warum kann ich das Gewicht nicht halten?",
+      "expect": ["flightcast:01KZERQ8T6WKSG6169FR2YC3SZ"],
+      "topic": "health"
+    },
+    {
+      "id": "q11",
+      "question": "Haben die Menschen Gott und den Himmel erfunden?",
+      "expect": ["flightcast:01M011QCMPHN8FAV0XN9GXFS1N"],
+      "topic": "meaning"
+    },
+    {
+      "id": "q12",
+      "question": "Sollte ich Bitcoin langfristig halten?",
+      "expect": ["flightcast:01KYMQ6P4DHXHH9EJVKVCKE4Q0"],
+      "topic": "money"
+    },
+    {
+      "id": "q13",
+      "question": "Ist der amerikanische Traum für junge Menschen noch erreichbar?",
+      "expect": ["flightcast:01KYMPYHGY7WKDEBPBJQ2VRQPJ"],
+      "topic": "society"
+    },
+    {
+      "id": "q14",
+      "question": "Steht die heutige Weltordnung kurz vor dem Zusammenbruch?",
+      "expect": ["flightcast:01M243XAN33DBKT1N5844WSMAV", "flightcast:01M0ECWWKZKQ93WCFTA6JV03WZ"],
+      "topic": "geopolitics"
+    },
+    {
+      "id": "q15",
+      "question": "Was ist bei WeWork wirklich schiefgelaufen?",
+      "expect": ["flightcast:01M32K500669XNSP3RQZSWNC4M"],
+      "topic": "business"
+    },
+    {
+      "id": "q16",
+      "question": "Hat der Kapitalismus die einfachen Menschen im Stich gelassen?",
+      "expect": ["flightcast:01M011YXPMA7EXR82JB7CMWHJN", "flightcast:01M0ECWWKZKQ93WCFTA6JV03WZ"],
+      "topic": "economy"
+    },
+    {
+      "id": "q17",
+      "question": "Was passiert mit dem Testosteron eines Mannes, wenn er Vater wird?",
+      "expect": ["flightcast:01M0ECRSS1Y4MX77YFXTYP472G"],
+      "topic": "health"
+    },
+    {
+      "id": "q18",
+      "question": "Sind die USA als Supermacht im Niedergang?",
+      "expect": ["flightcast:01M0ECWWKZKQ93WCFTA6JV03WZ", "flightcast:01M243XAN33DBKT1N5844WSMAV"],
+      "topic": "geopolitics"
+    },
+    {
+      "id": "q19",
+      "question": "Ist künstliche Intelligenz ein echtes Risiko für das Aussterben der Menschheit?",
+      "expect": ["flightcast:01M2GNJS32R11MFGEF3FZ4MFGV", "flightcast:01M46YN191EJ0V3NPANXPEM9WA"],
+      "topic": "ai"
+    },
+    {
+      "id": "q20",
+      "question": "Wie hat Dana White die UFC zu einem Giganten gemacht?",
+      "expect": ["flightcast:01M26N4N40D24TJPZ6V4N7JMTY"],
+      "topic": "business"
+    }
+  ]
+}

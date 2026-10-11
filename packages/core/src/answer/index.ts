@@ -16,7 +16,7 @@ export {
   emptyKnowledgeAnswer,
   restingAnswer,
 } from './compose.ts';
-export { condenseQuery } from './condense.ts';
+export { searchQuery } from './condense.ts';
 export { type AnswerContext, buildContext, renderSources, type SourcePassage } from './context.ts';
 export {
   type AnswerModel,

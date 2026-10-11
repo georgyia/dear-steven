@@ -50,6 +50,7 @@ function Block({
       <PullQuote
         citation={citation}
         text={block.text}
+        translation={block.translation}
         lead={block.lead}
         active={activeCitationId === citation.id}
         onOpen={onOpenCitation}

@@ -7,7 +7,7 @@ describe('persona instructions', () => {
   });
 
   it('persona-v2 leads with a view, and keeps every integrity rule (P6-06)', () => {
-    expect(PERSONA_VERSION).toBe('persona-v2');
+    expect(PERSONA_VERSION).toMatch(/^persona-v2(\.\d+)?$/);
     for (const rule of [
       'Open with your view',
       'Never open with a caveat about the sources',

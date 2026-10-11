@@ -235,6 +235,7 @@ const procrastination: DemoAnswer = {
       citationId: 'c2',
       lead: 'The line from that conversation that stayed with me:',
       text: 'you don’t procrastinate on the work. You procrastinate on the feeling the work gives you.',
+      translation: null,
     },
     {
       kind: 'paragraph',
@@ -302,6 +303,7 @@ const discipline: DemoAnswer = {
       citationId: 'c1',
       lead: null,
       text: passages.systems.text,
+      translation: null,
     },
     {
       kind: 'takeaway',

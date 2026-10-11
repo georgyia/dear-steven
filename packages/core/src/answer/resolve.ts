@@ -116,7 +116,13 @@ export function resolveBlock(
     const q = registry.forQuote(block.passageId, block.quote);
     if (!q) return null;
     return {
-      block: { kind: 'quote', citationId: q.citation.id, lead: block.lead, text: q.text },
+      block: {
+        kind: 'quote',
+        citationId: q.citation.id,
+        lead: block.lead,
+        text: q.text,
+        translation: block.translation?.trim().slice(0, 600) || null,
+      },
       citations: [q.citation],
     };
   }

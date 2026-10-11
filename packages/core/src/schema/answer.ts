@@ -33,8 +33,11 @@ export const ModelParagraphSchema = z.object({
 export const ModelQuoteSchema = z.object({
   kind: z.literal('quote'),
   passageId: z.string(),
+  /** Word for word from the passage, in English — the only text the validator checks. */
   quote: z.string(),
   lead: z.string().nullable(),
+  /** The quote in the answer's language, when that isn't English (P6-01); shown as a translation. */
+  translation: z.string().nullable(),
 });
 
 export const ModelTakeawaySchema = z.object({
@@ -49,6 +52,8 @@ export const ModelBlockSchema = z.discriminatedUnion('kind', [
 ]);
 
 export const ModelAnswerSchema = z.object({
+  /** ISO 639-1 code of the language the answer is written in (the question's). */
+  language: z.string(),
   mode: AnswerModeSchema,
   blocks: z.array(ModelBlockSchema),
   evidence: z.array(z.object({ passageId: z.string(), why: z.string() })),
@@ -120,13 +125,18 @@ export const ResolvedBlockSchema = z.discriminatedUnion('kind', [
     kind: z.literal('quote'),
     citationId: z.string(),
     lead: z.string().nullable(),
+    /** The stored transcript span, always English. */
     text: z.string(),
+    /** Model-written translation into the answer's language; never shown inside the quote marks. */
+    translation: z.string().nullable().default(null),
   }),
   z.object({ kind: z.literal('takeaway'), segments: z.array(ResolvedSegmentSchema) }),
 ]);
 export type ResolvedBlock = z.infer<typeof ResolvedBlockSchema>;
 
 export const FinalAnswerSchema = z.object({
+  /** The answer's language (P6-01). Answers stored before it existed were English. */
+  language: z.string().default('en'),
   mode: AnswerModeSchema,
   blocks: z.array(ResolvedBlockSchema),
   citations: z.array(CitationSchema),

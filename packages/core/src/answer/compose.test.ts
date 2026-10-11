@@ -60,6 +60,7 @@ const store1 = () => {
 
 /** Passage short ids are assigned by retrieval rank; with one episode the top passage is p1. */
 const good: ModelAnswer = {
+  language: 'en',
   mode: 'grounded',
   blocks: [
     {
@@ -78,6 +79,7 @@ const good: ModelAnswer = {
       passageId: 'p1',
       quote: 'procrastination is an emotion regulation problem, not a time management problem',
       lead: 'The line that stayed with me:',
+      translation: null,
     },
     {
       kind: 'takeaway',
@@ -223,6 +225,7 @@ describe('composeAnswer — validation, repair and downgrade', () => {
           passageId: 'p1',
           quote: 'Discipline is the bridge between goals and accomplishment, always.',
           lead: null,
+          translation: null,
         },
       ],
     };
