@@ -1,23 +1,30 @@
-import { MODELS, PRICES } from '@dear-steven/core/models';
-import { embeddingInput, openAIEmbedder } from '@dear-steven/core/openai';
+import { MODELS } from '@dear-steven/core/models';
+import { embeddingEstimate, embeddingInput, openAIEmbedder } from '@dear-steven/core/openai';
 import type { Context } from '../context.ts';
 import { c, progress, usd } from '../lib/output.ts';
 
 const BATCH = 128;
 
-/** Stage 6: embed every passage that lacks a current embedding. `--dry-run` prints the cost first. */
-export async function index(ctx: Context, opts: { dryRun: boolean }) {
-  const pending = ctx.store.countNeedingEmbedding(MODELS.embedding);
-  const prefixTokens = pending.passages * 30;
-  const cost = ((pending.tokens + prefixTokens) / 1_000_000) * PRICES.embeddingPerMillionTokens;
+/**
+ * Stage 6: embed every passage that lacks a current embedding. `--dry-run` prints the cost first;
+ * with `--budget`, nothing is embedded if the estimate is over it.
+ */
+export async function index(ctx: Context, opts: { dryRun: boolean; budget?: number }) {
+  const estimate = embeddingEstimate(ctx.store.countNeedingEmbedding(MODELS.embedding));
+  const cost = estimate.usd;
   console.log(
-    `${pending.passages.toLocaleString('en-GB')} passages need embeddings · ~${(pending.tokens + prefixTokens).toLocaleString('en-GB')} tokens · ~${usd(cost)} with ${MODELS.embedding}`,
+    `${estimate.passages.toLocaleString('en-GB')} passages need embeddings · ~${estimate.tokens.toLocaleString('en-GB')} tokens · ~${usd(cost)} with ${MODELS.embedding}`,
   );
-  if (opts.dryRun || pending.passages === 0) return;
+  if (opts.dryRun || estimate.passages === 0) return;
+  if (opts.budget !== undefined && cost > opts.budget) {
+    throw new Error(
+      `~${usd(cost)} is over the --budget of ${usd(opts.budget)}; nothing was embedded.`,
+    );
+  }
 
   const embedder = openAIEmbedder(ctx.openai());
   const run = ctx.store.startRun(null, 'index', { model: MODELS.embedding });
-  const bar = progress(Math.ceil(pending.passages / BATCH), 'embedding batches');
+  const bar = progress(Math.ceil(estimate.passages / BATCH), 'embedding batches');
   let embedded = 0;
   try {
     for (;;) {

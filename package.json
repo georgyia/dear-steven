@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "pnpm --filter @dear-steven/web dev",
+    "dev:setup": "node scripts/dev-setup.ts",
     "build": "pnpm --filter @dear-steven/web build",
     "start": "pnpm --filter @dear-steven/web start",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm arch",

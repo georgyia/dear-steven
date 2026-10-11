@@ -124,6 +124,15 @@ export const en = {
       `Your key works, but it can’t use ${model}, which I answer with.`,
     keyChecks: 'That’s a lot of key checks. Wait a minute, then try again.',
     keyForced: 'This copy runs in demo mode on purpose, so it doesn’t use a key.',
+    setupKeysInvalid:
+      'One of those doesn’t look like a key: OpenAI keys start with “sk-”, and a cap is a number of dollars.',
+    setupWriteFailed: 'I couldn’t write the env file. Check it isn’t read-only, then try again.',
+    setupBadStage: 'That isn’t a step I can run from here.',
+    setupBusy: 'Another step is still running. Wait for it to finish.',
+    setupNeedsOpenAI: 'Save an OpenAI key first: embedding runs on it.',
+    setupNeedsYouTube: 'Save a YouTube key first: linking videos runs on it.',
+    setupOverBudget: (estimate: string, cap: string) =>
+      `Embedding would cost about ${estimate}, over your ${cap} limit. Nothing was spent.`,
     shareSlow: 'That’s a lot of shared links at once. Wait a moment, then open it again.',
     shareGone:
       'The conversation that answer quoted is no longer in my knowledge base, so I won’t show it.',
@@ -322,6 +331,49 @@ export const en = {
         `Resting until midnight UTC: today’s ${cap} is spent, so I answer without calling OpenAI.`,
       within: (today: string, cap: string) =>
         `${today} of ${cap} spent today (estimated from token use).`,
+    },
+    guided: {
+      title: 'Set up this machine',
+      intro:
+        'Started with `pnpm dev:setup`, so this panel can save your keys and build the knowledge base. It works only on this machine, and only until the server stops.',
+      keysHeading: 'Keys',
+      openai: 'OpenAI API key',
+      youtube: 'YouTube Data API key',
+      budget: 'Daily cap on answer spend, in dollars',
+      saved: 'Saved — leave empty to keep',
+      notSaved: 'Not saved yet',
+      save: (file: string) => `Save to ${file}`,
+      saving: 'Saving…',
+      savedNote: (file: string) =>
+        `Saved to ${file}. Keys are never shown again, here or anywhere.`,
+      buildHeading: 'Knowledge base',
+      newest: 'Newest episodes to add',
+      build: 'Fetch transcripts',
+      buildNote: 'Free: the podcast’s own transcripts from its RSS feed, split into passages.',
+      embedHeading: 'Semantic search',
+      estimate: (passages: number, cost: string) =>
+        `${s(passages, 'passage', 'passages')} waiting · about ${cost} with OpenAI.`,
+      nothingToEmbed: 'Nothing waiting to be embedded.',
+      cap: 'Spend at most, in dollars',
+      embed: (cost: string) => `Embed for about ${cost}`,
+      needsOpenAI: 'Save an OpenAI key first.',
+      youtubeHeading: 'YouTube moments',
+      link: 'Link videos',
+      linkNote: 'Free within YouTube’s daily quota.',
+      needsYouTube: 'Save a YouTube key first.',
+      stages: {
+        discover: 'Reading the feed',
+        transcribe: 'Fetching transcripts',
+        chunk: 'Splitting into passages',
+        index: 'Embedding',
+        'match-youtube': 'Linking videos',
+      },
+      progress: 'Progress',
+      running: (stage: string) => `${stage}…`,
+      failed: (stage: string) =>
+        `${stage} stopped with an error (see the progress). Every step can be run again.`,
+      finished: 'Done.',
+      spent: (cost: string) => `${cost} recorded by paid steps so far.`,
     },
     speakers: {
       title: 'Verified speakers',

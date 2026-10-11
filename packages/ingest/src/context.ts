@@ -13,10 +13,13 @@ export interface Context {
   dataDir: string;
 }
 
-/** Loads `.env` from the repo root (Node's built-in loader; shell variables win), then opens the store. */
+/**
+ * Loads the env file (`.env` at the repo root, or `DEAR_STEVEN_ENV_FILE`) with Node's built-in loader —
+ * shell variables win — then opens the store.
+ */
 export function createContext(): Context {
   const root = findRepoRoot();
-  const envFile = join(root, '.env');
+  const { envFile } = readConfig(process.env, root);
   if (existsSync(envFile)) {
     const before = { ...process.env };
     process.loadEnvFile(envFile);

@@ -15,6 +15,11 @@ pnpm ingest all --limit 20     # discover → RSS transcripts → chunk → embe
 pnpm ingest status             # what's indexed, what failed, what to run next
 ```
 
+Or from the browser: `pnpm dev:setup` starts the app on this machine only and prints a link with
+a one-time token. Its setup panel saves the keys to `.env`, fetches transcripts (discover →
+transcribe → chunk), embeds after showing the estimate and asking for a cap, and links videos —
+running these same commands, with their output as they go. Paid diarization stays here.
+
 Measured on 2026-10-10: discovering the feed (739 full episodes) and indexing the newest 20 RSS
 transcripts (1,621 passages) takes about 10 seconds; embedding them costs about $0.015.
 
@@ -37,7 +42,7 @@ transcripts (1,621 passages) takes about 10 seconds; embedding them costs about 
 | `transcribe --diarize --budget <usd> --host-clip <file> …` | Download audio (cached in `data/cache/audio/`), split into ≤ 1,380 s mono chunks with ffmpeg, diarize each with the host clip enrolled as "Steven". Stops before an episode would exceed the budget; records the cost per run. | key, ffmpeg, a 2–10 s clip of the host (`plan/human/host-voice-clip.md`) |
 | `attribute` | QA report for diarized episodes: host share, guest count, flags (enrolment failure, multi-guest panels). | — |
 | `chunk [--force] [--episode <ref>]` | Speaker-turn-aware passages of ~350–500 tokens with a short overlap, plus a deterministic context prefix (`title · guests · date`). Keyword search works from here. | — |
-| `index [--dry-run]` | Embed passages lacking a current embedding (`text-embedding-3-small`, 1,536 dims) in batches of 128. `--dry-run` prints tokens and cost. | key |
+| `index [--dry-run] [--budget <usd>]` | Embed passages lacking a current embedding (`text-embedding-3-small`, 1,536 dims) in batches of 128. `--dry-run` prints tokens and cost; with `--budget`, nothing is embedded if the estimate is over it. | key |
 | `status [--episodes]` | Counts per stage, recent failures, recorded spend, the next command. | — |
 | `doctor [--online]` | Checks Node, keys, ffmpeg, SQLite + sqlite-vec, the feed. | — |
 | `align <episode> [--video <id>] [--offset <s>] [--exact \| --unknown]` | Hand-correct a video link or its timing. | — |

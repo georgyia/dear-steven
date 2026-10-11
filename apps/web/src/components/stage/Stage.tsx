@@ -1,7 +1,7 @@
 'use client';
 
 import { LIMITS } from '@dear-steven/core/limits';
-import type { AskErrorCode, KnowledgeStatus } from '@dear-steven/core/schema';
+import type { AskErrorCode, KnowledgeStatus, SetupState } from '@dear-steven/core/schema';
 import { InformationCircleIcon, VoiceIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { LayoutGroup, MotionConfig } from 'motion/react';
@@ -22,6 +22,7 @@ import {
 } from '@/lib/conversation';
 import { isTypingTarget, useKeydown } from '@/lib/hooks';
 import { restoredTurns } from '@/lib/memory';
+import { fetchSetup, forgetSetupToken, takeSetupToken } from '@/lib/setup';
 import { sharedToken } from '@/lib/share';
 import {
   ambientLevel,
@@ -78,6 +79,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const [draft, setDraft] = useState('');
   const [drawer, setDrawer] = useState<{ turnId: string; citationId: string } | null>(null);
   const [dialog, setDialog] = useState<'setup' | 'about' | 'episodes' | 'voice' | null>(null);
+  const [guided, setGuided] = useState<{ token: string; state: SetupState } | null>(null);
   const { prefs, update: updatePrefs, persisted } = useVoicePreferences();
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
@@ -201,6 +203,28 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     window.addEventListener('hashchange', open);
     return () => window.removeEventListener('hashchange', open);
   }, [memory.loaded, toast]);
+
+  // Guided setup (P6-04): the link `pnpm dev:setup` printed opens the setup panel with it. A token the
+  // server doesn't accept (a restarted server, a production one) is forgotten without a word. Taken
+  // once per mount: the fragment is gone by the time an effect runs again.
+  const setupLink = useRef<ReturnType<typeof takeSetupToken> | undefined>(undefined);
+  useEffect(() => {
+    if (setupLink.current === undefined) setupLink.current = takeSetupToken();
+    const taken = setupLink.current;
+    if (!taken) return;
+    const ctrl = new AbortController();
+    fetchSetup(taken.token, ctrl.signal)
+      .then((state) => {
+        if (!state) {
+          forgetSetupToken();
+          return;
+        }
+        setGuided({ token: taken.token, state });
+        if (taken.fromLink) setDialog('setup');
+      })
+      .catch(() => undefined);
+    return () => ctrl.abort();
+  }, []);
 
   const ask = useCallback<Ask>(async (raw, options = {}) => {
     const question = raw.trim().slice(0, LIMITS.questionChars);
@@ -490,6 +514,12 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
         status={status}
         onBrowse={() => setDialog('episodes')}
         onKeyChange={() => void refreshStatus()}
+        guided={
+          guided && {
+            ...guided,
+            onState: (state) => setGuided((current) => current && { ...current, state }),
+          }
+        }
       />
       <EpisodeExplorer open={dialog === 'episodes'} onClose={() => setDialog(null)} />
       <AboutDialog open={dialog === 'about'} onClose={() => setDialog(null)} />

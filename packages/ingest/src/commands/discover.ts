@@ -13,7 +13,7 @@ export interface DiscoverOptions {
 export async function discover(ctx: Context, opts: DiscoverOptions) {
   const run = ctx.store.startRun(null, 'discover');
   try {
-    const url = opts.feed ?? (await resolveFeedUrl());
+    const url = opts.feed ?? ctx.config.feedUrl ?? (await resolveFeedUrl());
     console.log(c.dim(`Feed: ${url}`));
     const all = parseFeed(await fetchFeed(url));
     const episodes = opts.includeBonus ? all : all.filter((e) => e.episodeType === 'full');

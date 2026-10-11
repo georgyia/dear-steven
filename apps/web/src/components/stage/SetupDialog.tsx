@@ -1,13 +1,15 @@
 'use client';
 
-import { LOCALE_TAG, type UiLocale } from '@dear-steven/core/copy';
-import type { KnowledgeStatus } from '@dear-steven/core/schema';
+import type { UiLocale } from '@dear-steven/core/copy';
+import type { KnowledgeStatus, SetupState } from '@dear-steven/core/schema';
 import type { ReactNode } from 'react';
 import { Dialog } from '@/components/ui/Dialog';
 import { Rich } from '@/components/ui/Rich';
 import StatusMark, { type StatusMarkStatus } from '@/components/vendor/react-bits/StatusMark';
 import type { Messages } from '@/i18n';
 import { useI18n } from '@/i18n/I18nProvider';
+import { usd } from '@/lib/money';
+import { GuidedSetup } from './GuidedSetup';
 import { OwnKey } from './OwnKey';
 
 interface SetupDialogProps {
@@ -18,6 +20,8 @@ interface SetupDialogProps {
   onBrowse: () => void;
   /** The visitor saved or forgot their own key: ask the server for the status again. */
   onKeyChange: () => void;
+  /** Set when `pnpm dev:setup` started this server and the page holds its token (P6-04). */
+  guided?: { token: string; state: SetupState; onState: (state: SetupState) => void } | null;
 }
 
 interface Item {
@@ -29,11 +33,6 @@ interface Item {
   action?: ReactNode;
   optional?: boolean;
 }
-
-const usd = (x: number, locale: UiLocale) => {
-  const digits = x < 1 ? 3 : 2;
-  return `$${x.toLocaleString(LOCALE_TAG[locale], { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
-};
 
 function items(
   s: KnowledgeStatus,
@@ -137,7 +136,14 @@ function items(
 }
 
 /** "What's set up, and what to run next" — the helpful alternative to crashing on missing config. */
-export function SetupDialog({ open, onClose, status, onBrowse, onKeyChange }: SetupDialogProps) {
+export function SetupDialog({
+  open,
+  onClose,
+  status,
+  onBrowse,
+  onKeyChange,
+  guided,
+}: SetupDialogProps) {
   const { t, locale } = useI18n();
   const copy = t.setup;
   return (
@@ -179,6 +185,7 @@ export function SetupDialog({ open, onClose, status, onBrowse, onKeyChange }: Se
           {copy.browse(status.episodes)}
         </button>
       ) : null}
+      {guided ? <GuidedSetup {...guided} onProgress={onKeyChange} /> : null}
       <p className="mt-6 border-t border-ink-3 pt-4 text-[13px] leading-relaxed text-ivory-2">
         <Rich text={copy.footer} />
       </p>

@@ -1,14 +1,15 @@
 import type { AskEvent } from '@dear-steven/core/schema';
 
 /**
- * Incremental parser for the `data: <json>\n\n` frames sent by `/api/ask`. Fed raw text chunks
- * in whatever sizes the network delivers them; returns every complete event so far.
+ * Incremental parser for the `data: <json>\n\n` frames sent by `/api/ask` and `/api/setup/run`.
+ * Fed raw text chunks in whatever sizes the network delivers them; returns every complete event so
+ * far.
  */
-export function createSseParser() {
+export function createSseParser<T extends { type: string } = AskEvent>() {
   let buffer = '';
-  return (chunk: string): AskEvent[] => {
+  return (chunk: string): T[] => {
     buffer += chunk.replace(/\r\n/g, '\n');
-    const events: AskEvent[] = [];
+    const events: T[] = [];
     let boundary = buffer.indexOf('\n\n');
     while (boundary !== -1) {
       const frame = buffer.slice(0, boundary);
@@ -19,7 +20,7 @@ export function createSseParser() {
         .map((line) => line.slice(5).trimStart())
         .join('\n');
       if (data) {
-        const parsed = safeParse(data);
+        const parsed = safeParse<T>(data);
         if (parsed) events.push(parsed);
       }
       boundary = buffer.indexOf('\n\n');
@@ -28,7 +29,7 @@ export function createSseParser() {
   };
 }
 
-function safeParse(data: string): AskEvent | null {
+function safeParse<T>(data: string): T | null {
   try {
     const value: unknown = JSON.parse(data);
     if (
@@ -36,7 +37,7 @@ function safeParse(data: string): AskEvent | null {
       typeof value === 'object' &&
       typeof (value as { type?: unknown }).type === 'string'
     ) {
-      return value as AskEvent;
+      return value as T;
     }
   } catch {
     // A malformed frame is dropped; the stream continues.
@@ -45,10 +46,12 @@ function safeParse(data: string): AskEvent | null {
 }
 
 /** Reads an SSE response body as a stream of events. */
-export async function* readEvents(body: ReadableStream<Uint8Array>): AsyncGenerator<AskEvent> {
+export async function* readEvents<T extends { type: string } = AskEvent>(
+  body: ReadableStream<Uint8Array>,
+): AsyncGenerator<T> {
   const reader = body.getReader();
   const decoder = new TextDecoder();
-  const parse = createSseParser();
+  const parse = createSseParser<T>();
   try {
     for (;;) {
       const { value, done } = await reader.read();
