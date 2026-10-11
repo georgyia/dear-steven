@@ -25,6 +25,8 @@ export interface Turn {
   error: { code: AskErrorCode | 'network'; message: string } | null;
   startedAt: number;
   elapsedMs: number | null;
+  /** Opened from a share link (P6-17) rather than asked here. */
+  shared?: true;
 }
 
 export interface ConversationState {
@@ -38,7 +40,9 @@ export type ConversationAction =
   | { type: 'turn.failed'; id: string; code: AskErrorCode | 'network'; message: string; at: number }
   | { type: 'reset' }
   /** A remembered conversation (P5-11). Ignored once the user has started a new one. */
-  | { type: 'restore'; turns: Turn[] };
+  | { type: 'restore'; turns: Turn[] }
+  /** A finished turn from outside the conversation: a share link (P6-17). */
+  | { type: 'append'; turn: Turn };
 
 export const initialConversation: ConversationState = { turns: [] };
 
@@ -105,6 +109,8 @@ export function conversationReducer(
       return initialConversation;
     case 'restore':
       return state.turns.length === 0 ? { turns: action.turns } : state;
+    case 'append':
+      return { turns: [...state.turns, action.turn] };
     case 'turn.start':
       return {
         turns: [

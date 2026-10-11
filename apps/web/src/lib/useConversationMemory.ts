@@ -66,6 +66,8 @@ export function useConversationMemory(
   }, []);
 
   return {
+    /** Whether a remembered conversation has been looked for (and restored, if there was one). */
+    loaded,
     remember,
     supported,
     saveFailed,

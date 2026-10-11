@@ -127,6 +127,11 @@ export const de: Messages = {
     keyChecks:
       'Das waren viele Schlüsselprüfungen. Warte eine Minute und versuch es dann noch einmal.',
     keyForced: 'Diese Kopie läuft absichtlich im Demo-Modus und nutzt keinen Schlüssel.',
+    shareSlow:
+      'Gerade werden sehr viele geteilte Links geöffnet. Warte kurz und öffne ihn dann noch einmal.',
+    shareGone:
+      'Das Gespräch, aus dem diese Antwort zitiert, ist nicht mehr in meiner Wissensbasis, deshalb zeige ich sie nicht.',
+    shareBroken: `Dieser Link wurde verändert, gekürzt oder von einer anderen Kopie von ${brand.name} erstellt, deshalb öffne ich ihn nicht.`,
   },
   voiceErrors: {
     noSpeech: 'Das habe ich nicht verstanden.',
@@ -148,6 +153,22 @@ export const de: Messages = {
     stopped: 'Du hast mich unterbrochen. Frag jederzeit noch einmal.',
     retry: 'Noch einmal versuchen',
     complete: 'Antwort fertig.',
+  },
+  share: {
+    tag: 'Mit dir geteilt',
+    copyLink: 'Link kopieren',
+    copied: 'Link kopiert',
+    copiedBody: 'Er öffnet diese Antwort mit allen Quellen, Wort für Wort.',
+    saveImage: 'Bild speichern',
+    saving: 'Wird gezeichnet …',
+    imageFailed: 'Das Bild ließ sich nicht zeichnen. Kopiere stattdessen den Link.',
+    note: 'Der Link enthält deine Frage und diese Antwort. Auf keinem Server wird etwas gespeichert.',
+    openedTitle: 'Eine Antwort, die jemand mit dir geteilt hat',
+    openedBody: `${brand.name} hat sie Wort für Wort geschrieben — ein geteilter Link lässt sich nicht verändern. Stell unten deine eigene Frage.`,
+    failedTitle: 'Der geteilte Link ließ sich nicht öffnen',
+    cardSources: 'Quellen',
+    cardFooter: (host: string) => `Jede Aussage führt zu dem Moment, in dem sie fiel · ${host}`,
+    fileName: 'dear-steven-antwort.png',
   },
   answer: {
     takeaway: 'An deiner Stelle',
@@ -380,7 +401,7 @@ export const de: Messages = {
     originalsHeading: 'Schau dir die Originale an',
     originals: `Alles hier stammt aus den Gesprächen von ${brand.show}, und die kannst du kostenlos auf YouTube ansehen. Das ist ein Fanprojekt, das Menschen zur Show schickt, kein Ersatz dafür: Wo eine Folge ihrem Video zugeordnet ist, verlinken ihre Quellen auf den Moment, aus dem sie stammen, und die ganzen Folgen anzusehen ist die beste Art, die Menschen zu unterstützen, die sie gemacht haben.`,
     dataHeading: 'Deine Daten',
-    data: 'Fragen werden an den Server und an OpenAI gesendet, um eine Antwort zu formulieren, und nicht gespeichert, es sei denn, wer diese Kopie betreibt, schaltet das Protokollieren von Antworten zur Auswertung ein. Das Mikrofon wird nur benutzt, solange du es gedrückt hältst oder einschaltest. Kurze Zitate mit Quellenangabe verweisen auf die Originalfolgen; vollständige Transkripte werden nie veröffentlicht. Videoplayer und Podcast-Audio laden erst dann von YouTube und vom Host des Podcasts, wenn du auf Abspielen drückst. Wenn du eine Sprache wählst, merkt sich ein kleines Cookie diese Wahl, damit die Seite in dieser Sprache öffnet. Wenn du deinen eigenen OpenAI-Schlüssel einfügst, bleibt er in diesem Tab (oder auf diesem Gerät, wenn du willst) und geht nur mit deinen Anfragen an diese Seite; der Server speichert oder protokolliert ihn nie. Stimmeinstellungen — und, nur wenn du es einschaltest, das Gespräch selbst — bleiben ausschließlich in diesem Browser, bis du sie vergessen lässt.',
+    data: 'Fragen werden an den Server und an OpenAI gesendet, um eine Antwort zu formulieren, und nicht gespeichert, es sei denn, wer diese Kopie betreibt, schaltet das Protokollieren von Antworten zur Auswertung ein. Das Mikrofon wird nur benutzt, solange du es gedrückt hältst oder einschaltest. Kurze Zitate mit Quellenangabe verweisen auf die Originalfolgen; vollständige Transkripte werden nie veröffentlicht. Videoplayer und Podcast-Audio laden erst dann von YouTube und vom Host des Podcasts, wenn du auf Abspielen drückst. Wenn du eine Sprache wählst, merkt sich ein kleines Cookie diese Wahl, damit die Seite in dieser Sprache öffnet. Wenn du deinen eigenen OpenAI-Schlüssel einfügst, bleibt er in diesem Tab (oder auf diesem Gerät, wenn du willst) und geht nur mit deinen Anfragen an diese Seite; der Server speichert oder protokolliert ihn nie. Ein geteilter Link trägt die Frage und die Antwort in sich selbst; auf dem Server wird dazu nichts gespeichert, und beim Öffnen prüft der Server nur, ob er diese Antwort geschrieben hat. Stimmeinstellungen — und, nur wenn du es einschaltest, das Gespräch selbst — bleiben ausschließlich in diesem Browser, bis du sie vergessen lässt.',
     fullVersion: 'Die vollständige Fassung, mit dem, was versprochen wird und was nicht:',
   },
   voice: {

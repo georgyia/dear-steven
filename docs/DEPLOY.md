@@ -47,6 +47,10 @@ secrets is a human step (`plan/human/api-keys.md`).
   call is made until midnight UTC. Requests already running when it is reached still finish. The
   setup panel and `/api/status` show today's spend. Also set a hard limit in the OpenAI dashboard:
   this cap is an estimate.
+- **Share links** (P6-17): the server signs every answer it writes with a secret it creates on
+  first use at `/data/share-secret` (owner-only). Keep it on the volume: deleting it, or running
+  without a writable `/data`, makes every link shared so far stop opening. Several instances behind
+  one address need the same file.
 - **Visitors' own keys** (P6-03): anyone can paste their own OpenAI key in the setup panel; their
   requests then run on it and are neither counted against nor stopped by the daily cap (rate
   limits still apply). The key arrives in the `x-openai-key` header, over HTTPS only, and is

@@ -28,6 +28,7 @@ export {
 export { ANSWER_FORMAT, answerInput } from './prompt.ts';
 export { locateQuote, type QuoteSpan } from './quotes.ts';
 export { CitationRegistry, episodesOf, finalMode, resolveBlock } from './resolve.ts';
+export { stillSourced } from './shared.ts';
 export { BlockStream } from './stream.ts';
 export {
   downgradeBlock,

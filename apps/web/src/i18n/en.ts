@@ -124,6 +124,10 @@ export const en = {
       `Your key works, but it can’t use ${model}, which I answer with.`,
     keyChecks: 'That’s a lot of key checks. Wait a minute, then try again.',
     keyForced: 'This copy runs in demo mode on purpose, so it doesn’t use a key.',
+    shareSlow: 'That’s a lot of shared links at once. Wait a moment, then open it again.',
+    shareGone:
+      'The conversation that answer quoted is no longer in my knowledge base, so I won’t show it.',
+    shareBroken: `That link was changed, cut short or made by another copy of ${brand.name}, so I won’t open it.`,
   },
   voiceErrors: {
     noSpeech: 'I didn’t catch that.',
@@ -145,6 +149,22 @@ export const en = {
     stopped: 'You stopped me there. Ask again any time.',
     retry: 'Try again',
     complete: 'Answer complete.',
+  },
+  share: {
+    tag: 'Shared with you',
+    copyLink: 'Copy link',
+    copied: 'Link copied',
+    copiedBody: 'It opens this answer with every source, word for word.',
+    saveImage: 'Save image',
+    saving: 'Drawing…',
+    imageFailed: 'Couldn’t draw the image. Copy the link instead.',
+    note: 'The link carries your question and this answer. Nothing is stored on a server.',
+    openedTitle: 'An answer someone shared with you',
+    openedBody: `${brand.name} wrote it, word for word — a shared link can’t be edited. Ask your own question below.`,
+    failedTitle: 'That shared link didn’t open',
+    cardSources: 'Sources',
+    cardFooter: (host: string) => `Every claim links to the moment it was said · ${host}`,
+    fileName: 'dear-steven-answer.png',
   },
   answer: {
     takeaway: 'If I were you',
@@ -373,7 +393,7 @@ export const en = {
     originalsHeading: 'Watch the originals',
     originals: `Everything here comes from ${brand.show}’s conversations, and they are free to watch on YouTube. This is a fan project that sends people to the show, not a replacement for it: wherever an episode is matched to its video, its sources link to the moment they come from, and watching the full episodes is the best way to support the people who made them.`,
     dataHeading: 'Your data',
-    data: 'Questions are sent to the server and to OpenAI to compose an answer, and are not stored unless whoever runs this copy switches on answer logging for evaluation. The microphone is only used while you hold or toggle it. Short, attributed quotations link back to the original episodes; full transcripts are never published. The video player and the podcast audio load from YouTube and the podcast’s host only when you press play. If you pick a language, a small cookie remembers it so the page opens in that language. If you paste your own OpenAI key, it stays in this tab (or on this device, if you ask) and goes only to this site with your requests; the server never stores or logs it. Voice settings — and, only if you switch it on, the conversation itself — are kept in this browser only, until you forget them.',
+    data: 'Questions are sent to the server and to OpenAI to compose an answer, and are not stored unless whoever runs this copy switches on answer logging for evaluation. The microphone is only used while you hold or toggle it. Short, attributed quotations link back to the original episodes; full transcripts are never published. The video player and the podcast audio load from YouTube and the podcast’s host only when you press play. If you pick a language, a small cookie remembers it so the page opens in that language. If you paste your own OpenAI key, it stays in this tab (or on this device, if you ask) and goes only to this site with your requests; the server never stores or logs it. A share link carries the question and the answer inside the link itself; nothing about it is stored on the server, and opening one only asks the server to check that it wrote that answer. Voice settings — and, only if you switch it on, the conversation itself — are kept in this browser only, until you forget them.',
     fullVersion: 'The full version, with what is and isn’t promised:',
   },
   voice: {

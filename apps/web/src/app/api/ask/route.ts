@@ -13,6 +13,7 @@ import {
 } from '@/server/knowledge';
 import { clientKey, takeToken } from '@/server/rate-limit';
 import { requestConfig } from '@/server/request-config';
+import { withShareToken } from '@/server/share';
 import { overBudget } from '@/server/spend';
 import { jsonError, sseResponse } from '@/server/sse';
 
@@ -60,7 +61,11 @@ export async function POST(req: Request) {
       );
     }
     // Fixtures cost nothing, so demo mode is not rate limited.
-    return sseResponse((signal) => streamDemoAnswer(request, signal), req.signal, uiLocale);
+    return sseResponse(
+      (signal) => withShareToken(streamDemoAnswer(request, signal), config, request.question),
+      req.signal,
+      uiLocale,
+    );
   }
 
   const limit = takeToken('ask', clientKey(req));
@@ -112,7 +117,7 @@ export async function POST(req: Request) {
     onComplete: answerLogger(config),
   };
   return sseResponse(
-    (signal) => composeAnswer(deps, request, signal),
+    (signal) => withShareToken(composeAnswer(deps, request, signal), config, request.question),
     req.signal,
     uiLocale,
     config.keySource,

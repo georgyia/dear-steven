@@ -196,3 +196,19 @@ export const RelatedMomentsSchema = z.object({
   passages: z.array(PassageContextSchema.shape.citation).max(5),
 });
 export type RelatedMoments = z.infer<typeof RelatedMomentsSchema>;
+
+/** What a share token holds (P6-17), and what opening one returns. */
+export const SharedAnswerSchema = z.object({
+  question: z.string().trim().min(1).max(LIMITS.questionChars),
+  answer: FinalAnswerSchema,
+});
+export type SharedAnswer = z.infer<typeof SharedAnswerSchema>;
+
+/** `v1.<compressed answer>.<HMAC-SHA256>`, base64url. */
+export const ShareTokenSchema = z
+  .string()
+  .max(LIMITS.shareTokenChars)
+  .regex(/^v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/);
+
+/** `POST /api/share`: open a share link. The token comes from the link's fragment. */
+export const ShareRequestSchema = z.strictObject({ token: ShareTokenSchema });
