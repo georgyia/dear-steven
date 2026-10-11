@@ -1,10 +1,10 @@
-import { readConfig } from '@dear-steven/core/config';
 import { transcriptionCostUsd } from '@dear-steven/core/models';
 import { transcribeSpeech } from '@dear-steven/core/openai';
 import { describeFailure } from '@/server/errors';
 import { getOpenAI } from '@/server/knowledge';
 import { clientKey, takeToken } from '@/server/rate-limit';
-import { overBudget, spendLedger } from '@/server/spend';
+import { requestConfig } from '@/server/request-config';
+import { overBudget, recordSpend } from '@/server/spend';
 import { jsonError } from '@/server/sse';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +18,8 @@ const AUDIO_TYPES = /^audio\/(webm|mp4|m4a|x-m4a|mpeg|mp3|ogg|wav|x-wav)(;|$)/;
  * field. Audio is passed straight to OpenAI and never stored.
  */
 export async function POST(req: Request) {
-  const config = readConfig();
+  const { config, refused } = requestConfig(req);
+  if (refused) return refused;
   const client = config.mode === 'live' ? getOpenAI(config) : null;
   if (!client) {
     return jsonError(
@@ -67,14 +68,14 @@ export async function POST(req: Request) {
         type: audio.type,
       },
       req.signal,
-      (usage) => spendLedger(config).record(transcriptionCostUsd(usage)),
+      (usage) => recordSpend(config, transcriptionCostUsd(usage)),
     );
     return Response.json(
       { text: text.slice(0, 2000) },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (error) {
-    const failure = describeFailure(error);
+    const failure = describeFailure(error, undefined, config.keySource);
     console.error('[transcribe] failed:', failure.log);
     return jsonError(502, failure.code, failure.message);
   }

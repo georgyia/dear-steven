@@ -96,8 +96,8 @@ one by its stored embedding (`buildRelatedMoments`, no model call; empty until e
 
 | Boundary | Rule |
 |----------|------|
-| Browser → server | Every body validated with zod; size caps; per-IP token buckets (live answers, transcribe, speech, passages + episode list). |
-| Server → OpenAI | Key only in server memory (`readConfig`); provider error text never logged or shown (`server/errors.ts`). |
+| Browser → server | Every body validated with zod; size caps; per-IP token buckets (live answers, transcribe, speech, passages + episode list, key checks). A visitor's own OpenAI key (P6-03) comes only in the `x-openai-key` header, over HTTPS, checked against `VisitorKeySchema`; every route builds its configuration from the request (`server/request-config.ts`). |
+| Server → OpenAI | The operator's key only in server memory (`readConfig`); a visitor's key only for their own request — never cached, logged or stored, and not counted against the operator's cap; provider error text never logged or shown (`server/errors.ts`). |
 | Browser storage → page | Untrusted on read: stored answers are re-validated, links rebuilt from ids, unknown fields dropped. |
 | Transcript text → model | Untrusted data: wrapped in `<sources>`, `<`/`>` neutralised, instructions say to ignore commands inside. |
 | Model → browser | Nothing passes without `validateBlock`; citation ids must be retrieved ids; quotes are re-derived from storage. |

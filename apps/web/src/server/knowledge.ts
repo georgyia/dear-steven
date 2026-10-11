@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { appendFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { type AnswerModel, type AnswerRecord, openAIAnswerModel } from '@dear-steven/core/answer';
-import { type AppConfig, readConfig } from '@dear-steven/core/config';
+import type { AppConfig } from '@dear-steven/core/config';
 import { answerCostUsd, embeddingCostUsd, MODELS } from '@dear-steven/core/models';
 import {
   createOpenAI,
@@ -14,12 +14,15 @@ import {
 } from '@dear-steven/core/openai';
 import type { ModerationResult } from '@dear-steven/core/safety';
 import { KnowledgeStore } from '@dear-steven/core/store';
-import { spendLedger } from './spend';
+import { recordSpend } from './spend';
 
 /**
- * Process-wide handles: one SQLite connection and one OpenAI client. Cached on globalThis so dev
- * hot-reloads don't leak connections. The store is opened read-mostly; the web app never creates
- * the database (the ingest CLI does).
+ * Process-wide handles: one SQLite connection and one OpenAI client for the operator's key. Cached
+ * on globalThis so dev hot-reloads don't leak connections. The store is opened read-mostly; the web
+ * app never creates the database (the ingest CLI does).
+ *
+ * Every getter takes the request's configuration (`requestConfig`), so whose key a call runs on
+ * is decided once per request.
  */
 interface Handles {
   dbPath?: string;
@@ -32,7 +35,7 @@ const g = globalThis as typeof globalThis & { __dearSteven?: Handles };
 if (!g.__dearSteven) g.__dearSteven = {};
 const handles: Handles = g.__dearSteven;
 
-export function getStore(config: AppConfig = readConfig()): KnowledgeStore | null {
+export function getStore(config: AppConfig): KnowledgeStore | null {
   if (handles.store && handles.dbPath === config.dbPath) return handles.store;
   if (!existsSync(config.dbPath)) return null;
   handles.store?.close();
@@ -43,6 +46,8 @@ export function getStore(config: AppConfig = readConfig()): KnowledgeStore | nul
 
 function client(config: AppConfig): OpenAI | null {
   if (!config.openaiApiKey) return null;
+  // A visitor's own key serves their request and is dropped with it: never cached or shared.
+  if (config.keySource === 'visitor') return createOpenAI(config.openaiApiKey);
   if (!handles.client || handles.apiKey !== config.openaiApiKey) {
     handles.client = createOpenAI(config.openaiApiKey);
     handles.apiKey = config.openaiApiKey;
@@ -50,38 +55,36 @@ function client(config: AppConfig): OpenAI | null {
   return handles.client;
 }
 
-export function getOpenAI(config: AppConfig = readConfig()): OpenAI | null {
+export function getOpenAI(config: AppConfig): OpenAI | null {
   return client(config);
 }
 
-export function getAnswerModel(config: AppConfig = readConfig()): AnswerModel | null {
+export function getAnswerModel(config: AppConfig): AnswerModel | null {
   const c = client(config);
   if (!c) return null;
-  const ledger = spendLedger(config);
-  return openAIAnswerModel(c, MODELS.answer, { onUsage: (u) => ledger.record(answerCostUsd(u)) });
+  return openAIAnswerModel(c, MODELS.answer, {
+    onUsage: (u) => recordSpend(config, answerCostUsd(u)),
+  });
 }
 
 /** The free moderation check behind the safety rails (P6-11), when there is a key. */
 export function getModerator(
-  config: AppConfig = readConfig(),
+  config: AppConfig,
 ): ((text: string, signal: AbortSignal) => Promise<ModerationResult>) | undefined {
   const c = client(config);
   return c ? (text, signal) => moderate(c, text, signal) : undefined;
 }
 
-export function getEmbedder(config: AppConfig = readConfig()): Embedder | null {
+export function getEmbedder(config: AppConfig): Embedder | null {
   const c = client(config);
   if (!c) return null;
-  const ledger = spendLedger(config);
   return openAIEmbedder(c, MODELS.embedding, {
-    onTokens: (tokens) => ledger.record(embeddingCostUsd(tokens)),
+    onTokens: (tokens) => recordSpend(config, embeddingCostUsd(tokens)),
   });
 }
 
 /** With DEAR_STEVEN_LOG_ANSWERS=1, appends each answer to data/answers.jsonl for the eval harness. */
-export function answerLogger(
-  config: AppConfig = readConfig(),
-): ((r: AnswerRecord) => void) | undefined {
+export function answerLogger(config: AppConfig): ((r: AnswerRecord) => void) | undefined {
   if (!config.logAnswers) return undefined;
   const file = join(dirname(config.dbPath), 'answers.jsonl');
   return (record) => {

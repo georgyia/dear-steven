@@ -57,7 +57,9 @@ export const en = {
       empty: 'Not indexed',
       partial: 'Indexing',
       broken: 'Offline',
+      yourKey: (x: number) => `${n(x)} · your key`,
     },
+    yourKey: 'your key',
     open: '. Open setup and knowledge base details.',
   },
   thinking: {
@@ -115,6 +117,13 @@ export const en = {
     internal: 'Something went wrong on my end.',
     noKey: 'No OpenAI key is configured.',
     noKnowledgeBase: 'The knowledge base could not be opened.',
+    yourKeyRejected: 'OpenAI rejected your key. Check it in Setup, or forget it there.',
+    keyMalformed: 'That doesn’t look like an OpenAI secret key — they start with “sk-”.',
+    keyNeedsHttps: 'Your own key can only be sent over HTTPS.',
+    keyNoModel: (model: string) =>
+      `Your key works, but it can’t use ${model}, which I answer with.`,
+    keyChecks: 'That’s a lot of key checks. Wait a minute, then try again.',
+    keyForced: 'This copy runs in demo mode on purpose, so it doesn’t use a key.',
   },
   voiceErrors: {
     noSpeech: 'I didn’t catch that.',
@@ -244,10 +253,26 @@ export const en = {
     },
     openai: {
       title: 'OpenAI API key',
-      forced: 'Found, but `DEAR_STEVEN_DEMO=1` is forcing demo mode.',
-      found: 'Found on the server. It never reaches the browser.',
+      forced: 'Not used: `DEAR_STEVEN_DEMO=1` is forcing demo mode.',
+      found: 'Found on the server. It never reaches the browser. You can use your own key instead.',
       missing:
-        'Missing — answers are demo fixtures until you add `OPENAI_API_KEY` to `.env` at the repository root and restart.',
+        'Missing — answers are demo fixtures. Paste your own key below, or add `OPENAI_API_KEY` to `.env` at the repository root and restart.',
+    },
+    ownKey: {
+      label: 'Your OpenAI key',
+      using: (remembered: boolean): string =>
+        remembered
+          ? 'Using your key, remembered on this device until you forget it.'
+          : 'Using your key, kept in this tab until you close it.',
+      remember: 'Remember on this device',
+      use: 'Test and use',
+      testing: 'Testing…',
+      forget: 'Forget my key',
+      privacy:
+        'It stays in this browser and goes only to this site, with your requests. The server uses it for that request and never stores or logs it.',
+      insecure: 'Your own key can only be used over HTTPS.',
+      failed: 'I couldn’t check that key just now. Try again?',
+      noStorage: 'Your key works, but this browser isn’t letting me keep it, so I can’t use it.',
     },
     kb: {
       title: 'Knowledge base',
@@ -348,7 +373,7 @@ export const en = {
     originalsHeading: 'Watch the originals',
     originals: `Everything here comes from ${brand.show}’s conversations, and they are free to watch on YouTube. This is a fan project that sends people to the show, not a replacement for it: wherever an episode is matched to its video, its sources link to the moment they come from, and watching the full episodes is the best way to support the people who made them.`,
     dataHeading: 'Your data',
-    data: 'Questions are sent to the server and to OpenAI to compose an answer, and are not stored unless whoever runs this copy switches on answer logging for evaluation. The microphone is only used while you hold or toggle it. Short, attributed quotations link back to the original episodes; full transcripts are never published. The video player and the podcast audio load from YouTube and the podcast’s host only when you press play. If you pick a language, a small cookie remembers it so the page opens in that language. Voice settings — and, only if you switch it on, the conversation itself — are kept in this browser only, until you forget them.',
+    data: 'Questions are sent to the server and to OpenAI to compose an answer, and are not stored unless whoever runs this copy switches on answer logging for evaluation. The microphone is only used while you hold or toggle it. Short, attributed quotations link back to the original episodes; full transcripts are never published. The video player and the podcast audio load from YouTube and the podcast’s host only when you press play. If you pick a language, a small cookie remembers it so the page opens in that language. If you paste your own OpenAI key, it stays in this tab (or on this device, if you ask) and goes only to this site with your requests; the server never stores or logs it. Voice settings — and, only if you switch it on, the conversation itself — are kept in this browser only, until you forget them.',
     fullVersion: 'The full version, with what is and isn’t promised:',
   },
   voice: {

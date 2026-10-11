@@ -1,9 +1,9 @@
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { readConfig } from '@dear-steven/core/config';
+import { forVisitor, readConfig } from '@dear-steven/core/config';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { overBudget, SpendLedger, spendLedger, spendStatus } from './spend';
+import { overBudget, recordSpend, SpendLedger, spendLedger, spendStatus } from './spend';
 
 const dir = () => mkdtempSync(join(tmpdir(), 'dear-steven-spend-'));
 const at = (iso: string) => () => new Date(iso);
@@ -50,6 +50,7 @@ describe('overBudget and spendStatus', () => {
     const base = dir();
     const config = (budget?: string) =>
       readConfig({
+        OPENAI_API_KEY: 'sk-operator',
         DEAR_STEVEN_DB_PATH: join(base, 'kb.db'),
         ...(budget === undefined ? {} : { DEAR_STEVEN_DAILY_BUDGET_USD: budget }),
       });
@@ -60,5 +61,21 @@ describe('overBudget and spendStatus', () => {
     expect(overBudget(config())).toBe(false);
     expect(spendStatus(config('0.5'))).toEqual({ todayUsd: 0.01, capUsd: 0.5 });
     expect(overBudget(config('nonsense'))).toBe(true); // unreadable budget = 0
+  });
+
+  it("leaves a visitor's own key out of the operator's cap, both ways (P6-03)", () => {
+    const base = dir();
+    const operator = readConfig({
+      OPENAI_API_KEY: 'sk-operator',
+      DEAR_STEVEN_DB_PATH: join(base, 'kb.db'),
+      DEAR_STEVEN_DAILY_BUDGET_USD: '0.01',
+    });
+    const visitor = forVisitor(operator, 'sk-visitor-0000000000000000000000');
+    recordSpend(visitor, 5);
+    expect(existsSync(join(base, 'spend.json'))).toBe(false);
+    expect(overBudget(operator)).toBe(false);
+    recordSpend(operator, 0.01);
+    expect(overBudget(operator)).toBe(true);
+    expect(overBudget(visitor)).toBe(false);
   });
 });

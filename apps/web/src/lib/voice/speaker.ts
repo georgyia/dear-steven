@@ -1,6 +1,7 @@
 'use client';
 
 import type { StockVoice } from '@dear-steven/core/schema';
+import { keyHeaders } from '@/lib/visitor-key';
 import type { VoiceOutput } from './capabilities';
 
 /**
@@ -112,7 +113,7 @@ export function createSpeaker(
       try {
         const res = await fetch('/api/speech', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...keyHeaders() },
           body: JSON.stringify({
             text,
             language,

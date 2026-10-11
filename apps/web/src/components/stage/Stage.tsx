@@ -121,20 +121,26 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       }),
   });
 
-  // Status: rendered on the server, refreshed when the tab regains focus (e.g. after an ingest run).
+  const refreshStatus = useCallback(
+    (signal?: AbortSignal) =>
+      fetchStatus(signal)
+        .then(setStatus)
+        .catch(() => undefined),
+    [],
+  );
+
+  // Status: rendered on the server without the visitor's own key, so asked again at once (with
+  // it), and whenever the tab regains focus (e.g. after an ingest run).
   useEffect(() => {
     const ctrl = new AbortController();
-    const refresh = () =>
-      fetchStatus(ctrl.signal)
-        .then(setStatus)
-        .catch(() => undefined);
+    const refresh = () => refreshStatus(ctrl.signal);
     refresh();
     window.addEventListener('focus', refresh);
     return () => {
       ctrl.abort();
       window.removeEventListener('focus', refresh);
     };
-  }, []);
+  }, [refreshStatus]);
 
   // Demo mode is announced, never implied. Each answer also carries its own "demo fixture" tag.
   useEffect(() => {
@@ -442,6 +448,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
         onClose={() => setDialog(null)}
         status={status}
         onBrowse={() => setDialog('episodes')}
+        onKeyChange={() => void refreshStatus()}
       />
       <EpisodeExplorer open={dialog === 'episodes'} onClose={() => setDialog(null)} />
       <AboutDialog open={dialog === 'about'} onClose={() => setDialog(null)} />

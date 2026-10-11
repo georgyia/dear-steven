@@ -7,6 +7,13 @@ import { dirname, isAbsolute, join, resolve } from 'node:path';
  */
 export interface AppConfig {
   openaiApiKey: string | null;
+  /** Whose key `openaiApiKey` is: a visitor's own key is used for their request only (P6-03). */
+  keySource: KeySource | null;
+  /**
+   * `DEAR_STEVEN_ALLOW_OPERATOR_KEY`: whether visitors without a key of their own may run on the
+   * operator's. On unless set to `0` / `false`, so a local copy keeps working as it did.
+   */
+  allowOperatorKey: boolean;
   youtubeApiKey: string | null;
   dbPath: string;
   mode: 'live' | 'demo';
@@ -20,6 +27,8 @@ export interface AppConfig {
   /** `DEAR_STEVEN_ACCESS_CODE`: when set, only browsers that entered it can use the API. */
   accessCode: string | null;
 }
+
+export type KeySource = 'operator' | 'visitor';
 
 type Env = Record<string, string | undefined>;
 
@@ -56,6 +65,8 @@ export function readConfig(env: Env = process.env, cwd: string = process.cwd()):
   const demoReason = forced ? 'forced' : openaiApiKey ? null : 'no_openai_key';
   return {
     openaiApiKey,
+    keySource: openaiApiKey ? 'operator' : null,
+    allowOperatorKey: !/^(0|false)$/.test(env.DEAR_STEVEN_ALLOW_OPERATOR_KEY?.trim() ?? ''),
     youtubeApiKey: clean(env.YOUTUBE_API_KEY),
     dbPath,
     mode: demoReason ? 'demo' : 'live',
@@ -71,6 +82,26 @@ function budget(value: string | undefined): number | null {
   if (!v) return null;
   const usd = Number(v);
   return Number.isFinite(usd) && usd >= 0 ? usd : 0;
+}
+
+/**
+ * The configuration for one web request (P6-03). A visitor's own key (already validated against
+ * `VisitorKeySchema`) wins; without one, the operator's key only if the operator allows it.
+ * Forced demo mode stays forced, and then a visitor's key is not used at all. The CLI uses
+ * `readConfig()` as it is.
+ */
+export function forVisitor(config: AppConfig, visitorKey: string | null): AppConfig {
+  const forced = config.demoReason === 'forced';
+  const own = forced ? null : visitorKey;
+  const openaiApiKey = own ?? (config.allowOperatorKey ? config.openaiApiKey : null);
+  const demoReason = forced ? 'forced' : openaiApiKey ? null : 'no_openai_key';
+  return {
+    ...config,
+    openaiApiKey,
+    keySource: own ? 'visitor' : openaiApiKey ? 'operator' : null,
+    mode: demoReason ? 'demo' : 'live',
+    demoReason,
+  };
 }
 
 /** Read alone by the request proxy, which must not touch the filesystem on every request. */

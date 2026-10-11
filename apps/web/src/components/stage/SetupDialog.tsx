@@ -8,6 +8,7 @@ import { Rich } from '@/components/ui/Rich';
 import StatusMark, { type StatusMarkStatus } from '@/components/vendor/react-bits/StatusMark';
 import type { Messages } from '@/i18n';
 import { useI18n } from '@/i18n/I18nProvider';
+import { OwnKey } from './OwnKey';
 
 interface SetupDialogProps {
   open: boolean;
@@ -15,6 +16,8 @@ interface SetupDialogProps {
   status: KnowledgeStatus;
   /** Opens the episode explorer. */
   onBrowse: () => void;
+  /** The visitor saved or forgot their own key: ask the server for the status again. */
+  onKeyChange: () => void;
 }
 
 interface Item {
@@ -22,6 +25,8 @@ interface Item {
   status: StatusMarkStatus;
   title: string;
   detail: ReactNode;
+  /** Controls under the detail. */
+  action?: ReactNode;
   optional?: boolean;
 }
 
@@ -30,7 +35,12 @@ const usd = (x: number, locale: UiLocale) => {
   return `$${x.toLocaleString(LOCALE_TAG[locale], { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
 };
 
-function items(s: KnowledgeStatus, copy: Messages['setup'], locale: UiLocale): Item[] {
+function items(
+  s: KnowledgeStatus,
+  copy: Messages['setup'],
+  locale: UiLocale,
+  onKeyChange: () => void,
+): Item[] {
   const demo = s.mode === 'demo';
   const money = (x: number) => usd(x, locale);
   return [
@@ -38,17 +48,18 @@ function items(s: KnowledgeStatus, copy: Messages['setup'], locale: UiLocale): I
       key: 'openai',
       status: s.setup.openaiKey ? 'done' : 'failed',
       title: copy.openai.title,
-      detail: (
+      detail: s.setup.visitorKey ? null : (
         <Rich
           text={
-            !s.setup.openaiKey
-              ? copy.openai.missing
-              : s.demoReason === 'forced'
-                ? copy.openai.forced
-                : copy.openai.found
+            s.demoReason === 'forced'
+              ? copy.openai.forced
+              : s.setup.openaiKey
+                ? copy.openai.found
+                : copy.openai.missing
           }
         />
       ),
+      action: s.demoReason === 'forced' ? null : <OwnKey onChange={onKeyChange} />,
     },
     {
       key: 'kb',
@@ -126,13 +137,13 @@ function items(s: KnowledgeStatus, copy: Messages['setup'], locale: UiLocale): I
 }
 
 /** "What's set up, and what to run next" — the helpful alternative to crashing on missing config. */
-export function SetupDialog({ open, onClose, status, onBrowse }: SetupDialogProps) {
+export function SetupDialog({ open, onClose, status, onBrowse, onKeyChange }: SetupDialogProps) {
   const { t, locale } = useI18n();
   const copy = t.setup;
   return (
     <Dialog open={open} onClose={onClose} eyebrow={copy.eyebrow} title={copy.title}>
       <ul className="flex flex-col gap-4">
-        {items(status, copy, locale).map((item) => (
+        {items(status, copy, locale, onKeyChange).map((item) => (
           <li key={item.key} className="flex gap-3">
             <StatusMark
               status={item.status}
@@ -142,7 +153,7 @@ export function SetupDialog({ open, onClose, status, onBrowse }: SetupDialogProp
               doneColor="var(--ember-0)"
               errorColor="var(--oxblood-1)"
               strike={false}
-              className="mt-0.5 flex-none"
+              className="mt-0.5 flex-none self-start"
             />
             <div className="min-w-0">
               <p className="text-[15px] font-medium text-ivory-0">
@@ -151,7 +162,10 @@ export function SetupDialog({ open, onClose, status, onBrowse }: SetupDialogProp
                   <span className="ml-2 font-mono text-[11px] text-steel">{copy.optional}</span>
                 ) : null}
               </p>
-              <p className="mt-0.5 text-[14px] leading-relaxed text-ivory-2">{item.detail}</p>
+              {item.detail ? (
+                <p className="mt-0.5 text-[14px] leading-relaxed text-ivory-2">{item.detail}</p>
+              ) : null}
+              {item.action}
             </div>
           </li>
         ))}

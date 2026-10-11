@@ -11,7 +11,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 - **Phase:** 0–4 built in the first implementation pass; Phase 5 open (the rest waits on humans);
   Phase 6 / M4 *Reach and trust* planned (`plan/04-issues/phase-6.md`).
 - **Done:** M0 (except GitHub publishing and third-party skills), M1 in code, M2; from M3: P5-03, P5-04, P5-05, P5-07, P5-11, P5-12.
-- **Next to pick (M4, since Phase 5 has nothing pickable):** P6-03 (unblocked), P6-17.
+- **Next to pick (M4, since Phase 5 has nothing pickable):** P6-17; P6-04 builds on P6-03 (in review).
   P6-08 (P0) is built and waits for human review. Phase 5's P5-01/02/06/09 wait on the first live
   eval (H-07), P5-08 on H-09, P5-10 on H-08 and now P6-08 + P6-12.
 - **Critical path:** H-07 (read five live answers) → P5-01 (first block p50 3.5–4 s against a 3 s target; the unanswerable u03 flips to `partial` on a passage that mentions Pokémon cards).
@@ -38,6 +38,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | Persona v2 (P6-06), live 2026-10-11 | advice-seeking answers that open with a position 0/16 → 18/18; decisiveness 3.61 → 4.29; actionability 3.54 → 3.68; hedges per answer 3.64 → 2.79; modes 4 grounded / 24 partial → 17 / 11; citation integrity unchanged (100% resolve, 0 attribution, 0 quote, lint clean); red team 22/22 live; first block p50 3.5 s. `eval/baselines/2026-10-11-persona-v2.json` |
 | Safety rails (P6-11), live 2026-10-11 | red team 22/22 routed by the phrase rules alone; live through the real model and moderation: 20/22, the two misses were correct refusals the checker misread (fixed: negation-aware); no ordinary question stopped (0/23 with moderation); unanswerable 2/3 on a rerun — u01 (sourdough) now finds a fermentation passage and answers `partial` (P5-01) |
 | Interface language (P6-02), 2026-10-11 | English and German catalogues, German typed against English (unit: every key, translated, code spans and number formats kept); a German browser walks home → answer → inspector → voice settings → setup → terms with no English outside quotes, excerpts, episode titles and policy text (e2e, desktop + 375 px); the language switch applies without a reload and survives one; axe clean in German; `pnpm check` 347 tests in 45 files; `pnpm e2e` 114 passed, 12 skipped. Crisis replies and the terms text stay English (H-11) |
+| Bring your own key (P6-03), 2026-10-11 | A canary key through `/api/key`, `/api/status`, `/api/ask` and `/api/speech` appears in no response or log line — not even OpenAI's masked echo — while the request runs on it (`Authorization: Bearer <canary>` to api.openai.com); nothing cached or written to the spend ledger; malformed, plain-HTTP, keyless, forced-demo and rate-limited checks refused without a call. A keyless server goes live for that browser; a visitor's key is neither counted against nor stopped by the operator's cap. E2E: paste → test → ask (the request carries the key) → forget (the next one doesn't); tab vs device storage; axe clean. Leak test mutation-checked. No live OpenAI call made |
 | Spend cap and access gate (P6-08) | past the cap `/api/ask` gives the resting reply with no network call (route test); every API route on disk answers 401 without the cookie (proxy test); passcode screen, wrong code, rate limit and axe audit against a gated server (e2e) |
 | YouTube matching (P6-15, real feed) | 536 of 739 full episodes linked: 535 of 548 full conversations since the channel's first upload (the rest are podcast-only compilations); 218 `exact` from shared chapters (58 with a mid-episode step), predicting 99.3% of 6,735 shared chapters within 2 s; 318 `estimated` (≈ two in three within 10 s, held-out); human spot check H-10 |
 | Strict CSP (P6-09) | every e2e test fails on a CSP violation: none; injected inline script, event handler and foreign `<script src>` refused; `next dev` answers with no console errors |
@@ -140,7 +141,7 @@ answers `track:answers` (P6-06–07), security `track:security` (P6-08–11), po
 |----|---|-------|-----|------|-------|------------|-------|
 | P6-01 | #1 | feat(core): ask and answer in any language | P1 | medium | done | — | — |
 | P6-02 | #2 | feat(web): the interface and voice in the visitor's language | P2 | low | in review | P6-01 | — |
-| P6-03 | #3 | feat(web): bring your own API keys from the setup panel | P1 | high | open | P6-09 | human review |
+| P6-03 | #3 | feat(web): bring your own API keys from the setup panel | P1 | high | in review (needs human review) | P6-09 | human review |
 | P6-04 | #4 | feat(web): guided local setup — keys, knowledge base and budget from the browser | P2 | high | open | P6-03 | human review |
 | P6-05 | #5 | chore(core): spike — a second LLM provider behind the model adapter | P2 | medium | open, blocked | P3-08 | — |
 | P6-06 | #6 | feat(core): persona v2 — a concrete opinion and what I'd do, grounded in the interviews | P1 | medium | done (human spot check of five answers open) | P3-08, P6-11 | — |

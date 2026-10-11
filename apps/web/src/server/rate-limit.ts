@@ -19,6 +19,9 @@ export const BUCKETS = {
   access: { capacity: 5, refillPerMinute: 5 },
   /** …and thirty a minute in all, because a client can claim any X-Forwarded-For it likes. */
   accessAll: { capacity: 30, refillPerMinute: 30 },
+  /** Key checks (P6-03) — the same pair, so this server can't be used to test stolen keys in bulk. */
+  keyCheck: { capacity: 5, refillPerMinute: 5 },
+  keyCheckAll: { capacity: 30, refillPerMinute: 30 },
 } satisfies Record<string, Bucket>;
 
 type Key = keyof typeof BUCKETS;

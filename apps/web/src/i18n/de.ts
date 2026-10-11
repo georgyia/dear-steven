@@ -56,7 +56,9 @@ export const de: Messages = {
       empty: 'Nicht indexiert',
       partial: 'Indexiere',
       broken: 'Offline',
+      yourKey: (x) => `${n(x)} · dein Schlüssel`,
     },
+    yourKey: 'dein Schlüssel',
     open: '. Einrichtung und Details zur Wissensbasis öffnen.',
   },
   thinking: {
@@ -115,6 +117,16 @@ export const de: Messages = {
     internal: 'Bei mir ist etwas schiefgelaufen.',
     noKey: 'Es ist kein OpenAI-Schlüssel eingerichtet.',
     noKnowledgeBase: 'Die Wissensbasis konnte nicht geöffnet werden.',
+    yourKeyRejected:
+      'OpenAI hat deinen Schlüssel abgelehnt. Prüf ihn unter Einrichtung, oder vergiss ihn dort.',
+    keyMalformed:
+      'Das sieht nicht nach einem geheimen OpenAI-Schlüssel aus — die beginnen mit „sk-“.',
+    keyNeedsHttps: 'Deinen eigenen Schlüssel kann ich nur über HTTPS annehmen.',
+    keyNoModel: (model) =>
+      `Dein Schlüssel funktioniert, kann aber ${model} nicht nutzen — damit antworte ich.`,
+    keyChecks:
+      'Das waren viele Schlüsselprüfungen. Warte eine Minute und versuch es dann noch einmal.',
+    keyForced: 'Diese Kopie läuft absichtlich im Demo-Modus und nutzt keinen Schlüssel.',
   },
   voiceErrors: {
     noSpeech: 'Das habe ich nicht verstanden.',
@@ -244,10 +256,28 @@ export const de: Messages = {
     },
     openai: {
       title: 'OpenAI-API-Schlüssel',
-      forced: 'Gefunden, aber `DEAR_STEVEN_DEMO=1` erzwingt den Demo-Modus.',
-      found: 'Auf dem Server gefunden. Er gelangt nie in den Browser.',
+      forced: 'Nicht genutzt: `DEAR_STEVEN_DEMO=1` erzwingt den Demo-Modus.',
+      found:
+        'Auf dem Server gefunden. Er gelangt nie in den Browser. Du kannst stattdessen deinen eigenen Schlüssel nutzen.',
       missing:
-        'Fehlt — die Antworten sind Demo-Beispiele, bis du `OPENAI_API_KEY` in die `.env` im Wurzelverzeichnis des Repositorys einträgst und neu startest.',
+        'Fehlt — die Antworten sind Demo-Beispiele. Füg unten deinen eigenen Schlüssel ein, oder trag `OPENAI_API_KEY` in die `.env` im Wurzelverzeichnis des Repositorys ein und starte neu.',
+    },
+    ownKey: {
+      label: 'Dein OpenAI-Schlüssel',
+      using: (remembered) =>
+        remembered
+          ? 'Dein Schlüssel ist aktiv und auf diesem Gerät gespeichert, bis du ihn vergisst.'
+          : 'Dein Schlüssel ist aktiv und bleibt in diesem Tab, bis du ihn schließt.',
+      remember: 'Auf diesem Gerät merken',
+      use: 'Prüfen und nutzen',
+      testing: 'Wird geprüft …',
+      forget: 'Meinen Schlüssel vergessen',
+      privacy:
+        'Er bleibt in diesem Browser und geht nur an diese Seite, mit deinen Anfragen. Der Server nutzt ihn für die jeweilige Anfrage und speichert oder protokolliert ihn nie.',
+      insecure: 'Deinen eigenen Schlüssel kann ich nur über HTTPS nutzen.',
+      failed: 'Ich konnte den Schlüssel gerade nicht prüfen. Noch einmal?',
+      noStorage:
+        'Dein Schlüssel funktioniert, aber dieser Browser lässt mich ihn nicht behalten, also kann ich ihn nicht nutzen.',
     },
     kb: {
       title: 'Wissensbasis',
@@ -350,7 +380,7 @@ export const de: Messages = {
     originalsHeading: 'Schau dir die Originale an',
     originals: `Alles hier stammt aus den Gesprächen von ${brand.show}, und die kannst du kostenlos auf YouTube ansehen. Das ist ein Fanprojekt, das Menschen zur Show schickt, kein Ersatz dafür: Wo eine Folge ihrem Video zugeordnet ist, verlinken ihre Quellen auf den Moment, aus dem sie stammen, und die ganzen Folgen anzusehen ist die beste Art, die Menschen zu unterstützen, die sie gemacht haben.`,
     dataHeading: 'Deine Daten',
-    data: 'Fragen werden an den Server und an OpenAI gesendet, um eine Antwort zu formulieren, und nicht gespeichert, es sei denn, wer diese Kopie betreibt, schaltet das Protokollieren von Antworten zur Auswertung ein. Das Mikrofon wird nur benutzt, solange du es gedrückt hältst oder einschaltest. Kurze Zitate mit Quellenangabe verweisen auf die Originalfolgen; vollständige Transkripte werden nie veröffentlicht. Videoplayer und Podcast-Audio laden erst dann von YouTube und vom Host des Podcasts, wenn du auf Abspielen drückst. Wenn du eine Sprache wählst, merkt sich ein kleines Cookie diese Wahl, damit die Seite in dieser Sprache öffnet. Stimmeinstellungen — und, nur wenn du es einschaltest, das Gespräch selbst — bleiben ausschließlich in diesem Browser, bis du sie vergessen lässt.',
+    data: 'Fragen werden an den Server und an OpenAI gesendet, um eine Antwort zu formulieren, und nicht gespeichert, es sei denn, wer diese Kopie betreibt, schaltet das Protokollieren von Antworten zur Auswertung ein. Das Mikrofon wird nur benutzt, solange du es gedrückt hältst oder einschaltest. Kurze Zitate mit Quellenangabe verweisen auf die Originalfolgen; vollständige Transkripte werden nie veröffentlicht. Videoplayer und Podcast-Audio laden erst dann von YouTube und vom Host des Podcasts, wenn du auf Abspielen drückst. Wenn du eine Sprache wählst, merkt sich ein kleines Cookie diese Wahl, damit die Seite in dieser Sprache öffnet. Wenn du deinen eigenen OpenAI-Schlüssel einfügst, bleibt er in diesem Tab (oder auf diesem Gerät, wenn du willst) und geht nur mit deinen Anfragen an diese Seite; der Server speichert oder protokolliert ihn nie. Stimmeinstellungen — und, nur wenn du es einschaltest, das Gespräch selbst — bleiben ausschließlich in diesem Browser, bis du sie vergessen lässt.',
     fullVersion: 'Die vollständige Fassung, mit dem, was versprochen wird und was nicht:',
   },
   voice: {

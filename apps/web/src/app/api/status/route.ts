@@ -1,7 +1,10 @@
+import { requestConfig } from '@/server/request-config';
 import { getKnowledgeStatus } from '@/server/status';
 
 export const dynamic = 'force-dynamic';
 
-export function GET() {
-  return Response.json(getKnowledgeStatus(), { headers: { 'Cache-Control': 'no-store' } });
+export function GET(req: Request) {
+  const { config, refused } = requestConfig(req);
+  if (refused) return refused;
+  return Response.json(getKnowledgeStatus(config), { headers: { 'Cache-Control': 'no-store' } });
 }
