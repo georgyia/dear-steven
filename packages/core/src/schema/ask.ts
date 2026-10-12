@@ -15,6 +15,14 @@ export type HistoryTurn = z.infer<typeof HistoryTurnSchema>;
 export const AskRequestSchema = z.strictObject({
   question: z.string().trim().min(1).max(LIMITS.questionChars),
   history: z.array(HistoryTurnSchema).max(LIMITS.historyTurns).default([]),
+  /**
+   * The visitor's BCP 47 locale (`en-GB`): which crisis helpline to show (P6-11), later the answer
+   * language. Optional; the server falls back to Accept-Language.
+   */
+  locale: z
+    .string()
+    .regex(/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8}){0,3}$/)
+    .optional(),
 });
 export type AskRequest = z.infer<typeof AskRequestSchema>;
 

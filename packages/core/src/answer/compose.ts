@@ -1,6 +1,14 @@
 import type { Embedder } from '../openai/embedder.ts';
 import { EMPTY_KNOWLEDGE_REPLY, RESTING_REPLY, THINKING_COPY } from '../persona/copy.ts';
 import { hybridSearch } from '../retrieval/index.ts';
+import {
+  type ModerationResult,
+  routeQuestion,
+  type SafetyRoute,
+  safetyReply,
+  sensitivePreface,
+  stakesGuidance,
+} from '../safety/index.ts';
 import type {
   AskEvent,
   AskRequest,
@@ -35,6 +43,8 @@ export interface AnswerRecord {
   violations: Violation[];
   repaired: boolean;
   final: FinalAnswer;
+  /** How the safety rails routed the question (P6-11). */
+  safety: SafetyRoute;
 }
 
 export interface ComposeDeps {
@@ -44,6 +54,8 @@ export interface ComposeDeps {
   now?: () => number;
   /** Called once with everything that happened, for the eval harness and optional logging. */
   onComplete?: (record: AnswerRecord) => void;
+  /** Moderation of the question (P6-11). Without it, the phrase rules decide alone. */
+  moderate?: (text: string, signal: AbortSignal) => Promise<ModerationResult>;
 }
 
 const MALFORMED: Omit<Violation, 'blockIndex'> = {
@@ -71,9 +83,25 @@ export async function* composeAnswer(
     return;
   }
 
+  // Safety rails (P6-11): the phrase rules decide at once; moderation runs alongside retrieval,
+  // and its verdict is in before anything the model writes is shown.
+  const early = routeQuestion(request.question, null);
+  if (early.kind !== 'answer') {
+    yield* safetyAnswer(deps, request, early, started, now);
+    return;
+  }
+  const moderation = deps.moderate
+    ? deps.moderate(request.question, signal).catch(() => null)
+    : Promise.resolve(null);
+
   yield { type: 'status', step: 'searching', message: THINKING_COPY.searching(stats.episodes) };
   const query = await condenseQuery(deps.model, request.question, request.history, signal);
   const retrieval = await hybridSearch(deps.store, query, deps.embedder, {}, signal);
+  const route = routeQuestion(request.question, await moderation);
+  if (route.kind !== 'answer') {
+    yield* safetyAnswer(deps, request, route, started, now);
+    return;
+  }
   const ctx = buildContext(deps.store, retrieval.passages);
   const episodeCount = new Set(retrieval.passages.map((p) => p.episodeId)).size;
   yield { type: 'sources', passages: retrieval.passages.length, episodes: episodeCount };
@@ -90,6 +118,11 @@ export async function* composeAnswer(
   const emittedModelIdx = new Set<number>();
   const emitted: ResolvedBlock[] = [];
   let holding = false;
+  if (route.sensitive) {
+    const preface = sensitivePreface(request.locale);
+    yield { type: 'block.done', index: 0, block: preface, citations: [] };
+    emitted.push(preface);
+  }
 
   const emit = function* (modelIndex: number, block: ModelBlock): Generator<AskEvent> {
     const r = resolveBlock(block, registry);
@@ -101,7 +134,12 @@ export async function* composeAnswer(
 
   for await (const delta of deps.model.streamJson({
     instructions: PERSONA_INSTRUCTIONS,
-    input: answerInput(request.question, request.history, ctx),
+    input: answerInput(
+      request.question,
+      request.history,
+      ctx,
+      stakesGuidance(route.stakes, route.sensitive),
+    ),
     format: ANSWER_FORMAT,
     cacheKey: ANSWER_CACHE_KEY,
     signal,
@@ -213,7 +251,33 @@ export async function* composeAnswer(
     violations: allViolations,
     repaired,
     final,
+    safety: route,
   });
+}
+
+/** A fixed safety reply in place of an answer: no sources, and no model writes it. */
+function* safetyAnswer(
+  deps: ComposeDeps,
+  request: AskRequest,
+  route: Exclude<SafetyRoute, { kind: 'answer' }>,
+  started: number,
+  now: () => number,
+): Generator<AskEvent> {
+  for (const event of safetyReply(route, request.locale, started, now) ?? []) {
+    yield event;
+    if (event.type === 'final') {
+      deps.onComplete?.({
+        question: request.question,
+        query: '',
+        retrieved: [],
+        modes: [],
+        violations: [],
+        repaired: false,
+        final: event.answer,
+        safety: route,
+      });
+    }
+  }
 }
 
 /** The reply once the daily spend cap is reached (P6-08). No model call, no sources. */

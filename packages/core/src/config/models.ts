@@ -16,6 +16,8 @@ export const MODELS = {
   diarize: 'gpt-4o-transcribe-diarize',
   /** Spoken replies. Scheduled for retirement in Jan 2027 — swap here when it goes. */
   speech: 'gpt-4o-mini-tts',
+  /** Safety routing of questions (P6-11). The moderation endpoint is free. */
+  moderation: 'omni-moderation-latest',
 } as const;
 
 export const EMBEDDING_DIMENSIONS = 1536;

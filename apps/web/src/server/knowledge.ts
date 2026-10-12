@@ -5,7 +5,14 @@ import { dirname, join } from 'node:path';
 import { type AnswerModel, type AnswerRecord, openAIAnswerModel } from '@dear-steven/core/answer';
 import { type AppConfig, readConfig } from '@dear-steven/core/config';
 import { answerCostUsd, embeddingCostUsd, MODELS } from '@dear-steven/core/models';
-import { createOpenAI, type Embedder, type OpenAI, openAIEmbedder } from '@dear-steven/core/openai';
+import {
+  createOpenAI,
+  type Embedder,
+  moderate,
+  type OpenAI,
+  openAIEmbedder,
+} from '@dear-steven/core/openai';
+import type { ModerationResult } from '@dear-steven/core/safety';
 import { KnowledgeStore } from '@dear-steven/core/store';
 import { spendLedger } from './spend';
 
@@ -52,6 +59,14 @@ export function getAnswerModel(config: AppConfig = readConfig()): AnswerModel | 
   if (!c) return null;
   const ledger = spendLedger(config);
   return openAIAnswerModel(c, MODELS.answer, { onUsage: (u) => ledger.record(answerCostUsd(u)) });
+}
+
+/** The free moderation check behind the safety rails (P6-11), when there is a key. */
+export function getModerator(
+  config: AppConfig = readConfig(),
+): ((text: string, signal: AbortSignal) => Promise<ModerationResult>) | undefined {
+  const c = client(config);
+  return c ? (text, signal) => moderate(c, text, signal) : undefined;
 }
 
 export function getEmbedder(config: AppConfig = readConfig()): Embedder | null {

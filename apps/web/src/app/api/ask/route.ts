@@ -1,8 +1,15 @@
 import { composeAnswer, emptyKnowledgeAnswer, restingAnswer } from '@dear-steven/core/answer';
 import { readConfig } from '@dear-steven/core/config';
+import { routeQuestion, safetyReply } from '@dear-steven/core/safety';
 import { AskRequestSchema } from '@dear-steven/core/schema';
 import { streamDemoAnswer } from '@/server/demo';
-import { answerLogger, getAnswerModel, getEmbedder, getStore } from '@/server/knowledge';
+import {
+  answerLogger,
+  getAnswerModel,
+  getEmbedder,
+  getModerator,
+  getStore,
+} from '@/server/knowledge';
 import { clientKey, takeToken } from '@/server/rate-limit';
 import { overBudget } from '@/server/spend';
 import { jsonError, sseResponse } from '@/server/sse';
@@ -27,11 +34,19 @@ export async function POST(req: Request) {
   }
   const parsed = AskRequestSchema.safeParse(json);
   if (!parsed.success) return jsonError(400, 'bad_request', 'That question could not be read.');
+  const request = { ...parsed.data, locale: parsed.data.locale ?? acceptedLocale(req) };
 
   const config = readConfig();
   if (config.mode === 'demo') {
+    // Even fixtures must not answer someone in crisis with a demo about procrastination (P6-11).
+    const reply = safetyReply(routeQuestion(request.question, null), request.locale);
+    if (reply) {
+      return sseResponse(async function* () {
+        yield* reply;
+      }, req.signal);
+    }
     // Fixtures cost nothing, so demo mode is not rate limited.
-    return sseResponse((signal) => streamDemoAnswer(parsed.data.question, signal), req.signal);
+    return sseResponse((signal) => streamDemoAnswer(request.question, signal), req.signal);
   }
 
   const limit = takeToken('ask', clientKey(req));
@@ -67,6 +82,18 @@ export async function POST(req: Request) {
     }, req.signal);
   }
 
-  const deps = { store, model, embedder: getEmbedder(config), onComplete: answerLogger(config) };
-  return sseResponse((signal) => composeAnswer(deps, parsed.data, signal), req.signal);
+  const deps = {
+    store,
+    model,
+    embedder: getEmbedder(config),
+    moderate: getModerator(config),
+    onComplete: answerLogger(config),
+  };
+  return sseResponse((signal) => composeAnswer(deps, request, signal), req.signal);
+}
+
+/** The first Accept-Language tag, if it is a well-formed locale; it picks the crisis helpline. */
+function acceptedLocale(req: Request): string | undefined {
+  const tag = req.headers.get('accept-language')?.split(',')[0]?.split(';')[0]?.trim();
+  return tag && AskRequestSchema.shape.locale.safeParse(tag).success ? tag : undefined;
 }

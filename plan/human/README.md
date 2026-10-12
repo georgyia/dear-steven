@@ -23,3 +23,4 @@ so the agent can use them.
 | H-08 | `deploy.md` |
 | H-09 | `wake-word-spike.md` |
 | H-10 | `youtube-spot-check.md` |
+| H-11 | `safety-review.md` |

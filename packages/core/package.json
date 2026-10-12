@@ -18,7 +18,8 @@
     "./persona": "./src/persona/persona.ts",
     "./copy": "./src/persona/copy.ts",
     "./ingest": "./src/ingest/index.ts",
-    "./openai": "./src/openai/index.ts"
+    "./openai": "./src/openai/index.ts",
+    "./safety": "./src/safety/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
