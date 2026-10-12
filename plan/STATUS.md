@@ -167,7 +167,7 @@ Categories are labels: conversations `track:conversation` (P7-05–08), design `
 
 | Id | # | Issue | Pri | Risk | State | Depends on | Needs |
 |----|---|-------|-----|------|-------|------------|-------|
-| P7-01 | #46 | fix(web): browser extensions that edit the page no longer cause a hydration error | P1 | low | open | — | — |
+| P7-01 | #46 | fix(web): browser extensions that edit the page no longer cause a hydration error | P1 | low | done | — | — |
 | P7-02 | #48 | fix(design): no more "·" separators — structure through layout and wording | P1 | low | open | — | — |
 | P7-03 | #49 | feat(design): a proper quote preview when you hover a source | P1 | low | open | P7-02 | — |
 | P7-04 | #47 | fix(web): on phones the demo notice no longer hides the first-visit notice | P2 | low | open | — | — |
