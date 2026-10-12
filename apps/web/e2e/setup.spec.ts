@@ -68,10 +68,10 @@ test('keys, transcripts and embeddings from the setup panel', async ({ page }) =
     timeout: 60_000,
   });
   await expect(dialog.getByRole('log')).toContainText('E2E fixture episode');
-  await expect(dialog.getByText(/^2 episodes · \d+ passages indexed/)).toBeVisible();
+  await expect(dialog.getByText(/^2 episodes and \d+ passages indexed/)).toBeVisible();
 
   // Embeddings: the estimate first, then a run capped by it.
-  const estimate = dialog.getByText(/passages? waiting · about \$/);
+  const estimate = dialog.getByText(/passages? waiting, about \$/);
   await expect(estimate).toBeVisible();
   await dialog.getByRole('button', { name: /^Embed for about \$/ }).click();
   await expect(dialog.getByText(copy.nothingToEmbed)).toBeVisible({ timeout: 60_000 });
@@ -79,7 +79,7 @@ test('keys, transcripts and embeddings from the setup panel', async ({ page }) =
   await expect(dialog.getByText(en.setup.embeddings.done)).toBeVisible();
 
   // The CLI, reading the same database, agrees with the panel.
-  const kb = await dialog.getByText(/^2 episodes · \d+ passages indexed/).textContent();
+  const kb = await dialog.getByText(/^2 episodes and \d+ passages indexed/).textContent();
   const passages = kb?.match(/(\d+) passages/)?.[1];
   const { FORCE_COLOR: _, ...env } = process.env;
   const status = execFileSync(process.execPath, ['packages/ingest/src/cli.ts', 'status'], {

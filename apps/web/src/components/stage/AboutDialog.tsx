@@ -24,7 +24,8 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
               chip={
                 <span className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-ember-tint px-2 font-mono text-[11.5px] text-ember-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-ember-0" />
-                  {brand.host.firstName} · 32:14
+                  {brand.host.firstName}
+                  <span className="tabular opacity-70">32:14</span>
                 </span>
               }
               {...copy.host}
@@ -35,7 +36,8 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
                   <span className="grid h-[15px] min-w-[15px] place-items-center rounded-full bg-ivory-0 text-[8.5px] font-semibold text-ink-0">
                     {copy.guest.chip[0]}
                   </span>
-                  {copy.guest.chip} · 32:14
+                  {copy.guest.chip}
+                  <span className="tabular opacity-70">32:14</span>
                 </span>
               }
               title={copy.guest.title}
@@ -43,8 +45,9 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
             />
             <Legend
               chip={
-                <span className="inline-flex h-[22px] items-center rounded-full border border-dashed border-steel/60 px-2 font-mono text-[11.5px] text-steel">
-                  {copy.episode.chip} · 32:14
+                <span className="inline-flex h-[22px] items-center gap-1.5 rounded-full border border-dashed border-steel/60 px-2 font-mono text-[11.5px] text-steel">
+                  {copy.episode.chip}
+                  <span className="tabular opacity-70">32:14</span>
                 </span>
               }
               title={copy.episode.title}

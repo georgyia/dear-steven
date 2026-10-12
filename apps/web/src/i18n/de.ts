@@ -12,7 +12,7 @@ export const de: Messages = {
   meta: {
     description:
       'Eine KI-Persona von Steven Bartlett, die aus echten Gesprächen von The Diary Of A CEO antwortet — und dir genau zeigt, wo jede Idee gesagt wurde.',
-    termsTitle: `Nutzungsbedingungen, Haftungsausschluss und Datenschutz · ${brand.name}`,
+    termsTitle: `${brand.name}: Nutzungsbedingungen, Haftungsausschluss und Datenschutz`,
     termsDescription:
       'Was Dear Steven ist und was nicht, die Bedingungen für die Nutzung und was mit deinen Daten passiert.',
   },
@@ -25,7 +25,13 @@ export const de: Messages = {
       'Wie bleibe ich diszipliniert, wenn die Motivation nachlässt?',
       'Worüber sollte ich gründlich nachdenken, bevor ich ein Unternehmen gründe?',
     ],
-    shortcuts: '↵ fragen · ⇧↵ neue Zeile · / zum Tippen · [ ] Quellen',
+    shortcutsLabel: 'Tastenkürzel',
+    shortcuts: [
+      { keys: '↵', action: 'fragen' },
+      { keys: '⇧↵', action: 'neue Zeile' },
+      { keys: '/', action: 'zum Tippen' },
+      { keys: '[ ]', action: 'Quellen' },
+    ],
   },
   composer: {
     label: 'Frag Steven',
@@ -45,20 +51,20 @@ export const de: Messages = {
     dismiss: 'Verstanden',
   },
   status: {
-    ready: (x) => `${s(x, 'Gespräch', 'Gespräche')} · bereit`,
-    demo: 'Demo-Modus · Beispielantworten',
+    ready: (x) => `${s(x, 'Gespräch', 'Gespräche')} bereit`,
+    demo: 'Demo-Modus mit Beispielantworten',
     empty: 'Noch keine Gespräche indexiert',
-    partial: (x) => `${n(x)} indexiert · Embeddings ausstehend`,
+    partial: (x) => `${n(x)} indexiert, Embeddings ausstehend`,
     broken: 'Wissensbasis nicht verfügbar',
     short: {
-      ready: (x) => `${n(x)} · bereit`,
+      ready: (x) => `${n(x)} bereit`,
       demo: 'Demo-Modus',
       empty: 'Nicht indexiert',
       partial: 'Indexiere',
       broken: 'Offline',
-      yourKey: (x) => `${n(x)} · dein Schlüssel`,
+      yourKey: (x) => `${n(x)} mit deinem Schlüssel`,
     },
-    yourKey: 'dein Schlüssel',
+    onYourKey: (text) => `${text}, mit deinem Schlüssel`,
     open: '. Einrichtung und Details zur Wissensbasis öffnen.',
   },
   thinking: {
@@ -158,7 +164,7 @@ export const de: Messages = {
       'Noch ist nichts geladen. Führe den Ingest-Befehl aus, dann habe ich etwas zu sagen — siehe „Einrichten“.',
   },
   turn: {
-    demoTag: 'Demo-Beispiel · nicht von KI erzeugt und nicht quellengeprüft',
+    demoTag: 'Demo-Beispiel: nicht von KI erzeugt und nicht quellengeprüft',
     spokenHeading: 'Was ich laut sagen würde',
     spokenNote: 'Die geschriebene Antwort enthält die Quellen.',
     stopped: 'Du hast mich unterbrochen. Frag jederzeit noch einmal.',
@@ -178,7 +184,7 @@ export const de: Messages = {
     openedBody: `${brand.name} hat sie Wort für Wort geschrieben — ein geteilter Link lässt sich nicht verändern. Stell unten deine eigene Frage.`,
     failedTitle: 'Der geteilte Link ließ sich nicht öffnen',
     cardSources: 'Quellen',
-    cardFooter: (host: string) => `Jede Aussage führt zu dem Moment, in dem sie fiel · ${host}`,
+    cardFooter: (host: string) => `${host}: Jede Aussage führt zu dem Moment, in dem sie fiel`,
     fileName: 'dear-steven-antwort.png',
   },
   answer: {
@@ -206,7 +212,7 @@ export const de: Messages = {
     host: 'Bestätigte Aussage des Gastgebers',
     guest: 'Bestätigte Aussage eines Gasts',
     unverified: 'Echte Passage, Sprecher nicht bestätigt',
-    label: (who, time, note, spoken) => `${who} · ${time}. ${note}, bei ${spoken}. Quelle öffnen.`,
+    label: (who, time, note, spoken) => `${who}, ${time}. ${note}, bei ${spoken}. Quelle öffnen.`,
   },
   cards: {
     label: 'Zitierte Gespräche',
@@ -215,10 +221,10 @@ export const de: Messages = {
   },
   youtube: {
     watch: 'Auf YouTube ansehen',
-    watchFrom: (moment) => `Auf YouTube ansehen · ${moment.replace(' ', '\u00a0')}`,
+    watchFrom: (moment) => `Auf YouTube ab ${moment.replace(' ', '\u00a0')} ansehen`,
     newTab: ' — öffnet YouTube in einem neuen Tab',
     unmatched: 'Noch kein Video zugeordnet',
-    fixture: 'Beispiel · kein Video',
+    fixture: 'Kein Video im Demo-Modus',
     invitation:
       'Diese Gespräche lohnen sich in voller Länge — sie gehen weiter als jede Antwort, die ich geben kann.',
     channel: 'The Diary Of A CEO auf YouTube',
@@ -238,9 +244,9 @@ export const de: Messages = {
     verifiedGuest: 'Bestätigter Gast',
     notVerified: 'Sprecher nicht bestätigt',
     verbatim: 'Wörtlich aus dem gespeicherten Transkript',
-    asr: ' · automatische Transkription, kann Fehler enthalten',
+    asr: 'Automatische Transkription, sie kann Fehler enthalten.',
     unverifiedNote:
-      ' · die Passage ist echt, aber das Transkript sagt nicht, wer gerade gesprochen hat',
+      'Die Passage ist echt, aber das Transkript sagt nicht, wer gerade gesprochen hat.',
     whyCited: 'Warum ich das zitiere',
     aiNote: 'Eine KI-Notiz, nicht Teil des Transkripts.',
     copy: 'Zitat mit Quellenangabe kopieren',
@@ -316,7 +322,7 @@ export const de: Messages = {
       error: (detail) => `Die Datenbank konnte nicht geöffnet werden: ${detail}`,
       none: 'Noch keine Datenbank. Beginne mit `pnpm ingest discover`, dann `pnpm ingest transcribe --from vtt --limit 20`.',
       ready: (episodes, passages, lastRun) =>
-        `${s(episodes, 'Folge', 'Folgen')} · ${s(passages, 'Passage', 'Passagen')} indexiert${lastRun ? ` · letzter Lauf ${lastRun}` : ''}.`,
+        `${s(episodes, 'Folge', 'Folgen')} und ${s(passages, 'Passage', 'Passagen')} indexiert${lastRun ? `; letzter Lauf ${lastRun}` : ''}.`,
     },
     embeddings: {
       title: 'Semantische Suche',
@@ -361,7 +367,7 @@ export const de: Messages = {
         'Kostenlos: die eigenen Transkripte des Podcasts aus seinem RSS-Feed, in Passagen geteilt.',
       embedHeading: 'Semantische Suche',
       estimate: (passages, cost) =>
-        `${s(passages, 'Passage wartet', 'Passagen warten')} · etwa ${cost} bei OpenAI.`,
+        `${s(passages, 'Passage wartet', 'Passagen warten')}, etwa ${cost} bei OpenAI.`,
       nothingToEmbed: 'Nichts wartet darauf, eingebettet zu werden.',
       cap: 'Höchstens ausgeben, in Dollar',
       embed: (cost) => `Für etwa ${cost} einbetten`,

@@ -118,7 +118,7 @@ describe('demoEpisodePage', () => {
       [...all.episodes.map((e) => e.publishedAt)].sort().reverse(),
     );
     expect(demoEpisodePage('founder', 0).episodes.map((e) => e.guestNames[0])).toEqual([
-      'Demo Guest · Founder',
+      'Demo Guest, Founder',
     ]);
     expect(demoEpisodePage('nobody', 0).total).toBe(0);
   });

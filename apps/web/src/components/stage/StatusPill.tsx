@@ -39,7 +39,7 @@ function shortText(s: KnowledgeStatus, status: Messages['status']): string {
 /** Running on the visitor's own key (P6-03) is always said, not only in the setup panel. */
 function longText(s: KnowledgeStatus, status: Messages['status']): string {
   const text = statusText(s, status);
-  return s.setup.visitorKey ? `${text} · ${status.yourKey}` : text;
+  return s.setup.visitorKey ? status.onYourKey(text) : text;
 }
 
 const DOT: Record<KnowledgeState, string> = {

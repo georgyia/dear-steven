@@ -164,7 +164,7 @@ export async function drawShareCard(
     text(`“${content.quote.text}”`, S.quote, 6, PAD + QUOTE_INDENT, INNER - QUOTE_INDENT);
     gap(10);
     const c = content.quote.citation;
-    const by = `${speakerLabel(c, t.speaker).short} · ${c.episode.title}`;
+    const by = `${speakerLabel(c, t.speaker).short}, ${c.episode.title}`;
     text(by, S.meta, 2, PAD + QUOTE_INDENT, INNER - QUOTE_INDENT);
     ops.push({ kind: 'rect', x: PAD, y: top + 6, w: 4, h: y - top - 12, color: v('--ember-0') });
     gap(44);
@@ -179,10 +179,10 @@ export async function drawShareCard(
     text(t.share.cardSources.toUpperCase(), { ...S.label, color: v('--steel') }, 1);
     gap(12);
     for (const c of content.sources) {
-      text(`${speakerLabel(c, t.speaker).short} · ${c.episode.title}`, S.source, 1);
+      text(`${speakerLabel(c, t.speaker).short}, ${c.episode.title}`, S.source, 1);
       const at = formatMoment(c.timestamp.ms, c.timestamp.state);
       const link = c.youtubeUrl?.replace(/^https:\/\/(www\.)?/, '');
-      const where = [at, link].filter(Boolean).join(' · ');
+      const where = [at, link].filter(Boolean).join('   ');
       if (where) text(where, S.meta, 1);
       gap(14);
     }

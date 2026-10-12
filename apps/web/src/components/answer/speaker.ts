@@ -32,6 +32,6 @@ export function initials(name: string): string {
   return (
     (
       (words[0]?.[0] ?? '') + (words.length > 1 ? (words[words.length - 1]?.[0] ?? '') : '')
-    ).toUpperCase() || '·'
+    ).toUpperCase() || '?'
   );
 }

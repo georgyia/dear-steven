@@ -73,10 +73,7 @@ export function CitationChip({ citation, active, onOpen }: CitationChipProps) {
           <span aria-hidden="true" className="-ml-0.5 h-1.5 w-1.5 rounded-full bg-ember-0" />
         ) : null}
         <span className="max-w-[11rem] truncate">{who.short}</span>
-        <span aria-hidden="true" className="opacity-50">
-          ·
-        </span>
-        <span className="tabular">{time}</span>
+        <span className="tabular opacity-70">{time}</span>
       </button>
     </WarmTooltip>
   );

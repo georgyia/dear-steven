@@ -6,6 +6,7 @@ import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useId, useState } from 'react';
 import { speakerLabel } from '@/components/answer/speaker';
+import { MetaLine } from '@/components/ui/MetaLine';
 import { YouTubeLink } from '@/components/ui/YouTubeLink';
 import { useI18n } from '@/i18n/I18nProvider';
 import { fetchRelated } from '@/lib/api';
@@ -76,10 +77,14 @@ function RelatedItem({ passage: p }: { passage: PassageCitation }) {
         className="flex w-full items-start gap-3 rounded-[var(--radius-card)] px-4 pt-3 pb-2 text-left transition-colors hover:bg-ink-2/60"
       >
         <span className="min-w-0 flex-1">
-          <span className="block font-mono text-[11px] text-steel">
-            {formatDate(p.episode.publishedAt, locale)} · {formatTimestamp(p.startMs)} ·{' '}
-            {p.speaker === 'unverified' ? t.answer.notVerified : who.short}
-          </span>
+          <MetaLine
+            className="font-mono text-[11px] text-steel"
+            items={[
+              formatDate(p.episode.publishedAt, locale),
+              formatTimestamp(p.startMs),
+              p.speaker === 'unverified' ? t.answer.notVerified : who.short,
+            ]}
+          />
           <span
             lang="en"
             className="mt-1 block font-display text-[15.5px] leading-snug text-ivory-0"
@@ -104,9 +109,9 @@ function RelatedItem({ passage: p }: { passage: PassageCitation }) {
             <span>
               {p.speaker === 'unverified'
                 ? t.inspector.fromConversation(who.short)
-                : t.inspector.saidBy(who.short)}{' '}
-              · {t.inspector.inPodcast(formatTimestamp(p.startMs))}
+                : t.inspector.saidBy(who.short)}
             </span>
+            <span>{t.inspector.inPodcast(formatTimestamp(p.startMs))}</span>
             {p.youtubeUrl ? (
               <YouTubeLink href={p.youtubeUrl} variant="inline">
                 {p.timestamp.state === 'unknown'

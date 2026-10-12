@@ -244,7 +244,7 @@ function VoicePicker({
             <option value="">{copy.automatic}</option>
             {speaksLocale.map((v) => (
               <option key={v.voiceURI} value={v.voiceURI}>
-                {v.name} · {v.lang}
+                {v.name} ({v.lang})
               </option>
             ))}
           </select>

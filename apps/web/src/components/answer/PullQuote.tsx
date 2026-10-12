@@ -63,11 +63,9 @@ export function PullQuote({ citation, text, translation, lead, active, onOpen }:
           {translation}
         </p>
       ) : null}
-      <figcaption className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[12px] text-steel">
+      <figcaption className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[12px] text-steel">
         <span className="text-ivory-1">— {attribution}</span>
-        <span aria-hidden="true">·</span>
         <span className="tabular">{formatTimestamp(citation.startMs)}</span>
-        <span aria-hidden="true">·</span>
         <span>{t.answer.verbatim}</span>
         {citation.speaker === 'unverified' ? (
           <span className="rounded-full border border-dashed border-steel/60 px-2 py-0.5 text-[10.5px]">

@@ -13,7 +13,7 @@ export const en = {
   meta: {
     description:
       'An AI persona of Steven Bartlett that answers from real Diary Of A CEO conversations — and shows you exactly where each idea was said.',
-    termsTitle: `Terms, disclaimer and privacy · ${brand.name}`,
+    termsTitle: `${brand.name}: terms, disclaimer and privacy`,
     termsDescription:
       'What Dear Steven is and isn’t, the terms for using it, and what happens to your data.',
   },
@@ -26,7 +26,13 @@ export const en = {
       'How do I stay disciplined when the motivation runs out?',
       'What should I think hard about before starting a business?',
     ],
-    shortcuts: '↵ ask · ⇧↵ new line · / to type · [ ] sources',
+    shortcutsLabel: 'Keyboard shortcuts',
+    shortcuts: [
+      { keys: '↵', action: 'ask' },
+      { keys: '⇧↵', action: 'new line' },
+      { keys: '/', action: 'to type' },
+      { keys: '[ ]', action: 'sources' },
+    ],
   },
   composer: {
     label: 'Ask Steven',
@@ -46,20 +52,20 @@ export const en = {
     dismiss: 'Got it',
   },
   status: {
-    ready: (x: number) => `${s(x, 'conversation', 'conversations')} · ready`,
-    demo: 'Demo mode · fixture answers',
+    ready: (x: number) => `${s(x, 'conversation', 'conversations')} ready`,
+    demo: 'Demo mode with fixture answers',
     empty: 'No conversations indexed yet',
-    partial: (x: number) => `${n(x)} indexed · embeddings pending`,
+    partial: (x: number) => `${n(x)} indexed, embeddings pending`,
     broken: 'Knowledge base unavailable',
     short: {
-      ready: (x: number) => `${n(x)} · ready`,
+      ready: (x: number) => `${n(x)} ready`,
       demo: 'Demo mode',
       empty: 'Not indexed',
       partial: 'Indexing',
       broken: 'Offline',
-      yourKey: (x: number) => `${n(x)} · your key`,
+      yourKey: (x: number) => `${n(x)} on your key`,
     },
-    yourKey: 'your key',
+    onYourKey: (text: string) => `${text}, running on your key`,
     open: '. Open setup and knowledge base details.',
   },
   thinking: {
@@ -152,7 +158,7 @@ export const en = {
       'Nothing’s loaded yet. Run the ingest command and I’ll have something to say — see “Set up”.',
   },
   turn: {
-    demoTag: 'Demo fixture · not AI-generated or source-verified',
+    demoTag: 'Demo fixture: not AI-generated or source-verified',
     spokenHeading: 'What I’d say out loud',
     spokenNote: 'The written answer carries the sources.',
     stopped: 'You stopped me there. Ask again any time.',
@@ -172,7 +178,7 @@ export const en = {
     openedBody: `${brand.name} wrote it, word for word — a shared link can’t be edited. Ask your own question below.`,
     failedTitle: 'That shared link didn’t open',
     cardSources: 'Sources',
-    cardFooter: (host: string) => `Every claim links to the moment it was said · ${host}`,
+    cardFooter: (host: string) => `${host}: every claim links to the moment it was said`,
     fileName: 'dear-steven-answer.png',
   },
   answer: {
@@ -201,7 +207,7 @@ export const en = {
     guest: 'Verified guest statement',
     unverified: 'Real passage, speaker not verified',
     label: (who: string, time: string, note: string, spoken: string) =>
-      `${who} · ${time}. ${note}, at ${spoken}. Open source.`,
+      `${who}, ${time}. ${note}, at ${spoken}. Open source.`,
   },
   cards: {
     label: 'Conversations cited',
@@ -212,10 +218,10 @@ export const en = {
   youtube: {
     watch: 'Watch on YouTube',
     // The moment never breaks across lines: "≈ 40:10" stays together on a narrow card.
-    watchFrom: (moment: string) => `Watch on YouTube · ${moment.replace(' ', '\u00a0')}`,
+    watchFrom: (moment: string) => `Watch on YouTube at ${moment.replace(' ', '\u00a0')}`,
     newTab: ' — opens YouTube in a new tab',
     unmatched: 'No video matched yet',
-    fixture: 'Fixture · no video',
+    fixture: 'No video in demo mode',
     invitation:
       'These conversations are worth watching in full — they go further than any answer I can give.',
     channel: 'The Diary Of A CEO on YouTube',
@@ -235,8 +241,8 @@ export const en = {
     verifiedGuest: 'Verified guest',
     notVerified: 'Speaker not verified',
     verbatim: 'Verbatim from the stored transcript',
-    asr: ' · automatic transcription, may contain errors',
-    unverifiedNote: ' · this passage is real, but the transcript doesn’t say who was speaking',
+    asr: 'Automatic transcription, so it may contain errors.',
+    unverifiedNote: 'The passage is real, but the transcript doesn’t say who was speaking.',
     whyCited: 'Why I cited this',
     aiNote: 'An AI note, not part of the transcript.',
     copy: 'Copy quote with attribution',
@@ -308,7 +314,7 @@ export const en = {
       error: (detail: string) => `The database could not be opened: ${detail}`,
       none: 'No database yet. Start with `pnpm ingest discover`, then `pnpm ingest transcribe --from vtt --limit 20`.',
       ready: (episodes: number, passages: number, lastRun: string | null) =>
-        `${s(episodes, 'episode', 'episodes')} · ${s(passages, 'passage', 'passages')} indexed${lastRun ? ` · last run ${lastRun}` : ''}.`,
+        `${s(episodes, 'episode', 'episodes')} and ${s(passages, 'passage', 'passages')} indexed${lastRun ? `; last run ${lastRun}` : ''}.`,
     },
     embeddings: {
       title: 'Semantic search',
@@ -352,7 +358,7 @@ export const en = {
       buildNote: 'Free: the podcast’s own transcripts from its RSS feed, split into passages.',
       embedHeading: 'Semantic search',
       estimate: (passages: number, cost: string) =>
-        `${s(passages, 'passage', 'passages')} waiting · about ${cost} with OpenAI.`,
+        `${s(passages, 'passage', 'passages')} waiting, about ${cost} with OpenAI.`,
       nothingToEmbed: 'Nothing waiting to be embedded.',
       cap: 'Spend at most, in dollars',
       embed: (cost: string) => `Embed for about ${cost}`,

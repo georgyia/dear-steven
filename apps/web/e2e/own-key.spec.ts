@@ -88,7 +88,7 @@ test('paste a key, test it, ask on it, then forget it', async ({ page }) => {
   await page.getByRole('button', { name: copy.use }).click();
   await expect(page.getByText(copy.using(false))).toBeVisible();
   await expect(page.getByLabel(copy.label)).toHaveCount(0);
-  await expect(page.getByTestId('status-pill')).toContainText(en.status.yourKey);
+  await expect(page.getByTestId('status-pill')).toContainText('on your key');
   expect(await stored(page)).toEqual({ tab: CANARY, device: null });
 
   const audit = await new AxeBuilder({ page })
@@ -107,7 +107,7 @@ test('paste a key, test it, ask on it, then forget it', async ({ page }) => {
   await openSetup(page);
   await page.getByRole('button', { name: copy.forget }).click();
   await expect(page.getByLabel(copy.label)).toBeVisible();
-  await expect(page.getByTestId('status-pill')).not.toContainText(en.status.yourKey);
+  await expect(page.getByTestId('status-pill')).not.toContainText('on your key');
   expect(await stored(page)).toEqual({ tab: null, device: null });
 
   await closeSetup(page);
@@ -133,7 +133,7 @@ test('"remember on this device" survives a reload, and Forget clears it', async 
   expect(await stored(page)).toEqual({ tab: null, device: CANARY });
 
   await page.reload();
-  await expect(page.getByTestId('status-pill')).toContainText(en.status.yourKey);
+  await expect(page.getByTestId('status-pill')).toContainText('on your key');
   await openSetup(page);
   await expect(page.getByText(copy.using(true))).toBeVisible();
   await page.getByRole('button', { name: copy.forget }).click();
@@ -156,6 +156,6 @@ test('with storage blocked, says the key can’t be kept and never sends it', as
   await page.getByLabel(copy.label).fill(CANARY);
   await page.getByRole('button', { name: copy.use }).click();
   await expect(setup.getByRole('alert')).toHaveText(copy.noStorage);
-  await expect(page.getByTestId('status-pill')).not.toContainText(en.status.yourKey);
+  await expect(page.getByTestId('status-pill')).not.toContainText('on your key');
   expect(sent.filter((r) => r.key && !r.url.endsWith('/api/key'))).toEqual([]);
 });
