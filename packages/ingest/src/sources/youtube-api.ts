@@ -1,8 +1,6 @@
+import { SHOW_CHANNEL_ID } from '@dear-steven/core/youtube';
 import { fetchJson } from '../lib/http.ts';
 import { parseIsoDuration, type YouTubeVideo } from './youtube-match.ts';
-
-/** The Diary Of A CEO YouTube channel. Its uploads playlist is the channel id with `UU` for `UC`. */
-export const DOAC_CHANNEL_ID = 'UCGq-a57w-aPwyi3pW7XLiHw';
 
 const API = 'https://www.googleapis.com/youtube/v3';
 
@@ -26,7 +24,7 @@ interface VideosPage {
  */
 export async function listUploads(
   apiKey: string,
-  channelId: string = DOAC_CHANNEL_ID,
+  channelId: string = SHOW_CHANNEL_ID,
   onPage?: (count: number) => void,
 ): Promise<YouTubeVideo[]> {
   const playlistId = `UU${channelId.slice(2)}`;

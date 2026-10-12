@@ -2,6 +2,11 @@ import type { OffsetStep, TimestampState, YouTubeAlignment } from '../schema/ind
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 
+/** The Diary Of A CEO's YouTube channel. Its uploads playlist is the id with `UU` for `UC`. */
+export const SHOW_CHANNEL_ID = 'UCGq-a57w-aPwyi3pW7XLiHw';
+/** Where "watch the originals" points (P6-14). A plain https link opens the app where installed. */
+export const SHOW_CHANNEL_URL = `https://www.youtube.com/channel/${SHOW_CHANNEL_ID}`;
+
 export function isYouTubeVideoId(value: string): boolean {
   return VIDEO_ID.test(value);
 }

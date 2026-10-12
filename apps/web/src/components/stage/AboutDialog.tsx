@@ -1,7 +1,9 @@
 'use client';
 
+import { SHOW_CHANNEL_URL } from '@dear-steven/core/youtube';
 import { brand } from '@/brand';
 import { Dialog } from '@/components/ui/Dialog';
+import { YouTubeLink } from '@/components/ui/YouTubeLink';
 
 /** "How this works": the persona, the four kinds of statement, and what happens to your data. */
 export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -75,6 +77,22 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
             dropped, speaker claims must match the transcript, and quotes are shown from the stored
             transcript — never from the model’s memory. If the conversations don’t cover your
             question, it says so.
+          </p>
+        </section>
+
+        <section>
+          <h3 className="mb-2 font-mono text-[11px] tracking-[0.16em] text-steel uppercase">
+            Watch the originals
+          </h3>
+          <p>
+            Everything here comes from {brand.show}’s conversations, and they are free to watch on
+            YouTube. This is a fan project that sends people to the show, not a replacement for it:
+            wherever an episode is matched to its video, its sources link to the moment they come
+            from, and watching the full episodes is the best way to support the people who made
+            them.
+          </p>
+          <p className="mt-3">
+            <YouTubeLink href={SHOW_CHANNEL_URL}>{brand.copy.youtube.channel}</YouTubeLink>
           </p>
         </section>
 

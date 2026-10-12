@@ -3,9 +3,11 @@
 import { formatMoment, formatTimestamp } from '@dear-steven/core/format';
 import type { Citation } from '@dear-steven/core/schema';
 import { podcastAudioAt } from '@dear-steven/core/youtube';
-import { HeadphonesIcon, LinkSquare02Icon, PlayIcon } from '@hugeicons/core-free-icons';
+import { HeadphonesIcon, PlayIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useId, useRef, useState } from 'react';
+import { brand } from '@/brand';
+import { YouTubeLink } from '@/components/ui/YouTubeLink';
 
 /**
  * The inspector's Video tab (P5-05): the privacy-enhanced YouTube player at the aligned second
@@ -76,15 +78,9 @@ function VideoPlayer({ citation, youtubeUrl }: { citation: Citation; youtubeUrl:
           </button>
         )
       ) : null}
-      <a
-        href={youtubeUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex w-fit items-center gap-2 rounded-full border border-ink-3 px-3.5 py-2 text-[13px] text-ivory-1 transition-colors hover:border-ink-4 hover:bg-ink-2 hover:text-ivory-0"
-      >
-        <HugeiconsIcon icon={LinkSquare02Icon} size={14} strokeWidth={2} />
-        {moment ? `Open on YouTube at ${moment}` : 'Open the episode on YouTube'}
-      </a>
+      <YouTubeLink href={youtubeUrl}>
+        {moment ? brand.copy.youtube.watchFrom(moment) : brand.copy.youtube.watch}
+      </YouTubeLink>
       <p className="text-[13.5px] leading-relaxed text-ivory-2">
         {citation.timestamp.state === 'exact'
           ? 'The video and the podcast are aligned for this episode.'
