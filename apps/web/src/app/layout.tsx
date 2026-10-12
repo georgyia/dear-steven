@@ -45,9 +45,16 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const locale = await requestUiLocale();
+  // Browser extensions (Grammarly, Dark Reader, password managers) add attributes to <html> and
+  // <body> before React hydrates. suppressHydrationWarning covers these two elements' own
+  // attributes only, so a real mismatch anywhere inside the page is still reported (P7-01).
   return (
-    <html lang={locale} className={`${fraunces.variable} ${geist.variable} ${geistMono.variable}`}>
-      <body>
+    <html
+      lang={locale}
+      className={`${fraunces.variable} ${geist.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
+      <body suppressHydrationWarning>
         <I18nProvider initialLocale={locale}>{children}</I18nProvider>
       </body>
     </html>
