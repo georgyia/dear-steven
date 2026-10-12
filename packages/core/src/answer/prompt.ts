@@ -69,6 +69,6 @@ export function repairInput(
 }
 
 export const CONDENSE_INSTRUCTIONS =
-  'Rewrite the final user question as one standalone search query for a podcast transcript archive, resolving pronouns and references from the conversation. Keep names and key terms. Output only the query, no quotes, at most 25 words.';
+  'Rewrite the final user question as one standalone search query, in English, for an English podcast transcript archive: translate it if it is in another language, and resolve pronouns and references from the conversation. Keep names and key terms. Output only the query, no quotes, at most 25 words.';
 
 export { PERSONA_INSTRUCTIONS };

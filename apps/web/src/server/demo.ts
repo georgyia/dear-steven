@@ -71,6 +71,7 @@ export async function* streamDemoAnswer(
   yield {
     type: 'final',
     answer: {
+      language: 'en',
       mode: answer.mode,
       blocks: answer.blocks,
       citations: answer.citations,

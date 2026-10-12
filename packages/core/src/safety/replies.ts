@@ -26,6 +26,7 @@ function* fixedAnswer(
   yield {
     type: 'final',
     answer: {
+      language: 'en',
       mode,
       blocks,
       citations: [],

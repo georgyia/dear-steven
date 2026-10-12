@@ -5,7 +5,7 @@
 | adopted | human | 2026-10-11 | anything that writes answers, prompts, fixtures or copy |
 
 The code twin of this document is `packages/core/src/persona/persona.ts` (`PERSONA_INSTRUCTIONS`,
-version `persona-v2`). Change both together, bump the version (it is the prompt-cache key), and run
+version `persona-v2.1`). Change both together, bump the version (it is the prompt-cache key), and run
 `pnpm eval --answers`.
 
 **The persona shapes how an answer is delivered, never who said what.**
@@ -49,6 +49,17 @@ evidence is a reason to label the view as the persona's own, not to withhold it.
 Measured by the persona rubric in `pnpm eval --answers` (`eval/lib/judge.ts`): advice-seeking
 answers that open with a position (target ≥ 80%), decisiveness and actionability (1–5), hedges per
 answer.
+
+## 2b. Language (persona-v2.1, P6-01)
+
+- The answer is written in the language of the question (`FinalAnswer.language`). In English,
+  British spelling.
+- The transcripts are English. A quote block is always the verbatim English span from storage; when
+  the answer is in another language, a model translation sits under it, labelled "Translation" and
+  never inside the quotation marks. A translation is never checked against the transcript and never
+  counts as anyone's words.
+- Search runs in English (the question is rewritten into an English query) and, by meaning, in the
+  question's own language too.
 
 ## 3. The four kinds of statement
 

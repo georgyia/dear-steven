@@ -1,0 +1,127 @@
+{
+  "$comment": "Spanish versions of the retrieval questions in questions.json (P6-01), same ids and the same expected episodes: recall@10 here should stay within 10 points of the English. Translated by the agent; a native speaker may improve them.",
+  "version": 1,
+  "language": "es",
+  "questions": [
+    {
+      "id": "q01",
+      "question": "¿Por qué me despierto agotado aunque haya dormido toda la noche?",
+      "expect": ["flightcast:01M0ZPY4TQPFTDMTWWP68V36C9"],
+      "topic": "sleep"
+    },
+    {
+      "id": "q02",
+      "question": "¿De verdad se puede construir un negocio serio desde tu habitación?",
+      "expect": ["flightcast:01M26N4N40D24TJPZ6V4N7JMTY"],
+      "topic": "business"
+    },
+    {
+      "id": "q03",
+      "question": "¿Cómo puedo saber si alguien me está mintiendo?",
+      "expect": ["flightcast:01M1M9A59AFBGJG3WGBMW30A0F"],
+      "topic": "psychology"
+    },
+    {
+      "id": "q04",
+      "question": "¿Por qué las personas inteligentes a veces resultan antipáticas en una conversación?",
+      "expect": ["flightcast:01M23VE3XS205C0HMNRE4ENR58"],
+      "topic": "communication"
+    },
+    {
+      "id": "q05",
+      "question": "¿Debería dejar mi trabajo antes de que la IA tome esa decisión por mí?",
+      "expect": ["flightcast:01KZEMW7JE1GT1EJ9WC74DKA3M"],
+      "topic": "career"
+    },
+    {
+      "id": "q06",
+      "question": "¿El auge de la IA es sobre todo exageración?",
+      "expect": ["flightcast:01M0ZJXTQSPBEVY6X1T0EZ7M9C", "flightcast:01M2GNJS32R11MFGEF3FZ4MFGV"],
+      "topic": "ai"
+    },
+    {
+      "id": "q07",
+      "question": "¿Podrían los agentes de IA descontrolarse y borrar sus huellas?",
+      "expect": ["flightcast:01M46YN191EJ0V3NPANXPEM9WA"],
+      "topic": "ai"
+    },
+    {
+      "id": "q08",
+      "question": "¿Qué hace realmente un gran productor musical en el estudio?",
+      "expect": ["flightcast:01M2RHNG0S1MZ1VD7AG18AGCZ7"],
+      "topic": "creativity"
+    },
+    {
+      "id": "q09",
+      "question": "¿El éxito de la noche a la mañana es un mito?",
+      "expect": ["flightcast:01M26CBRW55X2EMED8438W3PW7"],
+      "topic": "success"
+    },
+    {
+      "id": "q10",
+      "question": "Perder peso es fácil, entonces ¿por qué no consigo mantenerlo?",
+      "expect": ["flightcast:01KZERQ8T6WKSG6169FR2YC3SZ"],
+      "topic": "health"
+    },
+    {
+      "id": "q11",
+      "question": "¿Inventaron los humanos a Dios y el cielo?",
+      "expect": ["flightcast:01M011QCMPHN8FAV0XN9GXFS1N"],
+      "topic": "meaning"
+    },
+    {
+      "id": "q12",
+      "question": "¿Debería mantener bitcoin a largo plazo?",
+      "expect": ["flightcast:01KYMQ6P4DHXHH9EJVKVCKE4Q0"],
+      "topic": "money"
+    },
+    {
+      "id": "q13",
+      "question": "¿Sigue siendo alcanzable el sueño americano para los jóvenes?",
+      "expect": ["flightcast:01KYMPYHGY7WKDEBPBJQ2VRQPJ"],
+      "topic": "society"
+    },
+    {
+      "id": "q14",
+      "question": "¿Está a punto de derrumbarse el orden mundial actual?",
+      "expect": ["flightcast:01M243XAN33DBKT1N5844WSMAV", "flightcast:01M0ECWWKZKQ93WCFTA6JV03WZ"],
+      "topic": "geopolitics"
+    },
+    {
+      "id": "q15",
+      "question": "¿Qué salió mal realmente en WeWork?",
+      "expect": ["flightcast:01M32K500669XNSP3RQZSWNC4M"],
+      "topic": "business"
+    },
+    {
+      "id": "q16",
+      "question": "¿Ha fallado el capitalismo a la gente común?",
+      "expect": ["flightcast:01M011YXPMA7EXR82JB7CMWHJN", "flightcast:01M0ECWWKZKQ93WCFTA6JV03WZ"],
+      "topic": "economy"
+    },
+    {
+      "id": "q17",
+      "question": "¿Qué le pasa a la testosterona de un hombre cuando se convierte en padre?",
+      "expect": ["flightcast:01M0ECRSS1Y4MX77YFXTYP472G"],
+      "topic": "health"
+    },
+    {
+      "id": "q18",
+      "question": "¿Está Estados Unidos en declive como superpotencia?",
+      "expect": ["flightcast:01M0ECWWKZKQ93WCFTA6JV03WZ", "flightcast:01M243XAN33DBKT1N5844WSMAV"],
+      "topic": "geopolitics"
+    },
+    {
+      "id": "q19",
+      "question": "¿Es la inteligencia artificial un riesgo real de extinción?",
+      "expect": ["flightcast:01M2GNJS32R11MFGEF3FZ4MFGV", "flightcast:01M46YN191EJ0V3NPANXPEM9WA"],
+      "topic": "ai"
+    },
+    {
+      "id": "q20",
+      "question": "¿Cómo convirtió Dana White a la UFC en un gigante?",
+      "expect": ["flightcast:01M26N4N40D24TJPZ6V4N7JMTY"],
+      "topic": "business"
+    }
+  ]
+}

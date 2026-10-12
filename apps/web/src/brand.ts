@@ -57,6 +57,8 @@ export const brand = {
     toast: {
       quoteCopied: 'Quote copied with attribution',
     },
+    /** Under a quote when the answer isn't in English (P6-01): model-made, not anyone's words. */
+    translation: 'Translation',
     /** The terms, the disclaimer and the first-visit notice (P6-12). */
     terms: {
       link: 'Terms & disclaimer',

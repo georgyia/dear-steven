@@ -1,3 +1,4 @@
+import { detectLanguage } from '../language/detect.ts';
 import type { Embedder } from '../openai/embedder.ts';
 import { EMPTY_KNOWLEDGE_REPLY, RESTING_REPLY, THINKING_COPY } from '../persona/copy.ts';
 import { hybridSearch } from '../retrieval/index.ts';
@@ -19,7 +20,7 @@ import type {
   ResolvedBlock,
 } from '../schema/index.ts';
 import type { KnowledgeStore } from '../store/index.ts';
-import { condenseQuery } from './condense.ts';
+import { searchQuery } from './condense.ts';
 import { buildContext } from './context.ts';
 import type { AnswerModel } from './model.ts';
 import {
@@ -95,8 +96,17 @@ export async function* composeAnswer(
     : Promise.resolve(null);
 
   yield { type: 'status', step: 'searching', message: THINKING_COPY.searching(stats.episodes) };
-  const query = await condenseQuery(deps.model, request.question, request.history, signal);
-  const retrieval = await hybridSearch(deps.store, query, deps.embedder, {}, signal);
+  // The transcripts are English: search in English, and by meaning in the question's own language
+  // too (P6-01). The answer comes back in the question's language.
+  const language = detectLanguage(request.question);
+  const query = await searchQuery(deps.model, request.question, request.history, language, signal);
+  const retrieval = await hybridSearch(
+    deps.store,
+    query,
+    deps.embedder,
+    language === 'en' ? {} : { alsoSemantic: [request.question] },
+    signal,
+  );
   const route = routeQuestion(request.question, await moderation);
   if (route.kind !== 'answer') {
     yield* safetyAnswer(deps, request, route, started, now);
@@ -229,6 +239,7 @@ export async function* composeAnswer(
 
   const citations: Citation[] = registry.all(answer.evidence);
   const final: FinalAnswer = {
+    language: /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/.test(answer.language) ? answer.language : language,
     mode: finalMode(answer.mode, emitted, notes.size > 0),
     blocks: emitted,
     citations,
@@ -293,6 +304,7 @@ export function* restingAnswer(
   yield {
     type: 'final',
     answer: {
+      language: 'en',
       mode: 'conversational',
       blocks: [block],
       citations: [],
@@ -323,6 +335,7 @@ export function* emptyKnowledgeAnswer(
   yield {
     type: 'final',
     answer: {
+      language: 'en',
       mode: 'insufficient',
       blocks: [block],
       citations: [],

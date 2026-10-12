@@ -8,8 +8,14 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { type AnswerRecord, composeAnswer, openAIAnswerModel } from '@dear-steven/core/answer';
+import {
+  type AnswerRecord,
+  composeAnswer,
+  openAIAnswerModel,
+  searchQuery,
+} from '@dear-steven/core/answer';
 import { findRepoRoot, readConfig } from '@dear-steven/core/config';
+import { detectLanguage } from '@dear-steven/core/language';
 import { answerCostUsd, embeddingCostUsd, MODELS } from '@dear-steven/core/models';
 import { createOpenAI, moderate, openAIEmbedder } from '@dear-steven/core/openai';
 import { hybridSearch } from '@dear-steven/core/retrieval';
@@ -44,7 +50,12 @@ const THRESHOLDS = {
   falseRefusalRate: 0.05,
   /** Persona v2 (P6-06): advice-seeking answers that open with a clear view or recommendation. */
   opensWithPosition: 0.8,
+  /** P6-01: recall@10 on a translated set may trail English by at most this. */
+  translatedRecallGap: 0.1,
 };
+
+/** Translated versions of the retrieval questions (P6-01): eval/questions.<lang>.json. */
+const LANGUAGES = ['de', 'es'] as const;
 
 const root = findRepoRoot();
 if (existsSync(join(root, '.env'))) process.loadEnvFile(join(root, '.env'));
@@ -104,6 +115,52 @@ console.log(
 );
 let failed = scored.length > 0 && recall < THRESHOLDS.recallAt10;
 
+/** The answer model, also used to turn translated questions into English search queries. */
+const model = client
+  ? openAIAnswerModel(client, MODELS.answer, {
+      onUsage: (usage) => {
+        costUsd += answerCostUsd(usage);
+      },
+    })
+  : null;
+
+// --------------------------------------------------------------- other languages (P6-01)
+const translatedRecall: Record<string, number> = {};
+if (!model) {
+  console.log('recall@10 in other languages: skipped (needs OPENAI_API_KEY to rewrite the query)');
+} else {
+  for (const lang of LANGUAGES) {
+    const set = JSON.parse(readFileSync(join(root, 'eval', `questions.${lang}.json`), 'utf8')) as {
+      questions: Question[];
+    };
+    const hits: boolean[] = [];
+    for (const q of set.questions.filter((x) => !only || only.includes(x.id))) {
+      const expected = (q.expect ?? []).filter((g) => indexedGuids.has(g));
+      if (!expected.length) continue;
+      const query = await searchQuery(model, q.question, [], detectLanguage(q.question));
+      const result = await hybridSearch(store, query, embedder, {
+        take: 10,
+        alsoSemantic: [q.question],
+      });
+      const hit = recallAt(
+        10,
+        result.passages.map((p) => p.episode.sourceGuid),
+        expected,
+      );
+      if (!hit) console.log(`✗ ${lang} ${q.id} ${q.question}\n    searched as: ${query}`);
+      hits.push(hit);
+    }
+    translatedRecall[lang] = hits.length ? hits.filter(Boolean).length / hits.length : 0;
+  }
+  console.log(
+    `recall@10 in other languages: ${LANGUAGES.map((l) => `${l} ${((translatedRecall[l] ?? 0) * 100).toFixed(0)}%`).join(' · ')} (en ${(recall * 100).toFixed(0)}%)`,
+  );
+  failed ||= LANGUAGES.some(
+    (l) =>
+      scored.length > 0 && (translatedRecall[l] ?? 0) < recall - THRESHOLDS.translatedRecallGap,
+  );
+}
+
 // --------------------------------------------------------------- safety rails (P6-11)
 const redTeam = loadRedTeam(root).filter((c) => !only || only.includes(c.id));
 const routingProblems = offlineRouting(redTeam);
@@ -117,6 +174,12 @@ failed ||= routingProblems.length > 0 || overRefused.rate > THRESHOLDS.falseRefu
 
 // ------------------------------------------------------------------ answers
 let personaRubric: ReturnType<typeof rubric> | null = null;
+const languageAnswers: {
+  id: string;
+  problems: string[];
+  quotes: number;
+  final: FinalAnswer | null;
+}[] = [];
 const redTeamResults: {
   id: string;
   kind: string;
@@ -136,12 +199,8 @@ const answers: {
 }[] = [];
 if (values.answers) {
   if (!client) throw new Error('--answers needs OPENAI_API_KEY in .env');
+  if (!model) throw new Error('--answers needs OPENAI_API_KEY in .env');
   const moderator = (text: string, signal: AbortSignal) => moderate(client, text, signal);
-  const model = openAIAnswerModel(client, MODELS.answer, {
-    onUsage: (usage) => {
-      costUsd += answerCostUsd(usage);
-    },
-  });
   for (const q of questions) {
     const t0 = Date.now();
     let ttfb: number | null = null;
@@ -203,6 +262,41 @@ if (values.answers) {
   console.log(
     `\ncitations resolve ${(resolveRate * 100).toFixed(0)}% · attribution violations ${attributionViolations} · quote mismatches ${quoteFailures} · persona lint ${personaFailures} · unanswerable handled ${honest}/${unanswerable.length} · first block p50 ${Math.round(ttfbP50)}ms · violations caught before display ${preRepair}`,
   );
+  // Other languages, live: a few answers each must come back in that language, quotes still the
+  // stored English spans, and any quote carrying a translation (P6-01).
+  for (const lang of LANGUAGES) {
+    const set = JSON.parse(readFileSync(join(root, 'eval', `questions.${lang}.json`), 'utf8')) as {
+      questions: Question[];
+    };
+    for (const q of set.questions.filter((x) => ['q01', 'q05', 'q12'].includes(x.id))) {
+      let final: FinalAnswer | null = null;
+      for await (const e of composeAnswer(
+        { store, model, embedder, moderate: moderator },
+        { question: q.question, history: [] },
+        new AbortController().signal,
+      )) {
+        if (e.type === 'final') final = e.answer;
+      }
+      const problems: string[] = [];
+      if (!final) problems.push('no answer');
+      else {
+        if (final.language !== lang) problems.push(`answered in ${final.language}`);
+        const check = checkAnswer(final, store);
+        if (!check.quotesMatch) problems.push('a quote is not the stored span');
+        if (!check.citationsResolve) problems.push('a citation does not resolve');
+        for (const b of final.blocks) {
+          if (b.kind === 'quote' && !b.translation) problems.push('a quote has no translation');
+        }
+      }
+      const quotes = final?.blocks.filter((b) => b.kind === 'quote').length ?? 0;
+      languageAnswers.push({ id: `${lang}-${q.id}`, problems, quotes, final });
+      console.log(
+        `${problems.length ? '✗' : '✓'} ${lang} ${q.id} ${final?.language ?? '—'} · ${final?.citations.length ?? 0} citations${problems.length ? ` · ${problems.join(', ')}` : ''}`,
+      );
+    }
+  }
+  failed ||= languageAnswers.some((a) => a.problems.length > 0);
+
   // The red team, live: the real model and moderation, and a poisoned transcript for injections.
   for (const c of redTeam) {
     let final: FinalAnswer | null = null;
@@ -266,6 +360,7 @@ writeFileSync(
       retrieval,
       safety: { routingProblems, overRefused: overRefused.refused, redTeam: redTeamResults },
       personaRubric,
+      languages: { recall: translatedRecall, answers: languageAnswers },
       answers,
       costUsd,
     },

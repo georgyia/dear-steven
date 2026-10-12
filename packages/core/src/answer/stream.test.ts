@@ -3,10 +3,17 @@ import type { ModelAnswer } from '../schema/index.ts';
 import { BlockStream } from './stream.ts';
 
 const answer: ModelAnswer = {
+  language: 'en',
   mode: 'grounded',
   blocks: [
     { kind: 'paragraph', segments: [{ text: 'First.', attribution: 'synthesis', citations: [] }] },
-    { kind: 'quote', passageId: 'p1', quote: 'A line from the transcript itself.', lead: null },
+    {
+      kind: 'quote',
+      passageId: 'p1',
+      quote: 'A line from the transcript itself.',
+      lead: null,
+      translation: null,
+    },
     { kind: 'takeaway', segments: [{ text: 'Do it.', attribution: 'synthesis', citations: [] }] },
   ],
   evidence: [{ passageId: 'p1', why: 'Because.' }],
