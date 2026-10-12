@@ -4,8 +4,10 @@ import { appendFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { type AnswerModel, type AnswerRecord, openAIAnswerModel } from '@dear-steven/core/answer';
 import { type AppConfig, readConfig } from '@dear-steven/core/config';
+import { answerCostUsd, embeddingCostUsd, MODELS } from '@dear-steven/core/models';
 import { createOpenAI, type Embedder, type OpenAI, openAIEmbedder } from '@dear-steven/core/openai';
 import { KnowledgeStore } from '@dear-steven/core/store';
+import { spendLedger } from './spend';
 
 /**
  * Process-wide handles: one SQLite connection and one OpenAI client. Cached on globalThis so dev
@@ -47,12 +49,18 @@ export function getOpenAI(config: AppConfig = readConfig()): OpenAI | null {
 
 export function getAnswerModel(config: AppConfig = readConfig()): AnswerModel | null {
   const c = client(config);
-  return c ? openAIAnswerModel(c) : null;
+  if (!c) return null;
+  const ledger = spendLedger(config);
+  return openAIAnswerModel(c, MODELS.answer, { onUsage: (u) => ledger.record(answerCostUsd(u)) });
 }
 
 export function getEmbedder(config: AppConfig = readConfig()): Embedder | null {
   const c = client(config);
-  return c ? openAIEmbedder(c) : null;
+  if (!c) return null;
+  const ledger = spendLedger(config);
+  return openAIEmbedder(c, MODELS.embedding, {
+    onTokens: (tokens) => ledger.record(embeddingCostUsd(tokens)),
+  });
 }
 
 /** With DEAR_STEVEN_LOG_ANSWERS=1, appends each answer to data/answers.jsonl for the eval harness. */

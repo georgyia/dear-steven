@@ -8,16 +8,27 @@ import type { StockVoice } from '../schema/index.ts';
  * for spoken replies. A stock OpenAI voice — deliberately never an imitation of Steven's voice.
  */
 
+export type TranscriptionUsage =
+  | { inputTokens: number; outputTokens: number }
+  | { seconds: number };
+
 export async function transcribeSpeech(
   client: OpenAI,
   audio: { bytes: Uint8Array; name: string; type: string },
   signal?: AbortSignal,
+  onUsage?: (usage: TranscriptionUsage) => void,
 ): Promise<string> {
   const file = await toFile(audio.bytes, audio.name, { type: audio.type });
   const result = await client.audio.transcriptions.create(
     { file, model: MODELS.transcribe },
     { signal },
   );
+  const usage = result.usage;
+  if (usage?.type === 'tokens') {
+    onUsage?.({ inputTokens: usage.input_tokens, outputTokens: usage.output_tokens });
+  } else if (usage?.type === 'duration') {
+    onUsage?.({ seconds: usage.seconds });
+  }
   return result.text.trim();
 }
 

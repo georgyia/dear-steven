@@ -14,6 +14,7 @@ export {
   type ComposeDeps,
   composeAnswer,
   emptyKnowledgeAnswer,
+  restingAnswer,
 } from './compose.ts';
 export { condenseQuery } from './condense.ts';
 export { type AnswerContext, buildContext, renderSources, type SourcePassage } from './context.ts';
@@ -21,6 +22,7 @@ export {
   type AnswerModel,
   type JsonFormat,
   ModelError,
+  type ModelHooks,
   type ModelMessage,
   openAIAnswerModel,
 } from './model.ts';

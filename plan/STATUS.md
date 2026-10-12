@@ -11,8 +11,8 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 - **Phase:** 0–4 built in the first implementation pass; Phase 5 open (the rest waits on humans);
   Phase 6 / M4 *Reach and trust* planned (`plan/04-issues/phase-6.md`).
 - **Done:** M0 (except GitHub publishing and third-party skills), M1 in code, M2; from M3: P5-03, P5-04, P5-05, P5-07, P5-11, P5-12.
-- **Next to pick (M4, since Phase 5 has nothing pickable):** P6-08 (P0, before any public
-  deploy), then P6-01, P6-12; P6-03 is unblocked. Phase 5's P5-01/02/06/09 wait on the first live
+- **Next to pick (M4, since Phase 5 has nothing pickable):** P6-12, P6-01; P6-03 is unblocked.
+  P6-08 (P0) is built and waits for human review. Phase 5's P5-01/02/06/09 wait on the first live
   eval (H-07), P5-08 on H-09, P5-10 on H-08 and now P6-08 + P6-12.
 - **Critical path:** H-03 → `pnpm ingest index` → H-07 / P3-08 → P5-01.
 
@@ -34,6 +34,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | First CI run on GitHub (2026-10-10) | `check`, `e2e`, `docker` green; `gitleaks` errored on the first push only (its scan range starts at the root commit's missing parent) and reported no leaks |
 | Live keys (H-03) | OpenAI and YouTube keys valid; all five configured models available. The web app ignored the root `.env` and stayed in demo mode until `next.config.ts` loaded it |
 | Security scans (P6-10) | `pnpm audit --prod`: no known vulnerabilities; weekly full-history gitleaks, audit and (once public) CodeQL in `security.yml`; Dependabot updates + alerts on |
+| Spend cap and access gate (P6-08) | past the cap `/api/ask` gives the resting reply with no network call (route test); every API route on disk answers 401 without the cookie (proxy test); passcode screen, wrong code, rate limit and axe audit against a gated server (e2e) |
 | YouTube matching (P6-15, real feed) | 536 of 739 full episodes linked: 535 of 548 full conversations since the channel's first upload (the rest are podcast-only compilations); 218 `exact` from shared chapters (58 with a mid-episode step), predicting 99.3% of 6,735 shared chapters within 2 s; 318 `estimated` (≈ two in three within 10 s, held-out); human spot check H-10 |
 | Strict CSP (P6-09) | every e2e test fails on a CSP violation: none; injected inline script, event handler and foreign `<script src>` refused; `next dev` answers with no console errors |
 | Answers from the real model | **not yet run** — P3-08 / H-07 |
@@ -138,7 +139,7 @@ answers `track:answers` (P6-06–07), security `track:security` (P6-08–11), po
 | P6-05 | #5 | chore(core): spike — a second LLM provider behind the model adapter | P2 | medium | open, blocked | P3-08 | — |
 | P6-06 | #6 | feat(core): persona v2 — a concrete opinion and what I'd do, grounded in the interviews | P1 | medium | open, blocked | P3-08, P6-11 | — |
 | P6-07 | #7 | feat(core): answers that use more of each conversation | P1 | medium | open, blocked | P3-08 | — |
-| P6-08 | #8 | feat(security): protect a public deployment — access gate and a daily spend cap | P0 | high | open | — | human review |
+| P6-08 | #8 | feat(security): protect a public deployment — access gate and a daily spend cap | P0 | high | in review (needs human review) | — | human review |
 | P6-09 | #9 | feat(security): strict Content-Security-Policy with per-request nonces, and HSTS | P1 | medium | done | — | — |
 | P6-10 | #10 | ci(security): dependency and code scanning, and a full-history secret scan | P1 | medium | done (post-merge checks open) | — | — |
 | P6-11 | #11 | feat(security): safety rails for high-stakes questions | P1 | high | open | — | human review |

@@ -49,6 +49,7 @@ const STAGE_ERROR: Record<AskErrorCode | 'network', StageErrorKind> = {
   not_configured: 'upstream',
   bad_request: 'generic',
   internal: 'generic',
+  locked: 'generic',
 };
 
 export function Stage({ initialStatus }: { initialStatus: KnowledgeStatus }) {

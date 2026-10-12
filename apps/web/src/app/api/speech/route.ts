@@ -1,9 +1,11 @@
 import { readConfig } from '@dear-steven/core/config';
+import { speechCostUsd } from '@dear-steven/core/models';
 import { synthesizeSpeech } from '@dear-steven/core/openai';
 import { SpeechRequestSchema } from '@dear-steven/core/schema';
 import { describeFailure } from '@/server/errors';
 import { getOpenAI } from '@/server/knowledge';
 import { clientKey, takeToken } from '@/server/rate-limit';
+import { overBudget, spendLedger } from '@/server/spend';
 import { jsonError } from '@/server/sse';
 
 export const dynamic = 'force-dynamic';
@@ -25,12 +27,16 @@ export async function POST(req: Request) {
 
   const parsed = SpeechRequestSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return jsonError(400, 'bad_request', 'Nothing to say.');
+  // The browser reads the reply in its own voice instead (it falls back on any error).
+  if (overBudget(config))
+    return jsonError(503, 'not_configured', 'Today’s spend limit is reached.');
 
   try {
     const body = await synthesizeSpeech(client, parsed.data.text, {
       voice: parsed.data.voice,
       signal: req.signal,
     });
+    spendLedger(config).record(speechCostUsd(parsed.data.text));
     return new Response(body, {
       headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store' },
     });

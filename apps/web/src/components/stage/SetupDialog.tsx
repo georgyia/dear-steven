@@ -22,6 +22,7 @@ interface Item {
 }
 
 const n = (x: number) => x.toLocaleString('en-GB');
+const usd = (x: number) => `$${x.toFixed(x < 1 ? 3 : 2)}`;
 
 function items(s: KnowledgeStatus): Item[] {
   const demo = s.mode === 'demo';
@@ -91,6 +92,28 @@ function items(s: KnowledgeStatus): Item[] {
             Optional. Add <Code>YOUTUBE_API_KEY</Code> and run{' '}
             <Code>pnpm ingest match-youtube</Code> so citations open the video at the right moment.
           </>
+        ),
+    },
+    {
+      key: 'spend',
+      optional: true,
+      status:
+        s.spend.capUsd === null
+          ? 'pending'
+          : s.spend.todayUsd >= s.spend.capUsd
+            ? 'failed'
+            : 'done',
+      title: 'Daily spend cap',
+      detail:
+        s.spend.capUsd === null ? (
+          <>
+            No cap: {usd(s.spend.todayUsd)} spent today (estimated). Set{' '}
+            <Code>DEAR_STEVEN_DAILY_BUDGET_USD</Code> before anyone else can reach this.
+          </>
+        ) : s.spend.todayUsd >= s.spend.capUsd ? (
+          `Resting until midnight UTC: today’s ${usd(s.spend.capUsd)} is spent, so I answer without calling OpenAI.`
+        ) : (
+          `${usd(s.spend.todayUsd)} of ${usd(s.spend.capUsd)} spent today (estimated from token use).`
         ),
     },
     {

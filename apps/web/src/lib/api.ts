@@ -18,13 +18,15 @@ export class AskError extends Error {
 }
 
 const errorCode = (status: number): AskErrorCode =>
-  status === 429
-    ? 'rate_limited'
-    : status === 400 || status === 413
-      ? 'bad_request'
-      : status === 503
-        ? 'not_configured'
-        : 'upstream';
+  status === 401
+    ? 'locked'
+    : status === 429
+      ? 'rate_limited'
+      : status === 400 || status === 413
+        ? 'bad_request'
+        : status === 503
+          ? 'not_configured'
+          : 'upstream';
 
 /** Streams `/api/ask` as typed events. Throws `AskError` for transport-level failures. */
 export async function* askStream(

@@ -28,6 +28,8 @@ export const AskErrorCodeSchema = z.enum([
   'not_configured',
   'upstream',
   'internal',
+  /** The access gate (P6-08): this browser hasn't entered the passcode, or its cookie expired. */
+  'locked',
 ]);
 export type AskErrorCode = z.infer<typeof AskErrorCodeSchema>;
 
@@ -86,6 +88,11 @@ export const KnowledgeStatusSchema = z.object({
   youtubeLinkedEpisodes: z.number().int().nonnegative(),
   lastIndexedAt: z.string().nullable(),
   storeError: z.string().nullable(),
+  /** Estimated OpenAI spend today (UTC) and the operator's daily cap, if any (P6-08). */
+  spend: z.object({
+    todayUsd: z.number().nonnegative(),
+    capUsd: z.number().nonnegative().nullable(),
+  }),
   setup: z.object({
     openaiKey: z.boolean(),
     youtubeKey: z.boolean(),

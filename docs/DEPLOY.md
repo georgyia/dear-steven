@@ -29,6 +29,8 @@ contains no data and no secrets. Build the knowledge base where you like (locall
 fly launch --no-deploy            # pick a name and region; keep one machine
 fly volumes create kb --size 1
 fly secrets set OPENAI_API_KEY=…  # never commit it
+fly secrets set DEAR_STEVEN_DAILY_BUDGET_USD=2      # the most it may spend a day
+fly secrets set DEAR_STEVEN_ACCESS_CODE="four words or more"   # optional: private deployment
 fly deploy
 fly ssh sftp shell                # put /data/dear-steven.db
 ```
@@ -38,6 +40,16 @@ fly ssh sftp shell                # put /data/dear-steven.db
 secrets is a human step (`plan/human/api-keys.md`).
 
 ## Operational notes
+
+- **Daily spend cap** (`DEAR_STEVEN_DAILY_BUDGET_USD`): every paid call adds its estimated cost
+  (from `PRICES` in `packages/core/src/config/models.ts` — keep those current) to
+  `/data/spend.json`; at the cap, answers become an in-persona "come back tomorrow" and no OpenAI
+  call is made until midnight UTC. Requests already running when it is reached still finish. The
+  setup panel and `/api/status` show today's spend. Also set a hard limit in the OpenAI dashboard:
+  this cap is an estimate.
+- **Access code** (`DEAR_STEVEN_ACCESS_CODE`): the page asks for it, and every API route answers
+  401 without the signed cookie it sets. Guesses are limited to five a minute per client and
+  thirty in all.
 
 - **Rate limits** are in memory, per process (`apps/web/src/server/rate-limit.ts`). With more than
   one instance, put a shared limiter in front or keep to one machine.

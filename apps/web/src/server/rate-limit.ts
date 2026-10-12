@@ -15,6 +15,10 @@ export const BUCKETS = {
   transcribe: { capacity: 10, refillPerMinute: 10 },
   speech: { capacity: 10, refillPerMinute: 10 },
   passages: { capacity: 120, refillPerMinute: 120 },
+  /** Passcode guesses (P6-08): five, then one every twelve seconds, per client… */
+  access: { capacity: 5, refillPerMinute: 5 },
+  /** …and thirty a minute in all, because a client can claim any X-Forwarded-For it likes. */
+  accessAll: { capacity: 30, refillPerMinute: 30 },
 } satisfies Record<string, Bucket>;
 
 type Key = keyof typeof BUCKETS;

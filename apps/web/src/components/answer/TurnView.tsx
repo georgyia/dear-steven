@@ -22,6 +22,7 @@ const ERROR_COPY = {
   not_configured: brand.copy.errors.notConfigured,
   bad_request: brand.copy.errors.generic,
   internal: brand.copy.errors.generic,
+  locked: brand.copy.errors.locked,
 } as const;
 
 /** One exchange: the question as an editorial heading, the thinking, then the answer. */

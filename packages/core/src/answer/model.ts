@@ -1,5 +1,5 @@
 import type OpenAI from 'openai';
-import { MODELS } from '../config/models.ts';
+import { MODELS, type TokenUsage } from '../config/models.ts';
 
 /** One message of conversation input for the model. */
 export interface ModelMessage {
@@ -33,7 +33,31 @@ export interface AnswerModel {
 
 export class ModelError extends Error {}
 
-export function openAIAnswerModel(client: OpenAI, model: string = MODELS.answer): AnswerModel {
+export interface ModelHooks {
+  /** Called once per completed request with what it used — the spend cap counts this (P6-08). */
+  onUsage?: (usage: TokenUsage) => void;
+}
+
+interface ResponsesUsage {
+  input_tokens: number;
+  input_tokens_details?: { cached_tokens?: number } | null;
+  output_tokens: number;
+}
+
+const toUsage = (u: ResponsesUsage): TokenUsage => ({
+  inputTokens: u.input_tokens,
+  cachedInputTokens: u.input_tokens_details?.cached_tokens ?? 0,
+  outputTokens: u.output_tokens,
+});
+
+export function openAIAnswerModel(
+  client: OpenAI,
+  model: string = MODELS.answer,
+  hooks: ModelHooks = {},
+): AnswerModel {
+  const report = (usage: ResponsesUsage | null | undefined) => {
+    if (usage) hooks.onUsage?.(toUsage(usage));
+  };
   const base = (r: ModelRequest) => ({
     model,
     instructions: r.instructions,
@@ -53,6 +77,7 @@ export function openAIAnswerModel(client: OpenAI, model: string = MODELS.answer)
       );
       for await (const event of stream) {
         if (event.type === 'response.output_text.delta') yield event.delta;
+        else if (event.type === 'response.completed') report(event.response.usage);
         else if (event.type === 'response.refusal.delta')
           throw new ModelError('The model refused to answer.');
         else if (event.type === 'response.failed')
@@ -65,6 +90,7 @@ export function openAIAnswerModel(client: OpenAI, model: string = MODELS.answer)
         { ...base(r), reasoning: { effort: 'low' }, text: format(r.format) },
         { signal: r.signal },
       );
+      report(res.usage);
       if (!res.output_text) throw new ModelError('Empty response');
       return res.output_text;
     },
@@ -73,6 +99,7 @@ export function openAIAnswerModel(client: OpenAI, model: string = MODELS.answer)
         { ...base(r), reasoning: { effort: 'none' }, max_output_tokens: r.maxOutputTokens ?? 200 },
         { signal: r.signal },
       );
+      report(res.usage);
       return res.output_text.trim();
     },
   };
