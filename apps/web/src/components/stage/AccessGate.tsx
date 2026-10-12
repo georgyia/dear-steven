@@ -2,6 +2,7 @@
 
 import { useId, useState } from 'react';
 import { brand } from '@/brand';
+import { Disclosure } from './Disclosure';
 import { HeroWordmark } from './Wordmark';
 
 type State = { kind: 'idle' } | { kind: 'checking' } | { kind: 'wrong' | 'slow' | 'offline' };
@@ -78,7 +79,7 @@ export function AccessGate() {
           {message}
         </p>
       </form>
-      <p className="max-w-sm text-[13px] leading-relaxed text-ivory-2">{brand.disclosure}</p>
+      <Disclosure className="max-w-sm text-[13px] leading-relaxed text-ivory-2" />
     </main>
   );
 }

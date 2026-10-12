@@ -102,10 +102,18 @@ Build the image with `docker build -t dear-steven .`. It runs as a single contai
 
 ## Rights, privacy and takedowns
 
+Dear Steven is an independent, non-commercial fan project: an AI persona, not Steven Bartlett, and
+not affiliated with, endorsed by or speaking for him, The Diary Of A CEO or FlightStory. Answers can
+be wrong and are not professional advice; it comes with no warranty. Please watch the full
+conversations on [The Diary Of A CEO's YouTube channel](https://www.youtube.com/channel/UCGq-a57w-aPwyi3pW7XLiHw)
+and support the show. The details: [`DISCLAIMER.md`](DISCLAIMER.md), [`TERMS.md`](TERMS.md) and
+[`PRIVACY.md`](PRIVACY.md), also shown in the app at `/terms`.
+
 - No transcripts, audio or embeddings are in this repository. Each installation builds its own knowledge base from the publisher's public RSS feed.
 - The app shows short, attributed quotations with links to the original episode. It never publishes a transcript.
 - Questions are not stored. Answer logging is off unless you set `DEAR_STEVEN_LOG_ANSWERS=1`.
-- To remove an episode, run `pnpm ingest purge <episode> --yes`. It deletes the transcript, passages, embeddings and cached audio. Rights holders can open an issue titled "takedown" to have something removed from the project's defaults.
+- **Takedown requests:** if you hold the rights to an episode, appear in one, or have another good reason to want something removed, ask and it will be removed. Contact: **TODO (owner) — a contact address will be published here** (see [`TERMS.md`](TERMS.md)).
+- To remove an episode from your own copy, run `pnpm ingest purge <episode> --yes`. It deletes the transcript, passages, embeddings and cached audio.
 
 ## Contributing
 

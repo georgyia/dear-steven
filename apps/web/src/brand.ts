@@ -57,6 +57,14 @@ export const brand = {
     toast: {
       quoteCopied: 'Quote copied with attribution',
     },
+    /** The terms, the disclaimer and the first-visit notice (P6-12). */
+    terms: {
+      link: 'Terms & disclaimer',
+      noticeLabel: 'Before you start',
+      notice:
+        'I’m an AI persona — not Steven Bartlett, and not affiliated with the show. I answer from public interviews, I can be wrong, and nothing I say is medical, legal or financial advice.',
+      dismiss: 'Got it',
+    },
     /** Sending people to the original conversations (P6-14). One wording everywhere. */
     youtube: {
       watch: 'Watch on YouTube',
