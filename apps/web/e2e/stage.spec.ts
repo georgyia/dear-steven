@@ -18,8 +18,38 @@ test.describe('home, with no API keys', () => {
       page.getByRole('list', { name: 'Example questions' }).getByRole('button'),
     ).toHaveCount(3);
     await expect(page.getByTestId('status-pill')).toHaveAttribute('data-state', 'demo');
+    // One message at a time (P7-04): the first-visit notice, then the demo notice.
+    const notice = page.getByRole('region', { name: 'Before you start' });
+    await expect(notice).toBeVisible();
+    await expect(page.getByText('Demo — not AI-generated or source-verified')).toHaveCount(0);
+    await notice.getByRole('button', { name: 'Got it' }).click();
     await expect(page.getByText('Demo — not AI-generated or source-verified')).toBeVisible();
     await expect(page.getByText(/AI persona — not Steven Bartlett/).first()).toBeVisible();
+  });
+
+  test('on a phone, nothing covers the first-visit notice', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 760 });
+    await page.goto('/');
+    const notice = page.getByRole('region', { name: 'Before you start' });
+    await expect(notice).toBeVisible();
+    await page.waitForTimeout(800); // let any toast that would appear, appear
+    const box = await notice.boundingBox();
+    const toasts = await page.getByRole('region', { name: 'Notifications' }).locator('li').all();
+    for (const toast of toasts) {
+      const t = await toast.boundingBox();
+      if (!box || !t) continue;
+      const overlap =
+        box.x < t.x + t.width &&
+        t.x < box.x + box.width &&
+        box.y < t.y + t.height &&
+        t.y < box.y + box.height;
+      expect(overlap).toBe(false);
+    }
+    // Its link and button respond to a plain click, with nothing in the way.
+    await notice.getByRole('button', { name: 'Got it' }).click({ trial: true, timeout: 2000 });
+    await notice
+      .getByRole('link', { name: 'Terms & disclaimer' })
+      .click({ trial: true, timeout: 2000 });
   });
 
   test('setup panel explains what is missing instead of crashing', async ({ page }) => {

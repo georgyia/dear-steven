@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useI18n } from '@/i18n/I18nProvider';
 
 const NOTICE_KEY = 'dear-steven:first-visit-notice';
@@ -36,26 +36,45 @@ function seen(): boolean {
   }
 }
 
+export interface FirstVisitNotice {
+  /** `null` until this browser has been checked (after hydration). */
+  pending: boolean | null;
+  dismiss: () => void;
+}
+
+/**
+ * Whether the first-visit notice is still waiting to be read (P6-12). Owned by the stage, so the
+ * demo toast can wait its turn (P7-04): one message at a time, never one on top of the other.
+ */
+export function useFirstVisitNotice(): FirstVisitNotice {
+  const [pending, setPending] = useState<boolean | null>(null);
+  useEffect(() => setPending(!seen()), []);
+  const dismiss = useCallback(() => {
+    try {
+      localStorage.setItem(NOTICE_KEY, NOTICE_VERSION);
+    } catch {
+      // Storage blocked: it closes for this visit and may show again next time.
+    }
+    setPending(false);
+  }, []);
+  return { pending, dismiss };
+}
+
 /**
  * The first visit says what this is before anything else (P6-12): an AI persona, not professional
  * advice, the terms one click away. Shown once per browser — remembered locally, with nothing sent
  * anywhere — and never as a modal, so it can't stand between someone and the question they came
  * with. Until the browser has been checked (after hydration), the plain disclosure shows.
  */
-export function FirstVisitDisclosure({ className }: { className?: string }) {
-  const [show, setShow] = useState(false);
+export function FirstVisitDisclosure({
+  notice,
+  className,
+}: {
+  notice: FirstVisitNotice;
+  className?: string;
+}) {
   const { t } = useI18n();
-  useEffect(() => setShow(!seen()), []);
-
-  if (!show) return <Disclosure className={className} />;
-  const dismiss = () => {
-    try {
-      localStorage.setItem(NOTICE_KEY, NOTICE_VERSION);
-    } catch {
-      // Storage blocked: it closes for this visit and may show again next time.
-    }
-    setShow(false);
-  };
+  if (!notice.pending) return <Disclosure className={className} />;
   return (
     <section
       aria-label={t.terms.noticeLabel}
@@ -66,7 +85,7 @@ export function FirstVisitDisclosure({ className }: { className?: string }) {
         <TermsLink />
         <button
           type="button"
-          onClick={dismiss}
+          onClick={notice.dismiss}
           className="rounded-full border border-ink-3 px-3 py-1 font-mono text-[11px] text-ivory-0 transition-colors hover:border-ink-4 hover:bg-ink-2"
         >
           {t.terms.dismiss}

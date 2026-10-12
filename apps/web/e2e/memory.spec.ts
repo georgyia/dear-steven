@@ -3,7 +3,12 @@ import { expect, type Page, test } from './fixtures';
 const DB = 'dear-steven-memory';
 
 const ask = async (page: Page, question: string) => {
-  // The demo notice is a persistent toast over the end of the page; dismiss it like a reader would.
+  // A first visit reads the first-visit notice, then the demo notice that follows it (P7-04), and
+  // dismisses both like a reader would: the toast sits over the end of the page.
+  await page
+    .getByRole('region', { name: 'Before you start' })
+    .getByRole('button', { name: 'Got it' })
+    .click();
   const notices = page.getByRole('region', { name: 'Notifications' });
   await notices.getByRole('button', { name: 'Close' }).first().click();
   await expect(notices.getByText(/Demo — not AI-generated/)).toHaveCount(0);

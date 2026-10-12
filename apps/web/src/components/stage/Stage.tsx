@@ -38,6 +38,7 @@ import { useVoice, VoiceContext } from '@/lib/voice/useVoice';
 import { AboutDialog } from './AboutDialog';
 import { AmbientLayer } from './AmbientLayer';
 import { ConversationView } from './ConversationView';
+import { useFirstVisitNotice } from './Disclosure';
 import { EpisodeExplorer } from './EpisodeExplorer';
 import { HomeView } from './HomeView';
 import { MemoryControl } from './MemoryControl';
@@ -84,6 +85,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
   const { toast, dismiss } = useToast();
+  const notice = useFirstVisitNotice();
   const { t, locale } = useI18n();
   const i18nRef = useRef({ t, locale });
   i18nRef.current = { t, locale };
@@ -147,8 +149,11 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   }, [refreshStatus]);
 
   // Demo mode is announced, never implied. Each answer also carries its own "demo fixture" tag.
+  // One message at a time (P7-04): while the first-visit notice is on the home screen, the demo
+  // notice waits — on a phone it would otherwise sit on top of it. The status pill says "demo".
+  const noticeShowing = notice.pending !== false && !inConversation;
   useEffect(() => {
-    if (status.mode !== 'demo') {
+    if (status.mode !== 'demo' || noticeShowing) {
       dismiss('demo');
       return;
     }
@@ -163,7 +168,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
         tone: 'ember',
       });
     }
-  }, [status.mode, dialog, toast, dismiss, t]);
+  }, [status.mode, noticeShowing, dialog, toast, dismiss, t]);
 
   // A share link (P6-17) opens once a remembered conversation has had its chance to restore, so the
   // shared answer joins it instead of being replaced by it. The fragment is cleared first: a reload
@@ -484,6 +489,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
           <HomeView
             composer={composer}
             footerStart={pill}
+            notice={notice}
             footerEnd={
               <div className="flex items-center gap-1">
                 {voiceSettings}

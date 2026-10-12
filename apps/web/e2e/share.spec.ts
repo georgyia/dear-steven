@@ -12,6 +12,11 @@ const QUESTION = 'Why do I keep procrastinating?';
 const copy = en.share;
 
 const dismissDemoNotice = async (page: Page) => {
+  // The demo notice follows the first-visit notice (P7-04).
+  await page
+    .getByRole('region', { name: en.terms.noticeLabel })
+    .getByRole('button', { name: en.terms.dismiss })
+    .click();
   const notices = page.getByRole('region', { name: 'Notifications' });
   await notices.getByRole('button', { name: en.ui.close }).first().click();
   await expect(notices.getByText(en.demoNotice.title)).toHaveCount(0);
