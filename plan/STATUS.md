@@ -172,7 +172,7 @@ Categories are labels: conversations `track:conversation` (P7-05–08), design `
 | P7-03 | #49 | feat(design): a proper quote preview when you hover a source | P1 | low | done | P7-02 | — |
 | P7-04 | #47 | fix(web): on phones the demo notice no longer hides the first-visit notice | P2 | low | done | — | — |
 | P7-10 | #60 | fix(web): with reduced motion, the home screen no longer stays blurred | P1 | low | done | — | — |
-| P6-16 | #16 | feat(ingest): bring in the latest episodes — one command, one button, and a schedule | P1 | medium | open | — | — |
+| P6-16 | #16 | feat(ingest): bring in the latest episodes — one command, one button, and a schedule | P1 | medium | done | — | — |
 | P7-05 | #50 | feat(core): talk mode — just talk to Steven | P1 | medium | open | — | — |
 | P7-06 | #51 | feat(core): interview mode — Steven interviews you, the way he interviews his guests | P1 | medium | open | P7-05 | — |
 | P7-07 | #52 | feat(core): practise presenting your expertise — a mock interview with a debrief | P1 | medium | open | P7-06 | — |

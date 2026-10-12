@@ -358,6 +358,12 @@ export const en = {
       newest: 'Newest episodes to add',
       build: 'Fetch transcripts',
       buildNote: 'Free: the podcast’s own transcripts from its RSS feed, split into passages.',
+      latestHeading: 'New episodes',
+      latest: 'Bring in new episodes',
+      latestNote: (cap: string) =>
+        `Only what was published since your last run: transcripts, passages, embeddings for at most ${cap}, and video links. To keep up on a schedule, run \`pnpm ingest latest\` (see \`docs/INGESTION.md\`).`,
+      latestNoteFree:
+        'Only what was published since your last run, free: transcripts and passages, found by keyword until an OpenAI key embeds them. To keep up on a schedule, run `pnpm ingest latest` (see `docs/INGESTION.md`).',
       embedHeading: 'Semantic search',
       estimate: (passages: number, cost: string) =>
         `${s(passages, 'passage', 'passages')} waiting, about ${cost} with OpenAI.`,
@@ -375,6 +381,7 @@ export const en = {
         chunk: 'Splitting into passages',
         index: 'Embedding',
         'match-youtube': 'Linking videos',
+        latest: 'Bringing in new episodes',
       },
       progress: 'Progress',
       running: (stage: string) => `${stage}…`,
@@ -409,6 +416,7 @@ export const en = {
     passages: (x: number) => s(x, 'passage', 'passages'),
     verified: 'speakers verified',
     notVerified: 'speakers not verified',
+    isNew: 'New',
   },
   memory: {
     label: 'Conversation memory',

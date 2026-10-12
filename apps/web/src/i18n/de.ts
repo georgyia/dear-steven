@@ -367,6 +367,12 @@ export const de: Messages = {
       build: 'Transkripte holen',
       buildNote:
         'Kostenlos: die eigenen Transkripte des Podcasts aus seinem RSS-Feed, in Passagen geteilt.',
+      latestHeading: 'Neue Folgen',
+      latest: 'Neue Folgen holen',
+      latestNote: (cap) =>
+        `Nur, was seit dem letzten Lauf erschienen ist: Transkripte, Passagen, Einbettungen für höchstens ${cap} und Videolinks. Regelmäßig geht das mit \`pnpm ingest latest\` (siehe \`docs/INGESTION.md\`).`,
+      latestNoteFree:
+        'Nur, was seit dem letzten Lauf erschienen ist, kostenlos: Transkripte und Passagen, per Stichwort auffindbar, bis ein OpenAI-Schlüssel sie einbettet. Regelmäßig geht das mit `pnpm ingest latest` (siehe `docs/INGESTION.md`).',
       embedHeading: 'Semantische Suche',
       estimate: (passages, cost) =>
         `${s(passages, 'Passage wartet', 'Passagen warten')}, etwa ${cost} bei OpenAI.`,
@@ -384,6 +390,7 @@ export const de: Messages = {
         chunk: 'In Passagen teilen',
         index: 'Einbetten',
         'match-youtube': 'Videos werden verknüpft',
+        latest: 'Neue Folgen werden geholt',
       },
       progress: 'Fortschritt',
       running: (stage) => `${stage} …`,
@@ -419,6 +426,7 @@ export const de: Messages = {
     passages: (x) => s(x, 'Passage', 'Passagen'),
     verified: 'Sprecher bestätigt',
     notVerified: 'Sprecher nicht bestätigt',
+    isNew: 'Neu',
   },
   memory: {
     label: 'Gesprächsgedächtnis',

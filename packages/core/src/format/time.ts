@@ -65,6 +65,15 @@ export function formatDate(iso: string, locale: UiLocale = 'en'): string {
     : `${d.getUTCDate()} ${month} ${d.getUTCFullYear()}`;
 }
 
+/** How long an episode is marked new in the explorer (P6-16). */
+export const NEW_EPISODE_DAYS = 7;
+
+/** Published within the last `NEW_EPISODE_DAYS` (and not in the future). */
+export function isNewEpisode(publishedAt: string, now: Date = new Date()): boolean {
+  const age = now.getTime() - new Date(publishedAt).getTime();
+  return age >= 0 && age < NEW_EPISODE_DAYS * 86_400_000;
+}
+
 /** Short label for an episode: its first guest, else a trimmed title. */
 export function episodeLabel(episode: { guestNames: string[]; title: string }): string {
   const guest = episode.guestNames[0];

@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDate } from '@dear-steven/core/format';
+import { formatDate, isNewEpisode } from '@dear-steven/core/format';
 import type { EpisodePage, EpisodeSummary } from '@dear-steven/core/schema';
 import { Cancel01Icon, Search01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -141,8 +141,13 @@ function EpisodeRow({ episode }: { episode: EpisodeSummary }) {
   const copy = t.explorer;
   return (
     <li className="flex flex-col gap-1.5 py-4 sm:flex-row sm:items-start sm:gap-5">
-      <span className="w-24 flex-none pt-0.5 font-mono text-[11.5px] text-steel">
+      <span className="flex w-24 flex-none items-center gap-2 pt-0.5 font-mono text-[11.5px] text-steel sm:flex-col sm:items-start sm:gap-1.5">
         {formatDate(episode.publishedAt, locale)}
+        {isNewEpisode(episode.publishedAt) ? (
+          <span className="rounded-full bg-ember-0 px-2 py-0.5 text-[10.5px] font-medium text-ink-0">
+            {copy.isNew}
+          </span>
+        ) : null}
       </span>
       <div className="min-w-0 flex-1">
         <p lang="en" className="font-display text-[17px] leading-snug text-ivory-0">

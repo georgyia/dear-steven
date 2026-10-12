@@ -2,7 +2,7 @@
 
 | Status | Owner | Updated | Feeds |
 |--------|-------|---------|-------|
-| adopted | ai | 2026-10-10 | `packages/ingest`, P2-* issues |
+| adopted | ai | 2026-10-13 | `packages/ingest`, P2-* issues, P6-16 |
 
 Everything here runs on your machine with `pnpm ingest <command>` and writes one SQLite file,
 `data/dear-steven.db` (gitignored). Every stage is idempotent and resumable: re-running skips work
@@ -22,6 +22,34 @@ running these same commands, with their output as they go. Paid diarization stay
 
 Measured on 2026-10-10: discovering the feed (739 full episodes) and indexing the newest 20 RSS
 transcripts (1,621 passages) takes about 10 seconds; embedding them costs about $0.015.
+
+### Keeping up with new episodes
+
+```bash
+pnpm ingest latest --dry-run          # what is new, and what embedding it would cost
+pnpm ingest latest --budget 0.05      # bring it in; stops before paying if over the budget
+```
+
+`latest` reads the feed, then runs the stages for new episodes only: anything published in the
+last 14 days (`--days N`) or since the newest episode you already have, never the back catalogue.
+Transcripts and video links are free; embeddings run only with `--budget`, and only if the exact
+estimate fits under it. Without a key or a budget the new episodes are still found by keyword. A
+second run with nothing new fetches the feed and nothing else. The setup panel's "Bring in new
+episodes" button runs this same command.
+
+To keep up on a schedule, run it daily from cron (`crontab -e`) on the machine that holds `data/`:
+
+```cron
+# 06:30 every day: bring in new episodes, embedding for at most five cents
+30 6 * * * cd /path/to/dear-steven && pnpm ingest latest --budget 0.05 >> data/latest.log 2>&1
+```
+
+On macOS, a launchd agent works too; cron is the shortest recipe. The deployed image (`docs/DEPLOY.md`)
+ships the web app only, not this CLI: for a Fly deployment, schedule `latest` here, upload the
+updated `data/dear-steven.db` to the volume afterwards, and restart the machine (`fly machine
+restart`): the running app keeps the file it opened. A scheduled job inside the deployment is #63.
+
+The explorer marks episodes published in the last 7 days as new.
 
 ## 2. Sources, in order of preference
 
@@ -43,6 +71,7 @@ transcripts (1,621 passages) takes about 10 seconds; embedding them costs about 
 | `attribute` | QA report for diarized episodes: host share, guest count, flags (enrolment failure, multi-guest panels). | — |
 | `chunk [--force] [--episode <ref>]` | Speaker-turn-aware passages of ~350–500 tokens with a short overlap, plus a deterministic context prefix (`title · guests · date`). Keyword search works from here. | — |
 | `index [--dry-run] [--budget <usd>]` | Embed passages lacking a current embedding (`text-embedding-3-small`, 1,536 dims) in batches of 128. `--dry-run` prints tokens and cost; with `--budget`, nothing is embedded if the estimate is over it. | key |
+| `latest [--days 14] [--dry-run \| --budget <usd>] [--feed <url>]` | Discover, then transcribe, chunk, embed (within the budget) and link only the new episodes. Prints the list and an estimate first. Safe to schedule. | network; key and `--budget` to embed |
 | `status [--episodes]` | Counts per stage, recent failures, recorded spend, the next command. | — |
 | `doctor [--online]` | Checks Node, keys, ffmpeg, SQLite + sqlite-vec, the feed. | — |
 | `align <episode> [--video <id>] [--offset <s>] [--exact \| --unknown]` | Hand-correct a video link or its timing. | — |

@@ -128,6 +128,10 @@ export function cliArgs(run: SetupRun): string[] {
       return ['index', '--budget', String(run.budgetUsd)];
     case 'match-youtube':
       return ['match-youtube'];
+    case 'latest':
+      return run.budgetUsd === undefined
+        ? ['latest']
+        : ['latest', '--budget', String(run.budgetUsd)];
   }
 }
 

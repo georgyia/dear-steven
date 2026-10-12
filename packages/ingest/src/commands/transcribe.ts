@@ -17,6 +17,8 @@ export interface TranscribeOptions {
   from: 'vtt' | 'diarize';
   limit?: number;
   episode?: string;
+  /** Only these episodes (`latest` passes the new ones). */
+  ids?: string[];
   force: boolean;
   /** Required for `diarize`: the most this run may spend, in USD. */
   budget?: number;
@@ -35,9 +37,10 @@ function pick(ctx: Context, opts: TranscribeOptions, eligible: (e: Episode) => b
     }
     return found;
   }
+  const only = opts.ids ? new Set(opts.ids) : null;
   return ctx.store
     .listEpisodes({ types: ['full'] })
-    .filter(eligible)
+    .filter((e) => (only === null || only.has(e.id)) && eligible(e))
     .slice(0, opts.limit ?? Number.MAX_SAFE_INTEGER);
 }
 
