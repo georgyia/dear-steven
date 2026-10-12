@@ -53,7 +53,6 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 ## Decisions waiting (`needs:decision`)
 
 - P0-05: which third-party skills to install (H-02).
-- P6-13: which non-commercial licence replaces MIT (recommendation: PolyForm Noncommercial 1.0.0).
 
 ## Board
 
@@ -142,7 +141,7 @@ answers `track:answers` (P6-06–07), security `track:security` (P6-08–11), po
 | P6-10 | #10 | ci(security): dependency and code scanning, and a full-history secret scan | P1 | medium | done (post-merge checks open) | — | — |
 | P6-11 | #11 | feat(security): safety rails for high-stakes questions | P1 | high | open | — | human review |
 | P6-12 | #12 | docs: terms of use, disclaimer and no liability — in the repo and in the app | P1 | medium | open | — | human |
-| P6-13 | #13 | chore(repo): a non-commercial licence | P1 | medium | open | — | decision |
+| P6-13 | #13 | chore(repo): a non-commercial licence | P1 | medium | done (owner chose PolyForm Noncommercial 1.0.0) | — | — |
 | P6-14 | #14 | feat(web): send people to the originals — YouTube on every episode, card and answer | P1 | low | open | P6-15 | — |
 | P6-15 | #15 | feat(ingest): match more episodes to their videos and get the timing right | P1 | medium | open | — | — |
 | P6-16 | #16 | feat(ingest): stay current — pick up new episodes on a schedule | P2 | medium | open, blocked | P5-10 | — |

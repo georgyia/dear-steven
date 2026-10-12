@@ -2,6 +2,7 @@
   "name": "@dear-steven/eval",
   "version": "0.0.0",
   "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "description": "Retrieval, citation and persona evaluation harness.",
   "scripts": {

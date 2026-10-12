@@ -65,4 +65,5 @@ interface; the interviews are the evidence base; a deterministic validator stand
 - One developer; local-first; one SQLite file; one Node process; Docker for deploy.
 - OpenAI is the only paid provider; paid steps are human-approved and budget-capped.
 - TypeScript only (no Python toolchain).
-- React Bits components are MIT + Commons Clause: used inside the app only.
+- Dear Steven is PolyForm Noncommercial 1.0.0 (P6-13): never sold or commercialised. React Bits
+  components are MIT + Commons Clause: used inside the app only.

@@ -113,4 +113,7 @@ This repository is built to be worked on by people and coding agents alike. Star
 
 ## License
 
-MIT, except the vendored React Bits components (MIT + Commons Clause). See `LICENSE`.
+[PolyForm Noncommercial 1.0.0](LICENSE): you may read, run, change and share Dear Steven for any
+noncommercial purpose — personal use, study, research, hobby projects, charities, schools. You may
+not sell it or use it to make money. The vendored React Bits components keep their own licence
+(MIT + Commons Clause), and third-party packages keep theirs. See [`NOTICE`](NOTICE).
