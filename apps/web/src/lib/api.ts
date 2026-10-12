@@ -8,6 +8,7 @@ import type {
   RelatedMoments,
 } from '@dear-steven/core/schema';
 import { readEvents } from './sse';
+import { keyHeaders } from './visitor-key';
 
 export class AskError extends Error {
   readonly code: AskErrorCode | 'network';
@@ -37,7 +38,11 @@ export async function* askStream(
   try {
     res = await fetch('/api/ask', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+        ...keyHeaders(),
+      },
       body: JSON.stringify(request),
       signal,
     });
@@ -56,7 +61,10 @@ export async function fetchPassage(
   passageId: string,
   signal?: AbortSignal,
 ): Promise<PassageContext> {
-  const res = await fetch(`/api/passages/${encodeURIComponent(passageId)}`, { signal });
+  const res = await fetch(`/api/passages/${encodeURIComponent(passageId)}`, {
+    signal,
+    headers: keyHeaders(),
+  });
   if (!res.ok) throw new Error(`passage ${res.status}`);
   return (await res.json()) as PassageContext;
 }
@@ -65,13 +73,16 @@ export async function fetchRelated(
   passageId: string,
   signal?: AbortSignal,
 ): Promise<RelatedMoments> {
-  const res = await fetch(`/api/passages/${encodeURIComponent(passageId)}/related`, { signal });
+  const res = await fetch(`/api/passages/${encodeURIComponent(passageId)}/related`, {
+    signal,
+    headers: keyHeaders(),
+  });
   if (!res.ok) throw new Error(`related ${res.status}`);
   return (await res.json()) as RelatedMoments;
 }
 
 export async function fetchStatus(signal?: AbortSignal): Promise<KnowledgeStatus> {
-  const res = await fetch('/api/status', { signal, cache: 'no-store' });
+  const res = await fetch('/api/status', { signal, cache: 'no-store', headers: keyHeaders() });
   if (!res.ok) throw new Error(`status ${res.status}`);
   return (await res.json()) as KnowledgeStatus;
 }
@@ -82,7 +93,18 @@ export async function fetchEpisodes(
   signal?: AbortSignal,
 ): Promise<EpisodePage> {
   const qs = new URLSearchParams({ q: query, offset: String(offset) });
-  const res = await fetch(`/api/episodes?${qs}`, { signal });
+  const res = await fetch(`/api/episodes?${qs}`, { signal, headers: keyHeaders() });
   if (!res.ok) throw new Error(`episodes ${res.status}`);
   return (await res.json()) as EpisodePage;
+}
+
+/**
+ * "Test and use" (P6-03): asks the server whether `key` works, without storing it anywhere.
+ * Resolves to `null` when it does, or the message to show when it doesn't.
+ */
+export async function testKey(key: string, signal?: AbortSignal): Promise<string | null> {
+  const res = await fetch('/api/key', { method: 'POST', headers: keyHeaders(key), signal });
+  if (res.ok) return null;
+  const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+  return body?.error?.message ?? res.statusText;
 }

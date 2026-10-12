@@ -18,7 +18,7 @@ The hosting platform a copy runs on may keep its own standard access logs.
 
 ## What stays in your browser
 
-Your voice settings and whether you have seen the first-visit notice are kept in this browser only. If you switch on conversation memory, the conversation is kept in this browser’s storage on this device, until you press Forget or switch it off. If you choose a language, a cookie remembers it so the page opens in that language. If this copy has an access code, a cookie records that you entered it. There are no tracking cookies and no analytics.
+Your voice settings and whether you have seen the first-visit notice are kept in this browser only. If you switch on conversation memory, the conversation is kept in this browser’s storage on this device, until you press Forget or switch it off. If you choose a language, a cookie remembers it so the page opens in that language. If you paste your own OpenAI key, it is kept in this tab — or on this device, if you ask — and sent only to this site with your requests, which then run on your OpenAI account; the server uses it for that request and never stores or logs it. If this copy has an access code, a cookie records that you entered it. There are no tracking cookies and no analytics.
 
 ## Questions and requests
 

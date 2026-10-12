@@ -1,4 +1,5 @@
 import 'server-only';
+import type { KeySource } from '@dear-steven/core/config';
 import type { UiLocale } from '@dear-steven/core/copy';
 import type { AskEvent } from '@dear-steven/core/schema';
 import { describeFailure } from './errors';
@@ -11,12 +12,13 @@ export const encodeEvent = (event: AskEvent) =>
 /**
  * Streams events as `text/event-stream`. The producer receives the request's abort signal so a
  * closed tab or the composer's stop button cancels upstream work (and spend) immediately.
- * A failure mid-stream becomes an `error` event, worded in `locale`.
+ * A failure mid-stream becomes an `error` event, worded in `locale` for whoever owns the key.
  */
 export function sseResponse(
   produce: (signal: AbortSignal) => AsyncIterable<AskEvent>,
   requestSignal: AbortSignal,
   locale?: UiLocale,
+  keySource?: KeySource | null,
 ): Response {
   const controller = new AbortController();
   const abort = () => controller.abort();
@@ -31,7 +33,7 @@ export function sseResponse(
         }
       } catch (error) {
         if (!controller.signal.aborted) {
-          const failure = describeFailure(error, locale);
+          const failure = describeFailure(error, locale, keySource);
           console.error('[ask] stream failed:', failure.log);
           sink.enqueue(
             encodeEvent({ type: 'error', code: failure.code, message: failure.message }),

@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { findRepoRoot, readConfig, requireKey } from './env.ts';
+import { findRepoRoot, forVisitor, readConfig, requireKey } from './env.ts';
 
 const fakeRepo = () => {
   const root = mkdtempSync(join(tmpdir(), 'dear-steven-'));
@@ -52,6 +52,51 @@ describe('readConfig', () => {
     const root = fakeRepo();
     const c = readConfig({ DEAR_STEVEN_DB_PATH: 'tmp/kb.db' }, join(root, 'apps', 'web'));
     expect(c.dbPath).toBe(join(root, 'tmp', 'kb.db'));
+  });
+});
+
+describe('forVisitor (P6-03)', () => {
+  const OWN = 'sk-visitor-0000000000000000000000';
+  const operator = (env: Record<string, string> = {}) =>
+    readConfig({ OPENAI_API_KEY: 'sk-operator', ...env });
+
+  it("runs on the visitor's own key when there is one", () => {
+    for (const config of [readConfig({}), operator()]) {
+      const c = forVisitor(config, OWN);
+      expect(c).toMatchObject({ openaiApiKey: OWN, keySource: 'visitor', mode: 'live' });
+      expect(c.demoReason).toBeNull();
+    }
+  });
+
+  it("falls back to the operator's key unless the operator says no", () => {
+    expect(operator().allowOperatorKey).toBe(true);
+    expect(forVisitor(operator(), null)).toMatchObject({
+      openaiApiKey: 'sk-operator',
+      keySource: 'operator',
+      mode: 'live',
+    });
+    for (const off of ['0', 'false', ' false ']) {
+      const config = operator({ DEAR_STEVEN_ALLOW_OPERATOR_KEY: off });
+      expect(config.allowOperatorKey).toBe(false);
+      expect(config.openaiApiKey).toBe('sk-operator');
+      expect(forVisitor(config, null)).toMatchObject({
+        openaiApiKey: null,
+        keySource: null,
+        mode: 'demo',
+        demoReason: 'no_openai_key',
+      });
+      expect(forVisitor(config, OWN).keySource).toBe('visitor');
+    }
+  });
+
+  it('stays demo with neither key', () => {
+    expect(forVisitor(readConfig({}), null)).toMatchObject({ mode: 'demo', keySource: null });
+  });
+
+  it("ignores the visitor's key when demo mode is forced", () => {
+    const c = forVisitor(operator({ DEAR_STEVEN_DEMO: '1' }), OWN);
+    expect(c).toMatchObject({ mode: 'demo', demoReason: 'forced', keySource: 'operator' });
+    expect(c.openaiApiKey).not.toBe(OWN);
   });
 });
 

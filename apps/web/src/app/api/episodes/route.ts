@@ -1,9 +1,9 @@
 import { episodeSummary } from '@dear-steven/core/answer';
-import { readConfig } from '@dear-steven/core/config';
 import { EPISODE_PAGE_SIZE, EpisodeQuerySchema } from '@dear-steven/core/schema';
 import { demoEpisodePage } from '@/lib/demo-fixtures';
 import { getStore } from '@/server/knowledge';
 import { clientKey, takeToken } from '@/server/rate-limit';
+import { requestConfig } from '@/server/request-config';
 import { jsonError } from '@/server/sse';
 
 export const dynamic = 'force-dynamic';
@@ -22,7 +22,8 @@ export async function GET(req: Request) {
   const { q, offset } = parsed.data;
   const headers = { 'Cache-Control': 'private, max-age=30' };
 
-  const config = readConfig();
+  const { config, refused } = requestConfig(req);
+  if (refused) return refused;
   if (config.mode === 'demo') {
     const page = demoEpisodePage(q, offset);
     return Response.json(

@@ -1,6 +1,7 @@
 'use client';
 
 import { LIMITS } from '@dear-steven/core/limits';
+import { keyHeaders } from '@/lib/visitor-key';
 import { extensionFor, pickRecorderMime } from './capabilities';
 
 /**
@@ -70,7 +71,12 @@ export async function startRecording(
 export async function transcribe(blob: Blob, signal?: AbortSignal): Promise<string> {
   const form = new FormData();
   form.append('audio', blob, `speech.${extensionFor(blob.type)}`);
-  const res = await fetch('/api/transcribe', { method: 'POST', body: form, signal });
+  const res = await fetch('/api/transcribe', {
+    method: 'POST',
+    body: form,
+    signal,
+    headers: keyHeaders(),
+  });
   if (!res.ok) throw new Error(`transcribe ${res.status}`);
   const body = (await res.json()) as { text?: string };
   return (body.text ?? '').trim();

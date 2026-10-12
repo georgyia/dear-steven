@@ -105,12 +105,27 @@ export const KnowledgeStatusSchema = z.object({
     capUsd: z.number().nonnegative().nullable(),
   }),
   setup: z.object({
+    /** A key this visitor's requests can run on: their own, or the operator's if allowed. */
     openaiKey: z.boolean(),
+    /** That key is the visitor's own (P6-03). */
+    visitorKey: z.boolean(),
     youtubeKey: z.boolean(),
     database: z.boolean(),
   }),
 });
 export type KnowledgeStatus = z.infer<typeof KnowledgeStatusSchema>;
+
+/**
+ * A visitor's own OpenAI key travels in this request header (P6-03): never in a URL or a body,
+ * so it stays out of access logs and request dumps.
+ */
+export const VISITOR_KEY_HEADER = 'x-openai-key';
+
+/**
+ * The shape of an OpenAI secret key (`sk-…`, `sk-proj-…`, `sk-svcacct-…`). Anything else is
+ * refused before it reaches OpenAI, a log or a header of our own.
+ */
+export const VisitorKeySchema = z.string().regex(/^sk-[A-Za-z0-9_-]{20,300}$/);
 
 /**
  * OpenAI's built-in voices. Stock only: a custom or cloned voice id is never accepted, so the

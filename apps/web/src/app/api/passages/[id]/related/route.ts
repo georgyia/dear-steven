@@ -1,8 +1,8 @@
 import { buildRelatedMoments } from '@dear-steven/core/answer';
-import { readConfig } from '@dear-steven/core/config';
 import { demoRelatedMoments } from '@/lib/demo-fixtures';
 import { getStore } from '@/server/knowledge';
 import { clientKey, takeToken } from '@/server/rate-limit';
+import { requestConfig } from '@/server/request-config';
 import { jsonError } from '@/server/sse';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +24,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const demo = demoRelatedMoments(id);
   if (demo) return Response.json(demo, { headers });
 
-  const config = readConfig();
+  const { config, refused } = requestConfig(req);
+  if (refused) return refused;
   if (config.mode === 'demo') return jsonError(404, 'not_found', 'Unknown passage.');
   try {
     const store = getStore(config);

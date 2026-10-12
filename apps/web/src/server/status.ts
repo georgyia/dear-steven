@@ -1,14 +1,16 @@
 import 'server-only';
 import { existsSync } from 'node:fs';
-import { readConfig } from '@dear-steven/core/config';
+import type { AppConfig } from '@dear-steven/core/config';
 import type { KnowledgeStatus } from '@dear-steven/core/schema';
 import { DEMO_EPISODE_COUNT } from '@/lib/demo-fixtures';
 import { getStore } from './knowledge';
 import { spendStatus } from './spend';
 
-/** What the status pill and setup panel show. Never throws: a broken store is a status, not a crash. */
-export function getKnowledgeStatus(): KnowledgeStatus {
-  const config = readConfig();
+/**
+ * What the status pill and setup panel show, for this request's configuration (`requestConfig`).
+ * Never throws: a broken store is a status, not a crash.
+ */
+export function getKnowledgeStatus(config: AppConfig): KnowledgeStatus {
   const database = existsSync(config.dbPath);
   const base = {
     mode: config.mode,
@@ -16,6 +18,7 @@ export function getKnowledgeStatus(): KnowledgeStatus {
     spend: spendStatus(config),
     setup: {
       openaiKey: config.openaiApiKey !== null,
+      visitorKey: config.keySource === 'visitor',
       youtubeKey: config.youtubeApiKey !== null,
       database,
     },

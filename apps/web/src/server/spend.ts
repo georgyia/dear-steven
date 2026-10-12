@@ -96,10 +96,20 @@ export function spendLedger(config: AppConfig): SpendLedger {
   return ledger;
 }
 
-/** True once today's spend has reached the cap. No cap, never. */
+/**
+ * Records what a paid call cost the operator. A visitor's own key (P6-03) is their bill: it is
+ * neither counted against the operator's cap nor stopped by it.
+ */
+export function recordSpend(config: AppConfig, usd: number): void {
+  if (config.keySource === 'operator') spendLedger(config).record(usd);
+}
+
+/** True once today's spend on the operator's key has reached the cap. No cap, never. */
 export function overBudget(config: AppConfig): boolean {
   return (
-    config.dailyBudgetUsd !== null && spendLedger(config).spentToday() >= config.dailyBudgetUsd
+    config.keySource === 'operator' &&
+    config.dailyBudgetUsd !== null &&
+    spendLedger(config).spentToday() >= config.dailyBudgetUsd
   );
 }
 

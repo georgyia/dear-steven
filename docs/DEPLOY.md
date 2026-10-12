@@ -47,6 +47,12 @@ secrets is a human step (`plan/human/api-keys.md`).
   call is made until midnight UTC. Requests already running when it is reached still finish. The
   setup panel and `/api/status` show today's spend. Also set a hard limit in the OpenAI dashboard:
   this cap is an estimate.
+- **Visitors' own keys** (P6-03): anyone can paste their own OpenAI key in the setup panel; their
+  requests then run on it and are neither counted against nor stopped by the daily cap (rate
+  limits still apply). The key arrives in the `x-openai-key` header, over HTTPS only, and is
+  never logged or stored — keep it that way: don't turn on request-header logging in a proxy in
+  front of the app. To stop visitors spending your key, set
+  `DEAR_STEVEN_ALLOW_OPERATOR_KEY=0`: without a key of their own they get demo mode.
 - **Access code** (`DEAR_STEVEN_ACCESS_CODE`): the page asks for it, and every API route answers
   401 without the signed cookie it sets. Guesses are limited to five a minute per client and
   thirty in all.

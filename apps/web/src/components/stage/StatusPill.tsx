@@ -32,7 +32,14 @@ export function statusText(s: KnowledgeStatus, status: Messages['status']): stri
 
 function shortText(s: KnowledgeStatus, status: Messages['status']): string {
   const state = knowledgeState(s);
-  return state === 'ready' ? status.short.ready(s.episodes) : status.short[state];
+  if (state !== 'ready') return status.short[state];
+  return s.setup.visitorKey ? status.short.yourKey(s.episodes) : status.short.ready(s.episodes);
+}
+
+/** Running on the visitor's own key (P6-03) is always said, not only in the setup panel. */
+function longText(s: KnowledgeStatus, status: Messages['status']): string {
+  const text = statusText(s, status);
+  return s.setup.visitorKey ? `${text} · ${status.yourKey}` : text;
 }
 
 const DOT: Record<KnowledgeState, string> = {
@@ -69,7 +76,7 @@ export function StatusPill({ status, onOpen }: { status: KnowledgeStatus; onOpen
         <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${DOT[state]}`} />
       )}
       <span className="sm:hidden">{shortText(status, t.status)}</span>
-      <span className="hidden sm:inline">{statusText(status, t.status)}</span>
+      <span className="hidden sm:inline">{longText(status, t.status)}</span>
       <span className="sr-only">{t.status.open}</span>
     </button>
   );

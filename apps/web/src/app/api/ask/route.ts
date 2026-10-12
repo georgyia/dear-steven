@@ -1,5 +1,4 @@
 import { composeAnswer, emptyKnowledgeAnswer, restingAnswer } from '@dear-steven/core/answer';
-import { readConfig } from '@dear-steven/core/config';
 import { uiLocaleFrom } from '@dear-steven/core/copy';
 import { routeQuestion, safetyReply } from '@dear-steven/core/safety';
 import { AskRequestSchema } from '@dear-steven/core/schema';
@@ -13,6 +12,7 @@ import {
   getStore,
 } from '@/server/knowledge';
 import { clientKey, takeToken } from '@/server/rate-limit';
+import { requestConfig } from '@/server/request-config';
 import { overBudget } from '@/server/spend';
 import { jsonError, sseResponse } from '@/server/sse';
 
@@ -23,7 +23,8 @@ const MAX_BODY_BYTES = 64 * 1024;
 
 /**
  * POST { question, history, uiLocale? } → text/event-stream of AskEvents (packages/core/src/schema/ask.ts).
- * Validates input, rate-limits live answers, and hands everything else to packages/core.
+ * Validates input, rate-limits live answers, and hands everything else to packages/core. Runs on the
+ * visitor's own OpenAI key when they sent one (`requestConfig`, P6-03).
  */
 export async function POST(req: Request) {
   const raw = await req.text();
@@ -44,7 +45,8 @@ export async function POST(req: Request) {
   const { uiLocale } = request;
   const errors = MESSAGES[uiLocale].serverErrors;
 
-  const config = readConfig();
+  const { config, refused } = requestConfig(req, uiLocale);
+  if (refused) return refused;
   if (config.mode === 'demo') {
     // Even fixtures must not answer someone in crisis with a demo about procrastination (P6-11).
     const reply = safetyReply(routeQuestion(request.question, null), request.locale);
@@ -68,7 +70,7 @@ export async function POST(req: Request) {
     });
   }
 
-  // Past today's cap: an in-persona reply, and no OpenAI call at all (P6-08).
+  // Past today's cap on the operator's key: an in-persona reply, and no OpenAI call (P6-08).
   if (overBudget(config)) {
     return sseResponse(
       async function* () {
@@ -109,7 +111,12 @@ export async function POST(req: Request) {
     moderate: getModerator(config),
     onComplete: answerLogger(config),
   };
-  return sseResponse((signal) => composeAnswer(deps, request, signal), req.signal, uiLocale);
+  return sseResponse(
+    (signal) => composeAnswer(deps, request, signal),
+    req.signal,
+    uiLocale,
+    config.keySource,
+  );
 }
 
 /** The first Accept-Language tag, if it is a well-formed locale; it picks the crisis helpline. */

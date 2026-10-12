@@ -1,4 +1,4 @@
-import { readConfig } from '@dear-steven/core/config';
+import { forVisitor, readConfig } from '@dear-steven/core/config';
 import { cookies } from 'next/headers';
 import { AccessGate } from '@/components/stage/AccessGate';
 import { Stage } from '@/components/stage/Stage';
@@ -12,9 +12,12 @@ export const dynamic = 'force-dynamic';
  * or, when the operator set an access code this browser hasn't entered, the passcode screen.
  */
 export default async function Page() {
-  const code = readConfig().accessCode;
+  const config = readConfig();
+  const code = config.accessCode;
   if (code && !(await validAccessToken(code, (await cookies()).get(ACCESS_COOKIE)?.value))) {
     return <AccessGate />;
   }
-  return <Stage initialStatus={getKnowledgeStatus()} />;
+  // A visitor's own key lives in their browser, so the first paint is without it; the stage asks
+  // again with it straight away.
+  return <Stage initialStatus={getKnowledgeStatus(forVisitor(config, null))} />;
 }

@@ -1,4 +1,5 @@
 import 'server-only';
+import type { KeySource } from '@dear-steven/core/config';
 import { DEFAULT_UI_LOCALE, type UiLocale } from '@dear-steven/core/copy';
 import type { AskErrorCode } from '@dear-steven/core/schema';
 import { MESSAGES } from '@/i18n';
@@ -6,11 +7,13 @@ import { MESSAGES } from '@/i18n';
 /**
  * Turns a failure inside the answer pipeline into a code and a message safe to show and log.
  * Provider error text is never passed through: it can echo request details (even a masked key).
- * The message is in the visitor's interface language; the log line is always English.
+ * The message is in the visitor's interface language; the log line is always English. A
+ * rejected key is the visitor's to fix when it is their own (P6-03), the operator's otherwise.
  */
 export function describeFailure(
   error: unknown,
   locale: UiLocale = DEFAULT_UI_LOCALE,
+  keySource: KeySource | null = 'operator',
 ): {
   code: AskErrorCode;
   message: string;
@@ -25,7 +28,7 @@ export function describeFailure(
   if (status === 401 || status === 403) {
     return {
       code: 'not_configured',
-      message: copy.keyRejected,
+      message: keySource === 'visitor' ? copy.yourKeyRejected : copy.keyRejected,
       log: `openai ${status}`,
     };
   }
