@@ -1,3 +1,6 @@
+// First, before any schema exists: no eval probe in the browser (see zod-config.ts).
+import './zod-config.ts';
+
 export * from './answer.ts';
 export * from './ask.ts';
 export * from './episode.ts';

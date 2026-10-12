@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page, test } from './fixtures';
 
 const VIDEO = 'dQw4w9WgXcQ';
 const AUDIO = 'https://audio.example.test/episode.mp3';
