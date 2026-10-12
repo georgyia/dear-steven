@@ -15,6 +15,8 @@ export const BUCKETS = {
   transcribe: { capacity: 10, refillPerMinute: 10 },
   speech: { capacity: 10, refillPerMinute: 10 },
   passages: { capacity: 120, refillPerMinute: 120 },
+  /** Opening share links (P6-17): free, but each one inflates and validates a whole answer. */
+  share: { capacity: 20, refillPerMinute: 20 },
   /** Passcode guesses (P6-08): five, then one every twelve seconds, per client… */
   access: { capacity: 5, refillPerMinute: 5 },
   /** …and thirty a minute in all, because a client can claim any X-Forwarded-For it likes. */

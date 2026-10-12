@@ -32,7 +32,8 @@ packages/core/                framework-free domain — every decision lives her
   src/config/                 env (server config), models (every model id + price)
 packages/ingest/              CLI: commands/* and sources/{rss,youtube-*,openai-*}
 eval/                         questions.json + run.ts (recall, citation, attribution, persona)
-data/                         (gitignored) dear-steven.db, cache/, voiceprints/, answers.jsonl
+data/                         (gitignored) dear-steven.db, cache/, voiceprints/, answers.jsonl,
+                              spend.json, share-secret
 docs/                         what exists today          plan/  what we build next
 ```
 
@@ -99,6 +100,7 @@ one by its stored embedding (`buildRelatedMoments`, no model call; empty until e
 | Browser → server | Every body validated with zod; size caps; per-IP token buckets (live answers, transcribe, speech, passages + episode list, key checks). A visitor's own OpenAI key (P6-03) comes only in the `x-openai-key` header, over HTTPS, checked against `VisitorKeySchema`; every route builds its configuration from the request (`server/request-config.ts`). |
 | Server → OpenAI | The operator's key only in server memory (`readConfig`); a visitor's key only for their own request — never cached, logged or stored, and not counted against the operator's cap; provider error text never logged or shown (`server/errors.ts`). |
 | Browser storage → page | Untrusted on read: stored answers are re-validated, links rebuilt from ids, unknown fields dropped. |
+| Share link → page | A share token (P6-17) opens only through `POST /api/share`, and only if this deployment signed it (`server/share.ts`, HMAC under `data/share-secret`); the answer inside is then re-validated and re-linked like a stored one, and (unless it is a demo fixture) must still be sourced in the knowledge base as it is now (`stillSourced`). A link can't say anything this copy didn't write, nor outlive a takedown. |
 | Transcript text → model | Untrusted data: wrapped in `<sources>`, `<`/`>` neutralised, instructions say to ignore commands inside. |
 | Model → browser | Nothing passes without `validateBlock`; citation ids must be retrieved ids; quotes are re-derived from storage. |
 | Browser → YouTube / podcast host | Only after the user presses play: the youtube-nocookie player and the https RSS enclosure. CSP `frame-src` / `media-src` fence everything else. |
@@ -112,6 +114,9 @@ Tables: `episodes`, `segments` (speaker truth), `passages` (+ `passages_fts` FTS
 content, `passages_vec` vec0 cosine, both maintained by triggers), `ingestion_runs`, `kb_meta`.
 Migrations are numbered SQL in `store/migrations.ts`, tracked by `PRAGMA user_version`. Purging an
 episode cascades to segments, passages, FTS rows, vectors and runs (tested).
+
+Beside it: `spend.json` (today's estimated spend) and `share-secret` (the key share links are
+signed with, created on first use, owner-only).
 
 ### Browser (opt-in only)
 

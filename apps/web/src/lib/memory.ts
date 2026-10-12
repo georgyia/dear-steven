@@ -50,7 +50,7 @@ export function toStored(turns: Turn[], now = new Date()): StoredConversation {
 }
 
 /** Links are rebuilt from ids, never taken from storage: a stored URL could have been edited. */
-function relink(c: Citation): Citation {
+function relinkCitation(c: Citation): Citation {
   const { url, embedUrl } = linksAt(c.episode.youtubeVideoId, c.timestamp.ms, c.timestamp.state);
   return {
     ...c,
@@ -58,6 +58,11 @@ function relink(c: Citation): Citation {
     embedUrl,
     episode: { ...c.episode, audioUrl: httpsUrl(c.episode.audioUrl) },
   };
+}
+
+/** An answer from outside this page (storage, a share link) with every link rebuilt from ids. */
+export function relinked(answer: FinalAnswer): FinalAnswer {
+  return { ...answer, citations: answer.citations.map(relinkCitation) };
 }
 
 const isCount = (v: unknown) => Number.isInteger(v) && (v as number) >= 0;
@@ -93,7 +98,7 @@ export function parseStored(raw: unknown): StoredTurn[] | null {
       question,
       steps,
       sources,
-      final: { ...final.data, citations: final.data.citations.map(relink) },
+      final: relinked(final.data),
     });
   }
   return out;

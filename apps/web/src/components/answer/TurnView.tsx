@@ -5,6 +5,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import type { Turn } from '@/lib/conversation';
 import { AnswerBlocks } from './AnswerBlocks';
 import { EpisodeCards } from './EpisodeCards';
+import { ShareControls } from './ShareControls';
 import { type AnswerView, SpokenControls } from './SpokenControls';
 import { ThoughtTrace } from './ThoughtTrace';
 
@@ -36,9 +37,10 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
 
   return (
     <article id={`turn-${turn.id}`} aria-labelledby={headingId} className="scroll-mt-28">
-      {demo ? (
-        <p className="mb-3 font-mono text-[10.5px] tracking-[0.14em] text-ember-0 uppercase">
-          {t.turn.demoTag}
+      {demo || turn.shared ? (
+        <p className="mb-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10.5px] tracking-[0.14em] uppercase">
+          {turn.shared ? <span className="text-steel">{t.share.tag}</span> : null}
+          {demo ? <span className="text-ember-0">{t.turn.demoTag}</span> : null}
         </p>
       ) : null}
       <h2
@@ -101,6 +103,10 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
         <div className="mt-8">
           <EpisodeCards episodes={turn.final.episodes} citations={turn.citations} onOpen={open} />
         </div>
+      ) : null}
+
+      {turn.status === 'done' && turn.final ? (
+        <ShareControls question={turn.question} answer={turn.final} />
       ) : null}
 
       {turn.status === 'stopped' ? (

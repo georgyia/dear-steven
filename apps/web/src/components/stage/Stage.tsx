@@ -13,7 +13,7 @@ import { ToastProvider, ToastViewport, useToast } from '@/components/ui/Toasts';
 import { VoiceControl } from '@/components/voice/VoiceControl';
 import { VoiceSettings } from '@/components/voice/VoiceSettings';
 import { useI18n } from '@/i18n/I18nProvider';
-import { AskError, askStream, fetchStatus } from '@/lib/api';
+import { AskError, askStream, fetchStatus, openShared } from '@/lib/api';
 import {
   citationOrder,
   conversationReducer,
@@ -21,6 +21,8 @@ import {
   initialConversation,
 } from '@/lib/conversation';
 import { isTypingTarget, useKeydown } from '@/lib/hooks';
+import { restoredTurns } from '@/lib/memory';
+import { sharedToken } from '@/lib/share';
 import {
   ambientLevel,
   initialStage,
@@ -160,6 +162,45 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       });
     }
   }, [status.mode, dialog, toast, dismiss, t]);
+
+  // A share link (P6-17) opens once a remembered conversation has had its chance to restore, so the
+  // shared answer joins it instead of being replaced by it. The fragment is cleared first: a reload
+  // shouldn't open it twice, and the question shouldn't linger in the address bar.
+  useEffect(() => {
+    if (!memory.loaded) return;
+    const open = () => {
+      const token = sharedToken(window.location.hash);
+      if (token === null) return;
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      const { share } = i18nRef.current.t;
+      openShared(token)
+        .then(({ question, answer }) => {
+          const id = `s${Date.now().toString(36)}`;
+          const [turn] = restoredTurns([
+            { id, question, steps: [], sources: null, final: { ...answer, share: token } },
+          ]);
+          if (turn) dispatch({ type: 'append', turn: { ...turn, shared: true } });
+          toast({
+            id: 'shared',
+            title: share.openedTitle,
+            description: share.openedBody,
+            duration: 7000,
+          });
+        })
+        .catch((error: unknown) =>
+          toast({
+            id: 'shared',
+            title: share.failedTitle,
+            description: error instanceof Error ? error.message : undefined,
+            tone: 'error',
+            duration: 7000,
+          }),
+        );
+    };
+    open();
+    window.addEventListener('hashchange', open);
+    return () => window.removeEventListener('hashchange', open);
+  }, [memory.loaded, toast]);
 
   const ask = useCallback<Ask>(async (raw, options = {}) => {
     const question = raw.trim().slice(0, LIMITS.questionChars);

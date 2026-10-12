@@ -1,11 +1,13 @@
-import type {
-  AskErrorCode,
-  AskEvent,
-  AskRequest,
-  EpisodePage,
-  KnowledgeStatus,
-  PassageContext,
-  RelatedMoments,
+import {
+  type AskErrorCode,
+  type AskEvent,
+  type AskRequest,
+  type EpisodePage,
+  type KnowledgeStatus,
+  type PassageContext,
+  type RelatedMoments,
+  type SharedAnswer,
+  SharedAnswerSchema,
 } from '@dear-steven/core/schema';
 import { readEvents } from './sse';
 import { keyHeaders } from './visitor-key';
@@ -107,4 +109,24 @@ export async function testKey(key: string, signal?: AbortSignal): Promise<string
   if (res.ok) return null;
   const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
   return body?.error?.message ?? res.statusText;
+}
+
+/** Opens a share link's token (P6-17). Throws `AskError` with the message to show when it won't. */
+export async function openShared(token: string, signal?: AbortSignal): Promise<SharedAnswer> {
+  let res: Response;
+  try {
+    res = await fetch('/api/share', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+      signal,
+    });
+  } catch (error) {
+    throw new AskError('network', error instanceof Error ? error.message : 'Network error');
+  }
+  const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+  if (!res.ok) throw new AskError(errorCode(res.status), body?.error?.message ?? res.statusText);
+  const shared = SharedAnswerSchema.safeParse(body);
+  if (!shared.success) throw new AskError('upstream', res.statusText);
+  return shared.data;
 }

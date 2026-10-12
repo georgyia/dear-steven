@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LIMITS } from './limits.ts';
 
 /**
  * Who a statement belongs to. This is the product's central distinction (docs/PRODUCT.md §5):
@@ -145,6 +146,11 @@ export const FinalAnswerSchema = z.object({
   caveats: z.array(z.string()),
   demo: z.boolean(),
   elapsedMs: z.number().int().nonnegative(),
+  /**
+   * The server's signed copy of this question and answer, for a share link (P6-17). Opaque to the
+   * browser; only the server that wrote the answer can open it. Absent on fixed replies.
+   */
+  share: z.string().max(LIMITS.shareTokenChars).optional(),
 });
 export type FinalAnswer = z.infer<typeof FinalAnswerSchema>;
 export type AnswerEpisode = FinalAnswer['episodes'][number];

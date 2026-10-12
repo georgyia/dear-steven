@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { AskRequestSchema, SpeechRequestSchema, STOCK_VOICES, VisitorKeySchema } from './ask.ts';
+import {
+  AskRequestSchema,
+  ShareRequestSchema,
+  ShareTokenSchema,
+  SpeechRequestSchema,
+  STOCK_VOICES,
+  VisitorKeySchema,
+} from './ask.ts';
 
 describe('SpeechRequestSchema', () => {
   it('takes a stock voice, or none for the server default', () => {
@@ -55,5 +62,31 @@ describe('VisitorKeySchema (P6-03)', () => {
     ]) {
       expect(VisitorKeySchema.safeParse(key).success, JSON.stringify(key)).toBe(false);
     }
+  });
+});
+
+describe('ShareTokenSchema (P6-17)', () => {
+  const mac = 'a'.repeat(43);
+
+  it('takes version, body and a full signature, base64url only', () => {
+    expect(ShareTokenSchema.safeParse(`v1.AbC-_9.${mac}`).success).toBe(true);
+    for (const token of [
+      '',
+      `v2.AbC.${mac}`,
+      `v1..${mac}`,
+      `v1.AbC.${mac.slice(1)}`,
+      `v1.AbC.${mac}a`,
+      `v1.Ab+C.${mac}`,
+      `v1.AbC.${mac}.x`,
+      `v1.${'A'.repeat(24_000)}.${mac}`,
+    ]) {
+      expect(ShareTokenSchema.safeParse(token).success, token.slice(0, 40)).toBe(false);
+    }
+  });
+
+  it('is the only thing an open request may carry', () => {
+    const token = `v1.AbC.${mac}`;
+    expect(ShareRequestSchema.safeParse({ token }).success).toBe(true);
+    expect(ShareRequestSchema.safeParse({ token, answer: {} }).success).toBe(false);
   });
 });
