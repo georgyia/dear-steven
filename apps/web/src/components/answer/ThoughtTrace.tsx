@@ -1,7 +1,7 @@
 'use client';
 
-import { brand } from '@/brand';
 import ThoughtLine from '@/components/vendor/react-bits/ThoughtLine';
+import { useI18n } from '@/i18n/I18nProvider';
 import type { Turn } from '@/lib/conversation';
 
 /**
@@ -9,9 +9,10 @@ import type { Turn } from '@/lib/conversation';
  * the line settles to "Thought for 3.1s" when the answer is complete.
  */
 export function ThoughtTrace({ turn }: { turn: Turn }) {
+  const { thinking } = useI18n().t;
   const working = turn.status === 'streaming';
   const steps = turn.steps.map((s) => s.message);
-  const label = steps[steps.length - 1] ?? brand.copy.thinking.searching(0);
+  const label = steps[steps.length - 1] ?? thinking.searching(0);
   return (
     <ThoughtLine
       label={label}
@@ -19,12 +20,14 @@ export function ThoughtTrace({ turn }: { turn: Turn }) {
       working={working}
       doneLabel={
         turn.status === 'stopped'
-          ? 'Stopped after'
+          ? thinking.stopped
           : turn.status === 'error'
-            ? 'Interrupted after'
-            : brand.copy.thinking.done
+            ? thinking.interrupted
+            : thinking.done
       }
       elapsed={working || turn.elapsedMs === null ? undefined : turn.elapsedMs / 1000}
+      formatElapsed={thinking.elapsed}
+      formatElapsedSpoken={thinking.elapsedSpoken}
       glyph="dot"
       color="var(--ivory-2)"
       glyphColor="var(--ember-0)"

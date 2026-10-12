@@ -11,6 +11,7 @@ import {
   demoRelatedMoments,
   pickDemoAnswer,
 } from './demo-fixtures.ts';
+import { GERMAN, inGerman } from './demo-fixtures-de.ts';
 
 describe('demo fixtures', () => {
   it.each(DEMO_ANSWERS.map((a) => [a.key, a] as const))(
@@ -62,6 +63,11 @@ describe('demo fixtures', () => {
     expect(pickDemoAnswer('Why do I keep procrastinating?').key).toBe('procrastination');
     expect(pickDemoAnswer('How do I build discipline?').key).toBe('discipline');
     expect(pickDemoAnswer('Should I start a business?').key).toBe('business');
+    expect(pickDemoAnswer('Ich schiebe mein Projekt seit Wochen vor mir her.').key).toBe(
+      'procrastination',
+    );
+    expect(pickDemoAnswer('Wie bleibe ich diszipliniert?').key).toBe('discipline');
+    expect(pickDemoAnswer('Soll ich ein Unternehmen gründen?').key).toBe('business');
     const fallback = pickDemoAnswer('What is the capital of Peru?');
     expect(fallback.mode).toBe('insufficient');
     expect(fallback.citations).toEqual([]);
@@ -71,6 +77,35 @@ describe('demo fixtures', () => {
     for (const a of DEMO_ANSWERS)
       for (const c of a.citations) expect(demoPassageContext(c.passageId)).not.toBe(null);
     expect(demoPassageContext('ps_real_1')).toBe(null);
+  });
+});
+
+describe('demo fixtures in German (P6-02)', () => {
+  it('has German for every piece of prose, and for every quote', () => {
+    const prose = DEMO_ANSWERS.flatMap((a) => [
+      a.spoken,
+      ...a.caveats,
+      ...a.citations.flatMap((c) => (c.relevance ? [c.relevance] : [])),
+      ...a.blocks.flatMap((b) =>
+        b.kind === 'quote' ? [b.text, ...(b.lead ? [b.lead] : [])] : b.segments.map((s) => s.text),
+      ),
+    ]);
+    expect(prose.filter((text) => !GERMAN[text])).toEqual([]);
+  });
+
+  it('keeps quotes verbatim and English, with the translation beneath', () => {
+    for (const a of DEMO_ANSWERS) {
+      const de = inGerman(a);
+      expect(de.citations.map((c) => c.excerpt)).toEqual(a.citations.map((c) => c.excerpt));
+      de.blocks.forEach((b, i) => {
+        const original = a.blocks[i];
+        if (b.kind === 'quote' && original?.kind === 'quote') {
+          expect(b.text).toBe(original.text);
+          expect(b.translation).toBe(GERMAN[original.text]);
+        }
+        expect(() => ResolvedBlockSchema.parse(b)).not.toThrow();
+      });
+    }
   });
 });
 

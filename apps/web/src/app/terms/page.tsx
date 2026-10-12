@@ -1,14 +1,16 @@
+import { formatDate } from '@dear-steven/core/format';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { brand } from '@/brand';
 import { POLICIES, POLICIES_UPDATED } from '@/content/policies';
+import { MESSAGES } from '@/i18n';
+import { requestUiLocale } from '@/server/locale';
 
-export const metadata: Metadata = {
-  title: `Terms, disclaimer and privacy · ${brand.name}`,
-  description:
-    'What Dear Steven is and isn’t, the terms for using it, and what happens to your data.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { meta } = MESSAGES[await requestUiLocale()];
+  return { title: meta.termsTitle, description: meta.termsDescription };
+}
 
 const anchor = (file: string) => file.replace('.md', '').toLowerCase();
 
@@ -21,7 +23,7 @@ const HREF: Record<string, string> = {
 };
 
 /** `[text](url)` → a link; `code` → code. The only markup the policies use. */
-function inline(text: string): ReactNode[] {
+function inline(text: string, newTab: ReactNode): ReactNode[] {
   return text.split(/(\[[^\]]+\]\([^)]+\)|`[^`]+`)/g).map((part, i) => {
     const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(part);
     if (link?.[1] && link[2]) {
@@ -36,7 +38,7 @@ function inline(text: string): ReactNode[] {
           className="text-ivory-0 underline decoration-ink-4 underline-offset-2 hover:decoration-ember-0"
         >
           {link[1]}
-          {external ? <span className="sr-only"> (opens in a new tab)</span> : null}
+          {external ? newTab : null}
         </a>
       );
     }
@@ -52,8 +54,19 @@ function inline(text: string): ReactNode[] {
   });
 }
 
-/** The terms, the disclaimer and the privacy note, in one readable page (P6-12). */
-export default function TermsPage() {
+/**
+ * The terms, the disclaimer and the privacy note, in one readable page (P6-12). The page's own
+ * words follow the visitor's language; the policy text is English only until it is reviewed.
+ */
+export default async function TermsPage() {
+  const locale = await requestUiLocale();
+  const t = MESSAGES[locale];
+  const copy = t.termsPage;
+  const newTab = (
+    <span className="sr-only" lang={locale}>
+      {copy.newTab}
+    </span>
+  );
   return (
     <main className="relative z-10 mx-auto w-full max-w-[44rem] px-4 pt-12 pb-24 text-[15.5px] leading-relaxed text-ivory-1">
       <Link
@@ -63,14 +76,16 @@ export default function TermsPage() {
         ← {brand.name}
       </Link>
       <h1 className="mt-6 font-display text-[40px] leading-tight text-ivory-0 sm:text-[48px]">
-        Terms, disclaimer and privacy
+        {copy.title}
       </h1>
-      <p className="mt-4 text-ivory-2">{brand.disclosure}</p>
-      <nav aria-label="On this page" className="mt-6 flex flex-wrap gap-2">
+      <p className="mt-4 text-ivory-2">{t.disclosure}</p>
+      {copy.englishOnly ? <p className="mt-3 text-ivory-2">{copy.englishOnly}</p> : null}
+      <nav aria-label={copy.onThisPage} className="mt-6 flex flex-wrap gap-2">
         {POLICIES.map((p) => (
           <a
             key={p.file}
             href={`#${anchor(p.file)}`}
+            lang="en"
             className="rounded-full border border-ink-3 px-3 py-1 font-mono text-[11px] text-ivory-1 hover:border-ink-4 hover:text-ivory-0"
           >
             {p.title}
@@ -78,7 +93,7 @@ export default function TermsPage() {
         ))}
       </nav>
       {POLICIES.map((policy) => (
-        <section key={policy.file} id={anchor(policy.file)} className="mt-12 scroll-mt-8">
+        <section key={policy.file} id={anchor(policy.file)} lang="en" className="mt-12 scroll-mt-8">
           <h2 className="font-display text-[28px] leading-snug text-ivory-0">{policy.title}</h2>
           {policy.sections.map((section) => (
             <div key={section.heading} className="mt-6">
@@ -87,7 +102,7 @@ export default function TermsPage() {
               </h3>
               {section.body.map((paragraph) => (
                 <p key={paragraph} className="mt-2">
-                  {inline(paragraph)}
+                  {inline(paragraph, newTab)}
                 </p>
               ))}
             </div>
@@ -95,7 +110,7 @@ export default function TermsPage() {
         </section>
       ))}
       <p className="mt-12 border-t border-ink-3 pt-4 text-[13px] text-ivory-2">
-        Last updated {POLICIES_UPDATED}. Plain-language text, not legal advice.
+        {copy.updated(formatDate(POLICIES_UPDATED, locale))}
       </p>
     </main>
   );

@@ -2,6 +2,7 @@
 
 import type { Citation, ResolvedBlock, ResolvedSegment } from '@dear-steven/core/schema';
 import { Fragment } from 'react';
+import { useI18n } from '@/i18n/I18nProvider';
 import { CitationChip } from './CitationChip';
 import { PullQuote } from './PullQuote';
 import { Reveal } from './Reveal';
@@ -9,6 +10,8 @@ import { Reveal } from './Reveal';
 interface BlocksProps {
   blocks: ResolvedBlock[];
   citations: Record<string, Citation>;
+  /** The answer's language, once known: its prose is marked with it for screen readers. */
+  language?: string;
   activeCitationId: string | null;
   onOpenCitation: (citationId: string) => void;
 }
@@ -17,7 +20,13 @@ interface BlocksProps {
  * Renders validated answer blocks. Synthesis is set a shade softer than evidence-backed prose, so
  * the reader can tell interpretation from sourced statement without reading a legend.
  */
-export function AnswerBlocks({ blocks, citations, activeCitationId, onOpenCitation }: BlocksProps) {
+export function AnswerBlocks({
+  blocks,
+  citations,
+  language,
+  activeCitationId,
+  onOpenCitation,
+}: BlocksProps) {
   return (
     <div className="flex flex-col gap-6">
       {blocks.map((block, i) =>
@@ -27,6 +36,7 @@ export function AnswerBlocks({ blocks, citations, activeCitationId, onOpenCitati
             <Block
               block={block}
               citations={citations}
+              language={language}
               activeCitationId={activeCitationId}
               onOpenCitation={onOpenCitation}
             />
@@ -40,9 +50,11 @@ export function AnswerBlocks({ blocks, citations, activeCitationId, onOpenCitati
 function Block({
   block,
   citations,
+  language,
   activeCitationId,
   onOpenCitation,
 }: Omit<BlocksProps, 'blocks'> & { block: ResolvedBlock }) {
+  const { t } = useI18n();
   if (block.kind === 'quote') {
     const citation = citations[block.citationId];
     if (!citation) return null;
@@ -59,7 +71,7 @@ function Block({
   }
 
   const prose = (
-    <p className="text-[17px] leading-[1.7] text-pretty sm:text-[18px]">
+    <p lang={language} className="text-[17px] leading-[1.7] text-pretty sm:text-[18px]">
       {block.segments.map((segment, j) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: segments are fixed once a block is validated
         <Fragment key={j}>
@@ -80,7 +92,7 @@ function Block({
       <aside className="relative rounded-[var(--radius-card)] border border-ink-3 bg-[linear-gradient(180deg,rgb(26_23_20/0.9),rgb(18_16_14/0.6))] px-5 pt-4 pb-5 sm:px-6">
         <p className="mb-2 flex items-center gap-2 font-mono text-[11px] tracking-[0.16em] text-ember-0 uppercase">
           <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-ember-0" />
-          If I were you
+          {t.answer.takeaway}
         </p>
         {prose}
       </aside>

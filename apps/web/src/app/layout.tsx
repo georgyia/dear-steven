@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from 'next';
 import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { brand } from '@/brand';
+import { MESSAGES } from '@/i18n';
+import { I18nProvider } from '@/i18n/I18nProvider';
+import { requestUiLocale } from '@/server/locale';
 import '@/styles/globals.css';
 
 const fraunces = Fraunces({
@@ -23,11 +26,14 @@ const geistMono = Geist_Mono({
 // nonce (src/proxy.ts, P6-09). A prerendered page would carry none and its scripts would be refused.
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: brand.name,
-  description: brand.description,
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { meta } = MESSAGES[await requestUiLocale()];
+  return {
+    title: brand.name,
+    description: meta.description,
+    robots: { index: false, follow: false },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: '#0a0908',
@@ -37,10 +43,13 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const locale = await requestUiLocale();
   return (
-    <html lang="en" className={`${fraunces.variable} ${geist.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+    <html lang={locale} className={`${fraunces.variable} ${geist.variable} ${geistMono.variable}`}>
+      <body>
+        <I18nProvider initialLocale={locale}>{children}</I18nProvider>
+      </body>
     </html>
   );
 }

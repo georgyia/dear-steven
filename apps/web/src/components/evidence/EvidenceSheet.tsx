@@ -2,6 +2,7 @@
 
 import { motion, type PanInfo, useDragControls, useReducedMotion } from 'motion/react';
 import { type ReactNode, useEffect, useRef } from 'react';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface EvidenceSheetProps {
   open: boolean;
@@ -17,6 +18,7 @@ export function EvidenceSheet({ open, onClose, children }: EvidenceSheetProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const drag = useDragControls();
   const reduce = useReducedMotion();
+  const { t } = useI18n();
 
   useEffect(() => {
     const el = ref.current;
@@ -33,7 +35,7 @@ export function EvidenceSheet({ open, onClose, children }: EvidenceSheetProps) {
     // biome-ignore lint/a11y/useKeyWithClickEvents: backdrop click is a pointer convenience; Esc closes natively
     <dialog
       ref={ref}
-      aria-label="Source inspector"
+      aria-label={t.inspector.label}
       onCancel={(e) => {
         e.preventDefault();
         onClose();

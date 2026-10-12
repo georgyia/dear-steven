@@ -34,6 +34,7 @@ export async function POST(req: Request) {
   try {
     const body = await synthesizeSpeech(client, parsed.data.text, {
       voice: parsed.data.voice,
+      language: parsed.data.language,
       signal: req.signal,
     });
     spendLedger(config).record(speechCostUsd(parsed.data.text));

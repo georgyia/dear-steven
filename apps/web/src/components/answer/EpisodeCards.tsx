@@ -7,9 +7,10 @@ import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { motion, useReducedMotion } from 'motion/react';
 import type { CSSProperties } from 'react';
-import { brand } from '@/brand';
 import { NoVideo, YouTubeLink } from '@/components/ui/YouTubeLink';
 import SpotlightCard from '@/components/vendor/react-bits/SpotlightCard';
+import type { Messages } from '@/i18n';
+import { useI18n } from '@/i18n/I18nProvider';
 
 const CARD_VARS = {
   '--spotlight-card-surface': 'var(--ink-2)',
@@ -24,13 +25,17 @@ interface EpisodeCardsProps {
 }
 
 /** The video at the first moment this answer cites from the episode; the URL is core's. */
-function firstMoment(episode: AnswerEpisode, citations: Record<string, Citation>) {
+function firstMoment(
+  episode: AnswerEpisode,
+  citations: Record<string, Citation>,
+  youtube: Messages['youtube'],
+) {
   const first = episode.citationIds.map((id) => citations[id]).find((c) => c?.youtubeUrl);
   if (!first?.youtubeUrl) return null;
   const moment = formatMoment(first.timestamp.ms, first.timestamp.state);
   return {
     href: first.youtubeUrl,
-    label: moment ? brand.copy.youtube.watchFrom(moment) : brand.copy.youtube.watch,
+    label: moment ? youtube.watchFrom(moment) : youtube.watch,
   };
 }
 
@@ -40,16 +45,16 @@ function firstMoment(episode: AnswerEpisode, citations: Record<string, Citation>
  */
 export function EpisodeCards({ episodes, citations, onOpen }: EpisodeCardsProps) {
   const reduce = useReducedMotion();
+  const { t, locale } = useI18n();
   if (episodes.length === 0) return null;
   return (
-    <section aria-label="Conversations cited" className="mt-2">
+    <section aria-label={t.cards.label} className="mt-2">
       <h3 className="mb-3 font-mono text-[11px] tracking-[0.16em] text-steel uppercase">
-        From{' '}
-        {episodes.length === 1 ? 'this conversation' : `these ${episodes.length} conversations`}
+        {t.cards.heading(episodes.length)}
       </h3>
       <ul className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0">
         {episodes.map((episode, i) => {
-          const video = firstMoment(episode, citations);
+          const video = firstMoment(episode, citations, t.youtube);
           return (
             <motion.li
               key={episode.id}
@@ -76,13 +81,13 @@ export function EpisodeCards({ episodes, citations, onOpen }: EpisodeCardsProps)
                   className="group flex w-full flex-1 flex-col gap-2 p-4 pb-2 text-left"
                 >
                   <span className="flex items-center justify-between font-mono text-[11px] text-steel">
-                    <span>{formatDate(episode.publishedAt)}</span>
-                    <span>
-                      {episode.citationIds.length} moment
-                      {episode.citationIds.length === 1 ? '' : 's'}
-                    </span>
+                    <span>{formatDate(episode.publishedAt, locale)}</span>
+                    <span>{t.cards.moments(episode.citationIds.length)}</span>
                   </span>
-                  <span className="line-clamp-3 font-display text-[17px] leading-snug text-ivory-0">
+                  <span
+                    lang="en"
+                    className="line-clamp-3 font-display text-[17px] leading-snug text-ivory-0"
+                  >
                     {episode.title}
                   </span>
                   <span className="mt-auto flex items-center justify-between pt-1 text-[13px] text-ivory-2">
@@ -110,9 +115,9 @@ export function EpisodeCards({ episodes, citations, onOpen }: EpisodeCardsProps)
         })}
       </ul>
       <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13.5px] leading-relaxed text-ivory-2">
-        <span>{brand.copy.youtube.invitation}</span>
+        <span>{t.youtube.invitation}</span>
         <YouTubeLink href={SHOW_CHANNEL_URL} variant="inline">
-          {brand.copy.youtube.channel}
+          {t.youtube.channel}
         </YouTubeLink>
       </p>
     </section>

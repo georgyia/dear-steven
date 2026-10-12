@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { UI_LOCALES } from '../persona/copy.ts';
 import { type Citation, CitationSchema, FinalAnswerSchema, ResolvedBlockSchema } from './answer.ts';
 
 import { LIMITS } from './limits.ts';
@@ -23,6 +24,8 @@ export const AskRequestSchema = z.strictObject({
     .string()
     .regex(/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8}){0,3}$/)
     .optional(),
+  /** The interface language (P6-02): the thinking steps and fixed replies. Not the answer's. */
+  uiLocale: z.enum(UI_LOCALES).optional(),
 });
 export type AskRequest = z.infer<typeof AskRequestSchema>;
 
@@ -135,6 +138,11 @@ export const SpeechRequestSchema = z.strictObject({
   text: z.string().trim().min(1).max(LIMITS.speechChars),
   /** The listener's pick; the server default (`SPEECH_VOICE`) when absent. */
   voice: z.enum(STOCK_VOICES).optional(),
+  /** ISO 639-1 code of the text's language (P6-02), so it is pronounced as that language. */
+  language: z
+    .string()
+    .regex(/^[a-z]{2,3}$/)
+    .optional(),
 });
 
 /** One row of the episode explorer: metadata only, never transcript text. */

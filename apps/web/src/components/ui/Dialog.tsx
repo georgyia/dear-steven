@@ -3,6 +3,7 @@
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { type ReactNode, useEffect, useId, useRef } from 'react';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface DialogProps {
   open: boolean;
@@ -22,6 +23,7 @@ interface DialogProps {
 export function Dialog({ open, onClose, title, eyebrow, children, width = 'md' }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const { ui } = useI18n().t;
 
   useEffect(() => {
     const el = ref.current;
@@ -59,7 +61,7 @@ export function Dialog({ open, onClose, title, eyebrow, children, width = 'md' }
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={ui.close}
             className="-mr-2 grid h-9 w-9 flex-none place-items-center rounded-full text-ivory-2 transition-colors hover:bg-ink-3 hover:text-ivory-0"
           >
             <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={2} />

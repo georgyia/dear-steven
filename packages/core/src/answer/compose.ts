@@ -1,6 +1,13 @@
 import { detectLanguage } from '../language/detect.ts';
 import type { Embedder } from '../openai/embedder.ts';
-import { EMPTY_KNOWLEDGE_REPLY, RESTING_REPLY, THINKING_COPY } from '../persona/copy.ts';
+import {
+  DEFAULT_UI_LOCALE,
+  EMPTY_KNOWLEDGE_REPLY,
+  MALFORMED_ANSWER,
+  RESTING_REPLY,
+  THINKING_COPY,
+  type UiLocale,
+} from '../persona/copy.ts';
 import { hybridSearch } from '../retrieval/index.ts';
 import {
   type ModerationResult,
@@ -80,7 +87,7 @@ export async function* composeAnswer(
   const stats = deps.store.stats();
 
   if (stats.passages === 0) {
-    yield* emptyKnowledgeAnswer(started, now);
+    yield* emptyKnowledgeAnswer(request.uiLocale, started, now);
     return;
   }
 
@@ -95,7 +102,8 @@ export async function* composeAnswer(
     ? deps.moderate(request.question, signal).catch(() => null)
     : Promise.resolve(null);
 
-  yield { type: 'status', step: 'searching', message: THINKING_COPY.searching(stats.episodes) };
+  const thinking = THINKING_COPY[request.uiLocale ?? DEFAULT_UI_LOCALE];
+  yield { type: 'status', step: 'searching', message: thinking.searching(stats.episodes) };
   // The transcripts are English: search in English, and by meaning in the question's own language
   // too (P6-01). The answer comes back in the question's language.
   const language = detectLanguage(request.question);
@@ -118,9 +126,9 @@ export async function* composeAnswer(
   yield {
     type: 'status',
     step: 'found',
-    message: THINKING_COPY.found(retrieval.passages.length, episodeCount),
+    message: thinking.found(retrieval.passages.length, episodeCount),
   };
-  yield { type: 'status', step: 'writing', message: THINKING_COPY.writing };
+  yield { type: 'status', step: 'writing', message: thinking.writing };
 
   const registry = new CitationRegistry(ctx);
   const stream = new BlockStream();
@@ -176,7 +184,7 @@ export async function* composeAnswer(
     yield {
       type: 'error',
       code: 'upstream',
-      message: 'The answer came back malformed. Nothing was shown that wasn’t checked.',
+      message: MALFORMED_ANSWER[request.uiLocale ?? DEFAULT_UI_LOCALE],
     };
     return;
   }
@@ -191,7 +199,7 @@ export async function* composeAnswer(
   let repaired = false;
 
   if (failing.length > 0) {
-    yield { type: 'status', step: 'checking', message: THINKING_COPY.checking };
+    yield { type: 'status', step: 'checking', message: thinking.checking };
     try {
       const raw = await deps.model.completeJson({
         instructions: PERSONA_INSTRUCTIONS,
@@ -293,23 +301,24 @@ function* safetyAnswer(
 
 /** The reply once the daily spend cap is reached (P6-08). No model call, no sources. */
 export function* restingAnswer(
+  locale: UiLocale = DEFAULT_UI_LOCALE,
   started: number = Date.now(),
   now: () => number = Date.now,
 ): Generator<AskEvent> {
   const block: ResolvedBlock = {
     kind: 'paragraph',
-    segments: [{ text: RESTING_REPLY.text, attribution: 'synthesis', citationIds: [] }],
+    segments: [{ text: RESTING_REPLY[locale].text, attribution: 'synthesis', citationIds: [] }],
   };
   yield { type: 'block.done', index: 0, block, citations: [] };
   yield {
     type: 'final',
     answer: {
-      language: 'en',
+      language: locale,
       mode: 'conversational',
       blocks: [block],
       citations: [],
       episodes: [],
-      spoken: RESTING_REPLY.spoken,
+      spoken: RESTING_REPLY[locale].spoken,
       caveats: [],
       demo: false,
       elapsedMs: Math.max(0, Math.round(now() - started)),
@@ -319,28 +328,31 @@ export function* restingAnswer(
 
 /** The honest reply when nothing has been ingested yet. No model call. */
 export function* emptyKnowledgeAnswer(
+  locale: UiLocale = DEFAULT_UI_LOCALE,
   started: number = Date.now(),
   now: () => number = Date.now,
 ): Generator<AskEvent> {
-  yield { type: 'status', step: 'searching', message: THINKING_COPY.searching(0) };
-  yield { type: 'status', step: 'found', message: THINKING_COPY.found(0, 0) };
+  const thinking = THINKING_COPY[locale];
+  const reply = EMPTY_KNOWLEDGE_REPLY[locale];
+  yield { type: 'status', step: 'searching', message: thinking.searching(0) };
+  yield { type: 'status', step: 'found', message: thinking.found(0, 0) };
   const block: ResolvedBlock = {
     kind: 'paragraph',
     segments: [
-      { text: EMPTY_KNOWLEDGE_REPLY.text, attribution: 'synthesis', citationIds: [] },
-      { text: EMPTY_KNOWLEDGE_REPLY.hint, attribution: 'synthesis', citationIds: [] },
+      { text: reply.text, attribution: 'synthesis', citationIds: [] },
+      { text: reply.hint, attribution: 'synthesis', citationIds: [] },
     ],
   };
   yield { type: 'block.done', index: 0, block, citations: [] };
   yield {
     type: 'final',
     answer: {
-      language: 'en',
+      language: locale,
       mode: 'insufficient',
       blocks: [block],
       citations: [],
       episodes: [],
-      spoken: EMPTY_KNOWLEDGE_REPLY.spoken,
+      spoken: reply.spoken,
       caveats: [],
       demo: false,
       elapsedMs: Math.max(0, Math.round(now() - started)),

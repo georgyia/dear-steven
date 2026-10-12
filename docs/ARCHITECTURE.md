@@ -16,7 +16,8 @@ apps/web/                     Next.js 16 app — thin server shell + one client 
   src/components/             stage/ composer/ answer/ evidence/ voice/ ui/ vendor/react-bits/
   src/lib/                    stage-machine, conversation reducer, SSE parser, api client, voice/*
   src/styles/                 tokens.css (design tokens), globals.css (Tailwind v4 theme)
-  src/brand.ts                every name and line of product copy
+  src/brand.ts                the product, host and show names
+  src/i18n/                   message catalogues (en, de), I18nProvider, useI18n
   e2e/                        Playwright specs
 packages/core/                framework-free domain — every decision lives here
   src/schema/                 zod schemas: answer (model + resolved), ask events, episode, passage

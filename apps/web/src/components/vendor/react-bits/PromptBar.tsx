@@ -5,7 +5,8 @@
  * Used as part of this application only; these components are not redistributed on their own.
  * Local changes: removed the @-source, /-command, model and effort menus, attachments and the
  * spark canvas; single-row layout; added a controlled draft (`value`/`onValueChange`), a
- * `trailing` slot (microphone), `maxLength`, `disabled`, `inputRef`, `id` and `ariaLabel`.
+ * `trailing` slot (microphone), `maxLength`, `disabled`, `inputRef`, `id`, `ariaLabel` and the
+ * button's `sendLabel` / `stopLabel` (localised, P6-02).
  * Kept: autosizing textarea, Enter-to-send, the arrow→stop morph while busy, press feedback.
  */
 'use client';
@@ -46,6 +47,8 @@ export interface PromptBarProps {
   inputRef?: Ref<HTMLTextAreaElement>;
   id?: string;
   ariaLabel?: string;
+  sendLabel?: string;
+  stopLabel?: string;
   className?: string;
 }
 
@@ -136,6 +139,8 @@ const PromptBar: React.FC<PromptBarProps> = ({
   inputRef: externalRef,
   id,
   ariaLabel = 'Prompt',
+  sendLabel = 'Send',
+  stopLabel = 'Stop',
   className = ''
 }) => {
   const ownRef = useRef<HTMLTextAreaElement>(null);
@@ -227,7 +232,7 @@ const PromptBar: React.FC<PromptBarProps> = ({
           type="button"
           className="relative inline-grid h-9 w-9 flex-none cursor-pointer touch-manipulation place-items-center rounded-full border-0 p-0 outline-none select-none [background:color-mix(in_srgb,var(--pb-ink)_12%,var(--pb-bg))] [color:color-mix(in_srgb,var(--pb-ink)_55%,var(--pb-bg))] [font:inherit] [-webkit-tap-highlight-color:transparent] [transition:background-color_200ms_ease,color_200ms_ease,transform_160ms_cubic-bezier(0.23,1,0.32,1)] disabled:cursor-default data-[armed]:[background:var(--pb-ink)] data-[armed]:[color:var(--pb-bg)] data-[pressed]:[transform:scale(var(--pb-press))] motion-reduce:data-[pressed]:[transform:none]"
           disabled={!armed}
-          aria-label={busy ? 'Stop' : 'Send'}
+          aria-label={busy ? stopLabel : sendLabel}
           data-armed={armed ? '' : undefined}
           data-pressed={pressed ? '' : undefined}
           onMouseDown={e => e.preventDefault()}

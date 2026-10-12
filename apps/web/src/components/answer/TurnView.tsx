@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { brand } from '@/brand';
+import { useI18n } from '@/i18n/I18nProvider';
 import type { Turn } from '@/lib/conversation';
 import { AnswerBlocks } from './AnswerBlocks';
 import { EpisodeCards } from './EpisodeCards';
@@ -15,18 +15,19 @@ interface TurnViewProps {
   onRetry: (question: string) => void;
 }
 
-const ERROR_COPY = {
-  network: brand.copy.errors.network,
-  rate_limited: brand.copy.errors.rateLimited,
-  upstream: brand.copy.errors.upstream,
-  not_configured: brand.copy.errors.notConfigured,
-  bad_request: brand.copy.errors.generic,
-  internal: brand.copy.errors.generic,
-  locked: brand.copy.errors.locked,
+const ERROR_KEY = {
+  network: 'network',
+  rate_limited: 'rateLimited',
+  upstream: 'upstream',
+  not_configured: 'notConfigured',
+  bad_request: 'generic',
+  internal: 'generic',
+  locked: 'locked',
 } as const;
 
 /** One exchange: the question as an editorial heading, the thinking, then the answer. */
 export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: TurnViewProps) {
+  const { t } = useI18n();
   const open = (citationId: string) => onOpenCitation(turn.id, citationId);
   const demo = turn.final?.demo ?? Object.values(turn.citations).some((c) => c.episode.demo);
   const headingId = `q-${turn.id}`;
@@ -37,7 +38,7 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
     <article id={`turn-${turn.id}`} aria-labelledby={headingId} className="scroll-mt-28">
       {demo ? (
         <p className="mb-3 font-mono text-[10.5px] tracking-[0.14em] text-ember-0 uppercase">
-          Demo fixture · not AI-generated or source-verified
+          {t.turn.demoTag}
         </p>
       ) : null}
       <h2
@@ -56,17 +57,21 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
         {view === 'spoken' && spoken ? (
           <div>
             <p className="mb-3 font-mono text-[11px] tracking-[0.16em] text-steel uppercase">
-              What I’d say out loud
+              {t.turn.spokenHeading}
             </p>
-            <p className="font-display text-[21px] leading-[1.55] text-ivory-0 italic sm:text-[23px]">
+            <p
+              lang={turn.final?.language}
+              className="font-display text-[21px] leading-[1.55] text-ivory-0 italic sm:text-[23px]"
+            >
               {spoken}
             </p>
-            <p className="mt-3 text-[13px] text-ivory-2">The written answer carries the sources.</p>
+            <p className="mt-3 text-[13px] text-ivory-2">{t.turn.spokenNote}</p>
           </div>
         ) : (
           <AnswerBlocks
             blocks={turn.blocks}
             citations={turn.citations}
+            language={turn.final?.language}
             activeCitationId={activeCitationId}
             onOpenCitation={open}
           />
@@ -75,7 +80,13 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
       </div>
 
       {turn.final && spoken ? (
-        <SpokenControls turnId={turn.id} spoken={spoken} view={view} onView={setView} />
+        <SpokenControls
+          turnId={turn.id}
+          spoken={spoken}
+          language={turn.final.language}
+          view={view}
+          onView={setView}
+        />
       ) : null}
 
       {turn.final && turn.final.caveats.length > 0 ? (
@@ -93,7 +104,7 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
       ) : null}
 
       {turn.status === 'stopped' ? (
-        <p className="mt-6 text-[14px] text-ivory-2">You stopped me there. Ask again any time.</p>
+        <p className="mt-6 text-[14px] text-ivory-2">{t.turn.stopped}</p>
       ) : null}
 
       {turn.status === 'error' && turn.error ? (
@@ -102,7 +113,7 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
           className="mt-6 flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border border-oxblood/50 bg-oxblood-tint px-4 py-3 text-[15px] text-oxblood-1"
         >
           <span>
-            {ERROR_COPY[turn.error.code]}
+            {t.errors[ERROR_KEY[turn.error.code]]}
             {(turn.error.code === 'not_configured' || turn.error.code === 'upstream') &&
             turn.error.message ? (
               <span className="mt-0.5 block text-[13px] text-ivory-2">{turn.error.message}</span>
@@ -113,13 +124,13 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
             onClick={() => onRetry(turn.question)}
             className="rounded-full border border-oxblood-1/50 px-3 py-1 text-[13px] text-ivory-0 transition-colors hover:bg-oxblood/30"
           >
-            Try again
+            {t.turn.retry}
           </button>
         </div>
       ) : null}
 
       <p className="sr-only" role="status">
-        {turn.status === 'done' ? 'Answer complete.' : ''}
+        {turn.status === 'done' ? t.turn.complete : ''}
       </p>
     </article>
   );

@@ -20,4 +20,4 @@ Nothing here is medical, legal, financial, tax or psychological advice, and noth
 
 Dear Steven is provided as is, without any warranty or condition. As far as the law allows, the people who make it and the people who run a copy of it are not liable for any loss or damage arising from its answers or from using it. You use it at your own risk.
 
-Last updated 2026-10-10. This is plain-language text, not legal advice; it has not yet been reviewed by a lawyer.
+Last updated 2026-10-11. This is plain-language text, not legal advice; it has not yet been reviewed by a lawyer.

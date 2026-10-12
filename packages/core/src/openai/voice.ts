@@ -32,18 +32,34 @@ export async function transcribeSpeech(
   return result.text.trim();
 }
 
+const SPEECH_STYLE =
+  'Warm, relaxed and conversational, like a thoughtful podcast host talking to one person. Natural pauses; never theatrical.';
+
+/** The delivery instructions; a non-English text is pronounced as its own language (P6-02). */
+export function speechInstructions(language?: string): string {
+  if (!language || language === 'en') return SPEECH_STYLE;
+  let name: string | undefined;
+  try {
+    name = new Intl.DisplayNames(['en'], { type: 'language' }).of(language);
+  } catch {
+    name = undefined;
+  }
+  return name && name !== language
+    ? `${SPEECH_STYLE} The text is in ${name}: speak it as a native ${name} speaker would.`
+    : SPEECH_STYLE;
+}
+
 export async function synthesizeSpeech(
   client: OpenAI,
   text: string,
-  options: { voice?: StockVoice; signal?: AbortSignal } = {},
+  options: { voice?: StockVoice; language?: string; signal?: AbortSignal } = {},
 ): Promise<ReadableStream<Uint8Array> | null> {
   const audio = await client.audio.speech.create(
     {
       model: MODELS.speech,
       voice: options.voice ?? SPEECH_VOICE,
       input: text,
-      instructions:
-        'Warm, relaxed and conversational, like a thoughtful podcast host talking to one person. Natural pauses; never theatrical.',
+      instructions: speechInstructions(options.language),
       response_format: 'mp3',
     },
     { signal: options.signal },

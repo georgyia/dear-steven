@@ -1,17 +1,11 @@
 'use client';
 
 import { useId, useState } from 'react';
-import { brand } from '@/brand';
+import { useI18n } from '@/i18n/I18nProvider';
 import { Disclosure } from './Disclosure';
 import { HeroWordmark } from './Wordmark';
 
 type State = { kind: 'idle' } | { kind: 'checking' } | { kind: 'wrong' | 'slow' | 'offline' };
-
-const MESSAGE = {
-  wrong: 'That passcode isn’t right.',
-  slow: 'Too many tries. Wait a minute, then try again.',
-  offline: 'I couldn’t check that just now. Try again?',
-} as const;
 
 /**
  * The passcode screen (P6-08), shown instead of the stage when the operator set an access code
@@ -22,6 +16,7 @@ export function AccessGate() {
   const id = useId();
   const [code, setCode] = useState('');
   const [state, setState] = useState<State>({ kind: 'idle' });
+  const { access } = useI18n().t;
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -45,7 +40,7 @@ export function AccessGate() {
 
   const message =
     state.kind === 'wrong' || state.kind === 'slow' || state.kind === 'offline'
-      ? MESSAGE[state.kind]
+      ? access[state.kind]
       : null;
 
   return (
@@ -53,7 +48,7 @@ export function AccessGate() {
       <HeroWordmark />
       <form onSubmit={submit} className="flex w-full max-w-sm flex-col gap-3 text-left">
         <label htmlFor={`${id}-code`} className="text-[15px] text-ivory-1">
-          This copy of {brand.name} is private. Enter the passcode its owner gave you.
+          {access.prompt}
         </label>
         <div className="flex gap-2">
           <input
@@ -65,14 +60,14 @@ export function AccessGate() {
             aria-invalid={state.kind === 'wrong' || undefined}
             aria-describedby={message ? `${id}-message` : undefined}
             className="min-w-0 flex-1 rounded-full border border-ink-3 bg-ink-1 px-4 py-2.5 text-[15px] text-ivory-0 placeholder:text-steel focus:border-ember-0/60 focus:outline-none"
-            placeholder="Passcode"
+            placeholder={access.placeholder}
           />
           <button
             type="submit"
             disabled={state.kind === 'checking'}
             className="rounded-full bg-ember-0 px-5 py-2.5 text-[14px] font-medium text-ink-0 transition-colors hover:bg-ember-1 disabled:opacity-60"
           >
-            {state.kind === 'checking' ? 'Checking…' : 'Enter'}
+            {state.kind === 'checking' ? access.checking : access.enter}
           </button>
         </div>
         <p id={`${id}-message`} role="status" className="min-h-5 text-[13.5px] text-oxblood-1">

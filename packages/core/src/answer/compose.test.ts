@@ -429,3 +429,35 @@ describe('composeAnswer — safety rails (P6-11)', () => {
     expect(input).not.toMatch(/<care>/);
   });
 });
+
+describe('composeAnswer — interface language (P6-02)', () => {
+  const statuses = async (store: KnowledgeStore, uiLocale?: 'en' | 'de') => {
+    const events: AskEvent[] = [];
+    for await (const e of composeAnswer(
+      { store, model: scripted(good).model, embedder: null },
+      { question: 'Why do I procrastinate?', history: [], uiLocale },
+      new AbortController().signal,
+    )) {
+      events.push(e);
+    }
+    return events;
+  };
+
+  it('streams the thinking steps in the interface language', async () => {
+    const de = await statuses(store1(), 'de');
+    const steps = de.flatMap((e) => (e.type === 'status' ? [e.message] : []));
+    expect(steps[0]).toBe('Durchsuche 1 Gespräch…');
+    expect(steps).toContain('Formuliere');
+    const en = await statuses(store1());
+    expect(en.find((e) => e.type === 'status')).toMatchObject({
+      message: 'Searching 1 conversation…',
+    });
+  });
+
+  it('gives the empty-knowledge reply in the interface language', async () => {
+    const events = await statuses(tempStore(), 'de');
+    const final = events.find((e) => e.type === 'final');
+    expect(final?.type === 'final' && final.answer.language).toBe('de');
+    expect(JSON.stringify(final)).toMatch(/noch keines meiner Gespräche/);
+  });
+});

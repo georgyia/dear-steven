@@ -1,8 +1,9 @@
 'use client';
 
 import type { KnowledgeStatus } from '@dear-steven/core/schema';
-import { brand } from '@/brand';
 import LatticeLoader from '@/components/vendor/react-bits/LatticeLoader';
+import type { Messages } from '@/i18n';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export type KnowledgeState = 'ready' | 'demo' | 'empty' | 'partial' | 'broken';
 
@@ -14,8 +15,7 @@ export function knowledgeState(s: KnowledgeStatus): KnowledgeState {
   return 'ready';
 }
 
-export function statusText(s: KnowledgeStatus): string {
-  const { status } = brand.copy;
+export function statusText(s: KnowledgeStatus, status: Messages['status']): string {
   switch (knowledgeState(s)) {
     case 'demo':
       return status.demo;
@@ -30,13 +30,10 @@ export function statusText(s: KnowledgeStatus): string {
   }
 }
 
-const SHORT: Record<KnowledgeState, (s: KnowledgeStatus) => string> = {
-  ready: (s) => `${s.episodes.toLocaleString('en-GB')} · ready`,
-  demo: () => 'Demo mode',
-  empty: () => 'Not indexed',
-  partial: () => 'Indexing',
-  broken: () => 'Offline',
-};
+function shortText(s: KnowledgeStatus, status: Messages['status']): string {
+  const state = knowledgeState(s);
+  return state === 'ready' ? status.short.ready(s.episodes) : status.short[state];
+}
 
 const DOT: Record<KnowledgeState, string> = {
   ready: 'bg-ember-0 shadow-[0_0_10px_var(--ember-glow)]',
@@ -49,6 +46,7 @@ const DOT: Record<KnowledgeState, string> = {
 /** The restrained readiness indicator. Opens the setup panel. */
 export function StatusPill({ status, onOpen }: { status: KnowledgeStatus; onOpen: () => void }) {
   const state = knowledgeState(status);
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -70,9 +68,9 @@ export function StatusPill({ status, onOpen }: { status: KnowledgeStatus; onOpen
       ) : (
         <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${DOT[state]}`} />
       )}
-      <span className="sm:hidden">{SHORT[state](status)}</span>
-      <span className="hidden sm:inline">{statusText(status)}</span>
-      <span className="sr-only">. Open setup and knowledge base details.</span>
+      <span className="sm:hidden">{shortText(status, t.status)}</span>
+      <span className="hidden sm:inline">{statusText(status, t.status)}</span>
+      <span className="sr-only">{t.status.open}</span>
     </button>
   );
 }

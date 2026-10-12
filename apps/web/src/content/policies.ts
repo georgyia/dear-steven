@@ -7,7 +7,7 @@
  * No imports, so Node can run the generator straight from this file.
  */
 
-export const POLICIES_UPDATED = '2026-10-10';
+export const POLICIES_UPDATED = '2026-10-11';
 
 /**
  * Where takedown and privacy requests go. Not decided yet (#12): the owner fills this in, and
@@ -128,7 +128,7 @@ export const POLICIES: Policy[] = [
       {
         heading: 'What stays in your browser',
         body: [
-          'Your voice settings and whether you have seen the first-visit notice are kept in this browser only. If you switch on conversation memory, the conversation is kept in this browser’s storage on this device, until you press Forget or switch it off. If this copy has an access code, a cookie records that you entered it. There are no tracking cookies and no analytics.',
+          'Your voice settings and whether you have seen the first-visit notice are kept in this browser only. If you switch on conversation memory, the conversation is kept in this browser’s storage on this device, until you press Forget or switch it off. If you choose a language, a cookie remembers it so the page opens in that language. If this copy has an access code, a cookie records that you entered it. There are no tracking cookies and no analytics.',
         ],
       },
       {

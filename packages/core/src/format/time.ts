@@ -1,3 +1,4 @@
+import type { UiLocale } from '../persona/copy.ts';
 import type { TimestampState } from '../schema/index.ts';
 
 /** `32:14`, or `1:02:03` past the hour. */
@@ -16,27 +17,52 @@ export function formatMoment(ms: number, state: TimestampState): string {
   return state === 'estimated' ? `≈ ${formatTimestamp(ms)}` : formatTimestamp(ms);
 }
 
-/** Spoken form for screen readers: "32 minutes 14 seconds". */
-export function spokenTimestamp(ms: number): string {
+const UNITS: Record<UiLocale, Record<'h' | 'm' | 's', [one: string, other: string]>> = {
+  en: { h: ['hour', 'hours'], m: ['minute', 'minutes'], s: ['second', 'seconds'] },
+  de: { h: ['Stunde', 'Stunden'], m: ['Minute', 'Minuten'], s: ['Sekunde', 'Sekunden'] },
+};
+
+/** Spoken form for screen readers: "32 minutes 14 seconds", "32 Minuten 14 Sekunden". */
+export function spokenTimestamp(ms: number, locale: UiLocale = 'en'): string {
   const total = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  const parts = [
-    h ? `${h} hour${h === 1 ? '' : 's'}` : '',
-    m ? `${m} minute${m === 1 ? '' : 's'}` : '',
-    s || (!h && !m) ? `${s} second${s === 1 ? '' : 's'}` : '',
-  ];
+  const unit = (n: number, key: 'h' | 'm' | 's') => `${n} ${UNITS[locale][key][n === 1 ? 0 : 1]}`;
+  const parts = [h ? unit(h, 'h') : '', m ? unit(m, 'm') : '', s || (!h && !m) ? unit(s, 's') : ''];
   return parts.filter(Boolean).join(' ');
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/**
+ * Written out rather than taken from Intl: month abbreviations differ between ICU versions
+ * ("Sep"/"Sept"), and a date rendered on the server must match the browser's to the letter.
+ */
+const MONTHS: Record<UiLocale, string[]> = {
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  de: [
+    'Jan.',
+    'Feb.',
+    'März',
+    'Apr.',
+    'Mai',
+    'Juni',
+    'Juli',
+    'Aug.',
+    'Sept.',
+    'Okt.',
+    'Nov.',
+    'Dez.',
+  ],
+};
 
-/** `8 Oct 2026`, computed in UTC so server and client render identically. */
-export function formatDate(iso: string): string {
+/** `8 Oct 2026` / `8. Okt. 2026`, computed in UTC so server and client render identically. */
+export function formatDate(iso: string, locale: UiLocale = 'en'): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  const month = MONTHS[locale][d.getUTCMonth()];
+  return locale === 'de'
+    ? `${d.getUTCDate()}. ${month} ${d.getUTCFullYear()}`
+    : `${d.getUTCDate()} ${month} ${d.getUTCFullYear()}`;
 }
 
 /** Short label for an episode: its first guest, else a trimmed title. */

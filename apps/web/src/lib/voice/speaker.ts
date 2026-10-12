@@ -9,7 +9,12 @@ import type { VoiceOutput } from './capabilities';
  * reliable on iOS, where <audio>.play() after an await is blocked.
  */
 export interface TextToSpeech {
-  speak: (text: string, handlers?: { onStart?: () => void; onEnd?: () => void }) => Promise<void>;
+  /** `language` is the text's ISO 639-1 code; it picks the voice and the pronunciation. */
+  speak: (
+    text: string,
+    language: string,
+    handlers?: { onStart?: () => void; onEnd?: () => void },
+  ) => Promise<void>;
   stop: () => void;
 }
 
@@ -32,15 +37,26 @@ export interface VoiceChoice {
   browser: string | null;
 }
 
-function browserVoice(uri: string | null): SpeechSynthesisVoice | null {
-  const voices = window.speechSynthesis.getVoices();
-  return (
-    (uri ? voices.find((v) => v.voiceURI === uri) : undefined) ??
-    voices.find((v) => v.lang === 'en-GB' && /daniel|arthur|male/i.test(v.name)) ??
-    voices.find((v) => v.lang === 'en-GB') ??
-    voices.find((v) => v.lang.startsWith('en')) ??
-    null
-  );
+const languageOf = (tag: string) => tag.toLowerCase().split(/[-_]/)[0];
+
+/** The chosen voice if it speaks this language, else the best one that does (or the default). */
+export function browserVoice(
+  voices: SpeechSynthesisVoice[],
+  uri: string | null,
+  language: string,
+): SpeechSynthesisVoice | null {
+  const speaks = voices.filter((v) => languageOf(v.lang) === language);
+  const chosen = uri ? speaks.find((v) => v.voiceURI === uri) : undefined;
+  if (chosen) return chosen;
+  if (language === 'en') {
+    return (
+      speaks.find((v) => v.lang === 'en-GB' && /daniel|arthur|male/i.test(v.name)) ??
+      speaks.find((v) => v.lang === 'en-GB') ??
+      speaks[0] ??
+      null
+    );
+  }
+  return speaks.find((v) => v.default) ?? speaks[0] ?? null;
 }
 
 export function createSpeaker(
@@ -50,12 +66,17 @@ export function createSpeaker(
   let source: AudioBufferSourceNode | null = null;
   let generation = 0;
 
-  const speakBrowser = (text: string, h: { onStart?: () => void; onEnd?: () => void } = {}) =>
+  const speakBrowser = (
+    text: string,
+    language: string,
+    h: { onStart?: () => void; onEnd?: () => void } = {},
+  ) =>
     new Promise<void>((resolve) => {
       if (!('speechSynthesis' in window)) return resolve();
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      const voice = browserVoice(choice.browser);
+      u.lang = language;
+      const voice = browserVoice(window.speechSynthesis.getVoices(), choice.browser, language);
       if (voice) u.voice = voice;
       u.rate = 1.02;
       u.onstart = () => h.onStart?.();
@@ -83,16 +104,20 @@ export function createSpeaker(
 
   return {
     stop,
-    async speak(text, handlers = {}) {
+    async speak(text, language, handlers = {}) {
       stop();
       const mine = generation;
       if (output === 'none' || !text.trim()) return;
-      if (output === 'browser' || !context) return speakBrowser(text, handlers);
+      if (output === 'browser' || !context) return speakBrowser(text, language, handlers);
       try {
         const res = await fetch('/api/speech', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(choice.server ? { text, voice: choice.server } : { text }),
+          body: JSON.stringify({
+            text,
+            language,
+            ...(choice.server ? { voice: choice.server } : {}),
+          }),
         });
         if (!res.ok) throw new Error(`speech ${res.status}`);
         const buffer = await context.decodeAudioData(await res.arrayBuffer());
@@ -111,7 +136,7 @@ export function createSpeaker(
           node.start();
         });
       } catch {
-        if (mine === generation) await speakBrowser(text, handlers);
+        if (mine === generation) await speakBrowser(text, language, handlers);
       }
     },
   };
