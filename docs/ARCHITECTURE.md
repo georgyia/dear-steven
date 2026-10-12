@@ -105,6 +105,7 @@ one by its stored embedding (`buildRelatedMoments`, no model call; empty until e
 | Model → browser | Nothing passes without `validateBlock`; citation ids must be retrieved ids; quotes are re-derived from storage. |
 | Browser → YouTube / podcast host | Only after the user presses play: the youtube-nocookie player and the https RSS enclosure. CSP `frame-src` / `media-src` fence everything else. |
 | CLI → network | Polite UA, timeouts, retries with backoff; RSS + VTT + YouTube Data API + OpenAI only. Paid stages require `--budget`. |
+| Setup panel → this machine | Guided local setup (P6-04) exists only on a server `pnpm dev:setup` started: bound to 127.0.0.1, with a one-time token from the terminal. `/api/setup*` answer 404 unless the Host is loopback, Origin and Fetch Metadata (when sent) say same-origin, every forwarding hop is loopback and the token matches (`server/setup.ts`). Keys go to the env file atomically (owner-only) and are never sent back; the stages run as the ingest CLI itself (`process.execPath packages/ingest/src/cli.ts …`), one at a time, so the web app decides nothing about ingestion. Embedding runs only under a budget its estimate fits, which the CLI enforces again (`index --budget`); paid diarization stays in the terminal. |
 
 ## 6. Storage
 

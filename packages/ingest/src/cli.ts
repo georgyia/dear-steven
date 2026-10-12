@@ -28,7 +28,8 @@ ${c.ember('Stages')} ${c.dim('(each idempotent and resumable)')}
                                    paid: speaker-labelled transcripts from the audio
   attribute                        QA report on diarized speaker labels
   chunk [--force] [--episode <ref>] split transcripts into passages (keyword search works now)
-  index [--dry-run]                embed passages for semantic search (prints cost first)
+  index [--dry-run] [--budget <usd>]
+                                   embed passages for semantic search (prints cost first)
 
 ${c.ember('Inspect & maintain')}
   status [--episodes]              counts, failures, spend, and what to run next
@@ -111,7 +112,10 @@ async function main(argv: string[]) {
       case 'chunk':
         return chunk(ctx, { force: values.force, episode: values.episode });
       case 'index':
-        return await index(ctx, { dryRun: values['dry-run'] });
+        return await index(ctx, {
+          dryRun: values['dry-run'],
+          budget: num(values.budget, 'budget'),
+        });
       case 'status':
         return status(ctx, { episodes: values.episodes });
       case 'doctor':

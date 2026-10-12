@@ -1,18 +1,21 @@
 import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { NextConfig } from 'next';
 
 // The keys live in the repository-root .env, shared with the ingest CLI and the eval harness;
 // Next itself only reads apps/web/.env*. Variables already in the environment win (Node's loader
 // never overrides them), so the e2e suite's DEAR_STEVEN_DEMO=1 still forces demo mode. In Docker
-// there is no .env: the platform sets the variables.
-const rootEnv = fileURLToPath(new URL('../../.env', import.meta.url));
-if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
+// there is no .env: the platform sets the variables. `DEAR_STEVEN_ENV_FILE` (relative to the root)
+// points elsewhere — the same rule as readConfig's `envFile`, which the guided setup writes to.
+const root = fileURLToPath(new URL('../../', import.meta.url));
+const envFile = resolve(root, process.env.DEAR_STEVEN_ENV_FILE?.trim() || '.env');
+if (existsSync(envFile)) process.loadEnvFile(envFile);
 
 const nextConfig: NextConfig = {
   // One deployable unit: `output: 'standalone'` runs in a single Docker container (ADR-001).
   output: 'standalone',
-  outputFileTracingRoot: fileURLToPath(new URL('../../', import.meta.url)),
+  outputFileTracingRoot: root,
   // The stage is one client tree; we do not opt into Cache Components / PPR.
   cacheComponents: false,
   // Native SQLite + the sqlite-vec loadable extension must stay out of the bundle.

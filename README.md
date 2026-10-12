@@ -39,6 +39,8 @@ pnpm ingest all --limit 20        # the 20 newest episodes: free RSS transcripts
 pnpm dev
 ```
 
+Prefer the browser? `pnpm dev:setup` prints a one-time link; its setup panel saves your keys, fetches the transcripts, shows what embedding will cost before you click, and links the videos.
+
 `pnpm ingest all` reads the publisher's official RSS feed, fetches the free VTT transcripts it lists, splits them into passages, embeds them (about $0.02 for 20 episodes), and links each episode to its YouTube video when a YouTube key is set. Keyword search works the moment passages exist, even without an OpenAI key. Run `pnpm ingest status` at any time to see what's indexed and what to run next.
 
 RSS transcripts have no speaker labels, so citations from them are credited to the *conversation*, never to a person. To get verified host and guest statements, you can run a paid, budget-capped diarized transcription:
@@ -90,6 +92,7 @@ The details are in `docs/ARCHITECTURE.md`, and the reasons behind each choice ar
 | Command | What it does |
 |---------|--------------|
 | `pnpm dev` | Run the app (demo mode without a key) |
+| `pnpm dev:setup` | Run the app on this machine only, with the guided setup in its setup panel |
 | `pnpm check` | Lint, typecheck, unit tests and architecture rules; must pass before every PR |
 | `pnpm e2e` | Playwright end-to-end tests (desktop + mobile, demo mode) |
 | `pnpm ingest <command>` | Build the knowledge base (`pnpm ingest help`) |

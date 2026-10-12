@@ -1,9 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
 import { E2E_ACCESS_CODE } from './e2e/gated';
+import { E2E_SETUP_DB, E2E_SETUP_ENV_FILE, E2E_SETUP_TOKEN } from './e2e/setup-env';
 
 const PORT = Number(process.env.E2E_PORT ?? 3210);
 /** A second server from the same build, with an access code set (P6-08): `access.spec.ts` only. */
 const GATED_PORT = PORT + 1;
+/**
+ * Guided setup (P6-04): a server as `pnpm dev:setup` starts one, on a fresh database and env file,
+ * fed by a local fixture feed and a fake OpenAI (`e2e/setup-fixtures.ts`): `setup.spec.ts` only.
+ */
+const SETUP_PORT = PORT + 2;
+const FIXTURE_PORT = PORT + 3;
 const SERVER_ENV = {
   DEAR_STEVEN_DEMO: '1',
   DEAR_STEVEN_DB_PATH: 'data/e2e-does-not-exist.db',
@@ -29,18 +36,23 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop',
-      testIgnore: /access\.spec\.ts/,
+      testIgnore: /(access|setup)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 820 } },
     },
     {
       name: 'mobile',
-      testIgnore: /access\.spec\.ts/,
+      testIgnore: /(access|setup)\.spec\.ts/,
       use: { ...devices['Pixel 7'], viewport: { width: 375, height: 760 } },
     },
     {
       name: 'gated',
       testMatch: /access\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], baseURL: `http://localhost:${GATED_PORT}` },
+    },
+    {
+      name: 'setup',
+      testMatch: /setup\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], baseURL: `http://127.0.0.1:${SETUP_PORT}` },
     },
   ],
   // Started in order: the first builds, the second reuses that build.
@@ -59,6 +71,31 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
       env: { ...SERVER_ENV, DEAR_STEVEN_ACCESS_CODE: E2E_ACCESS_CODE },
+    },
+    {
+      command: `node e2e/setup-fixtures.ts ${FIXTURE_PORT}`,
+      url: `http://127.0.0.1:${FIXTURE_PORT}/feed.xml`,
+      reuseExistingServer: false,
+      timeout: 10_000,
+    },
+    {
+      command: `pnpm exec next start -H 127.0.0.1 -p ${SETUP_PORT}`,
+      url: `http://127.0.0.1:${SETUP_PORT}/api/status`,
+      reuseExistingServer: false,
+      timeout: 60_000,
+      env: {
+        NEXT_TELEMETRY_DISABLED: '1',
+        DEAR_STEVEN_SETUP_TOKEN: E2E_SETUP_TOKEN,
+        DEAR_STEVEN_SETUP_HOST: '127.0.0.1',
+        DEAR_STEVEN_DB_PATH: E2E_SETUP_DB,
+        DEAR_STEVEN_ENV_FILE: E2E_SETUP_ENV_FILE,
+        DEAR_STEVEN_FEED_URL: `http://127.0.0.1:${FIXTURE_PORT}/feed.xml`,
+        OPENAI_BASE_URL: `http://127.0.0.1:${FIXTURE_PORT}/v1`,
+        // Whatever the developer's shell has: this server starts with no keys, and gets fake ones.
+        OPENAI_API_KEY: '',
+        YOUTUBE_API_KEY: '',
+        DEAR_STEVEN_DAILY_BUDGET_USD: '',
+      },
     },
   ],
 });

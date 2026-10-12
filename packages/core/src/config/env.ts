@@ -26,6 +26,13 @@ export interface AppConfig {
   dailyBudgetUsd: number | null;
   /** `DEAR_STEVEN_ACCESS_CODE`: when set, only browsers that entered it can use the API. */
   accessCode: string | null;
+  /**
+   * Where the keys live: `.env` at the repository root, or `DEAR_STEVEN_ENV_FILE`. Read by the web
+   * app and the CLI at start-up; written only by the guided local setup (P6-04).
+   */
+  envFile: string;
+  /** `DEAR_STEVEN_FEED_URL`: the podcast feed to discover, instead of looking it up (a mirror, tests). */
+  feedUrl: string | null;
 }
 
 export type KeySource = 'operator' | 'visitor';
@@ -54,13 +61,10 @@ export function findRepoRoot(start: string = process.cwd()): string {
 export function readConfig(env: Env = process.env, cwd: string = process.cwd()): AppConfig {
   const openaiApiKey = clean(env.OPENAI_API_KEY);
   const forced = flag(env.DEAR_STEVEN_DEMO);
-  const rawDb = clean(env.DEAR_STEVEN_DB_PATH);
   const root = findRepoRoot(cwd);
-  const dbPath = rawDb
-    ? isAbsolute(rawDb)
-      ? rawDb
-      : resolve(root, rawDb)
-    : join(root, 'data', 'dear-steven.db');
+  const inRoot = (raw: string | null, fallback: string) =>
+    raw ? (isAbsolute(raw) ? raw : resolve(root, raw)) : join(root, fallback);
+  const dbPath = inRoot(clean(env.DEAR_STEVEN_DB_PATH), join('data', 'dear-steven.db'));
 
   const demoReason = forced ? 'forced' : openaiApiKey ? null : 'no_openai_key';
   return {
@@ -74,6 +78,8 @@ export function readConfig(env: Env = process.env, cwd: string = process.cwd()):
     logAnswers: flag(env.DEAR_STEVEN_LOG_ANSWERS),
     dailyBudgetUsd: budget(env.DEAR_STEVEN_DAILY_BUDGET_USD),
     accessCode: accessCodeFrom(env),
+    envFile: inRoot(clean(env.DEAR_STEVEN_ENV_FILE), '.env'),
+    feedUrl: clean(env.DEAR_STEVEN_FEED_URL),
   };
 }
 
@@ -119,3 +125,11 @@ export function requireKey(
     `${name} is not set. Add it to .env at the repository root (see .env.example), then re-run.`,
   );
 }
+
+export {
+  SETUP_ENV_KEYS,
+  type SetupEnvKey,
+  type SetupEnvValues,
+  withEnvValues,
+  writeEnvFile,
+} from './env-file.ts';

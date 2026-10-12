@@ -127,6 +127,17 @@ export const de: Messages = {
     keyChecks:
       'Das waren viele Schlüsselprüfungen. Warte eine Minute und versuch es dann noch einmal.',
     keyForced: 'Diese Kopie läuft absichtlich im Demo-Modus und nutzt keinen Schlüssel.',
+    setupKeysInvalid:
+      'Eines davon sieht nicht wie ein Schlüssel aus: OpenAI-Schlüssel beginnen mit „sk-“, und ein Limit ist ein Dollarbetrag.',
+    setupWriteFailed:
+      'Ich konnte die Env-Datei nicht schreiben. Prüf, dass sie nicht schreibgeschützt ist, und versuch es noch einmal.',
+    setupBadStage: 'Diesen Schritt kann ich von hier aus nicht ausführen.',
+    setupBusy: 'Ein anderer Schritt läuft noch. Warte, bis er fertig ist.',
+    setupNeedsOpenAI: 'Speichere zuerst einen OpenAI-Schlüssel: Das Einbetten läuft darüber.',
+    setupNeedsYouTube:
+      'Speichere zuerst einen YouTube-Schlüssel: Das Verknüpfen der Videos läuft darüber.',
+    setupOverBudget: (estimate: string, cap: string) =>
+      `Das Einbetten würde etwa ${estimate} kosten, mehr als dein Limit von ${cap}. Es wurde nichts ausgegeben.`,
     shareSlow:
       'Gerade werden sehr viele geteilte Links geöffnet. Warte kurz und öffne ihn dann noch einmal.',
     shareGone:
@@ -328,6 +339,50 @@ export const de: Messages = {
         `Pause bis Mitternacht UTC: Das heutige Budget von ${cap} ist aufgebraucht, deshalb antworte ich, ohne OpenAI aufzurufen.`,
       within: (today, cap) =>
         `Heute ${today} von ${cap} ausgegeben (geschätzt aus dem Tokenverbrauch).`,
+    },
+    guided: {
+      title: 'Diesen Rechner einrichten',
+      intro:
+        'Mit `pnpm dev:setup` gestartet: Hier kannst du deine Schlüssel speichern und die Wissensbasis aufbauen. Das geht nur auf diesem Rechner und nur, solange der Server läuft.',
+      keysHeading: 'Schlüssel',
+      openai: 'OpenAI-API-Schlüssel',
+      youtube: 'YouTube-Data-API-Schlüssel',
+      budget: 'Tageslimit für Antwortkosten, in Dollar',
+      saved: 'Gespeichert — leer lassen, um ihn zu behalten',
+      notSaved: 'Noch nicht gespeichert',
+      save: (file) => `In ${file} speichern`,
+      saving: 'Wird gespeichert …',
+      savedNote: (file) =>
+        `In ${file} gespeichert. Schlüssel werden nie wieder angezeigt, weder hier noch anderswo.`,
+      buildHeading: 'Wissensbasis',
+      newest: 'Neueste Folgen hinzufügen',
+      build: 'Transkripte holen',
+      buildNote:
+        'Kostenlos: die eigenen Transkripte des Podcasts aus seinem RSS-Feed, in Passagen geteilt.',
+      embedHeading: 'Semantische Suche',
+      estimate: (passages, cost) =>
+        `${s(passages, 'Passage wartet', 'Passagen warten')} · etwa ${cost} bei OpenAI.`,
+      nothingToEmbed: 'Nichts wartet darauf, eingebettet zu werden.',
+      cap: 'Höchstens ausgeben, in Dollar',
+      embed: (cost) => `Für etwa ${cost} einbetten`,
+      needsOpenAI: 'Speichere zuerst einen OpenAI-Schlüssel.',
+      youtubeHeading: 'YouTube-Momente',
+      link: 'Videos verknüpfen',
+      linkNote: 'Kostenlos im Rahmen des täglichen YouTube-Kontingents.',
+      needsYouTube: 'Speichere zuerst einen YouTube-Schlüssel.',
+      stages: {
+        discover: 'Feed wird gelesen',
+        transcribe: 'Transkripte werden geholt',
+        chunk: 'In Passagen teilen',
+        index: 'Einbetten',
+        'match-youtube': 'Videos werden verknüpft',
+      },
+      progress: 'Fortschritt',
+      running: (stage) => `${stage} …`,
+      failed: (stage) =>
+        `${stage} wurde mit einem Fehler beendet (siehe Fortschritt). Jeder Schritt lässt sich erneut ausführen.`,
+      finished: 'Fertig.',
+      spent: (cost) => `${cost} bisher von kostenpflichtigen Schritten verbucht.`,
     },
     speakers: {
       title: 'Bestätigte Sprecher',

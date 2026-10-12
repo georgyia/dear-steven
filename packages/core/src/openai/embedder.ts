@@ -1,5 +1,5 @@
 import type OpenAI from 'openai';
-import { EMBEDDING_DIMENSIONS, MODELS } from '../config/models.ts';
+import { EMBEDDING_DIMENSIONS, MODELS, PRICES } from '../config/models.ts';
 
 /** Anything that turns text into vectors. The OpenAI implementation is the only one today. */
 export interface Embedder {
@@ -39,3 +39,25 @@ export function openAIEmbedder(
 /** What gets embedded for a passage: where it is from, then what was said. */
 export const embeddingInput = (p: { contextPrefix: string; text: string }) =>
   `${p.contextPrefix}\n\n${p.text}`;
+
+/** Tokens the context prefix adds to each passage on top of its text, on average. */
+const PREFIX_TOKENS = 30;
+
+export interface EmbeddingEstimate {
+  passages: number;
+  tokens: number;
+  usd: number;
+}
+
+/** What embedding the passages still waiting would cost — shown before anything is spent. */
+export function embeddingEstimate(pending: {
+  passages: number;
+  tokens: number;
+}): EmbeddingEstimate {
+  const tokens = pending.tokens + pending.passages * PREFIX_TOKENS;
+  return {
+    passages: pending.passages,
+    tokens,
+    usd: (tokens / 1_000_000) * PRICES.embeddingPerMillionTokens,
+  };
+}

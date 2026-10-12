@@ -57,6 +57,9 @@ secrets is a human step (`plan/human/api-keys.md`).
   never logged or stored — keep it that way: don't turn on request-header logging in a proxy in
   front of the app. To stop visitors spending your key, set
   `DEAR_STEVEN_ALLOW_OPERATOR_KEY=0`: without a key of their own they get demo mode.
+- **Guided setup** (P6-04) is for a local clone only: never set `DEAR_STEVEN_SETUP_TOKEN` or
+  `DEAR_STEVEN_SETUP_HOST` on a deployment. Without them every `/api/setup` route answers 404, as
+  it also does for any request whose Host isn't loopback.
 - **Access code** (`DEAR_STEVEN_ACCESS_CODE`): the page asks for it, and every API route answers
   401 without the signed cookie it sets. Guesses are limited to five a minute per client and
   thirty in all.
