@@ -73,7 +73,7 @@ describe('hybridSearch — the question in its own language as well (P6-01)', ()
     const both = await hybridSearch(store, 'procrastination feeling', fakeEmbedder, {
       alsoSemantic: ['Kaffee Nachmittag Schlaf'],
     });
-    expect(both.modes).toEqual(['keyword', 'semantic', 'semantic']);
+    expect(both.modes).toEqual(['keyword', 'semantic']);
     expect(new Set(both.passages.map((p) => p.episodeId)).size).toBe(2);
   });
 });

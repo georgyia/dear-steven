@@ -17,6 +17,10 @@ export interface Judgement {
   actionability: number;
   /** Hedging phrases and disclaimers counted in the answer. */
   hedges: number;
+  /** 1 no help … 5 genuinely useful to a real person with this question (P6-07). */
+  usefulness: number;
+  /** 1 generic … 5 draws on specific moments, arguments and differences between conversations. */
+  specificity: number;
   note: string;
 }
 
@@ -31,6 +35,8 @@ export const JUDGE_FORMAT: JsonFormat = {
       'decisiveness',
       'actionability',
       'hedges',
+      'usefulness',
+      'specificity',
       'note',
     ],
     properties: {
@@ -39,6 +45,8 @@ export const JUDGE_FORMAT: JsonFormat = {
       decisiveness: { type: 'integer' },
       actionability: { type: 'integer' },
       hedges: { type: 'integer' },
+      usefulness: { type: 'integer' },
+      specificity: { type: 'integer' },
       note: { type: 'string' },
     },
   },
@@ -50,6 +58,8 @@ export const JUDGE_INSTRUCTIONS = `You grade one answer from an advice persona, 
 - decisiveness, 1–5: 1 hedges everything and commits to nothing; 3 leans one way; 5 takes a clear, reasoned stance and owns it.
 - actionability, 1–5: 1 no next step; 3 general advice; 5 concrete steps someone could start this week, with specifics (numbers, timeframes, examples).
 - hedges: count hedging phrases and disclaimers ("may", "might", "it depends", "I can't say", "not a diagnosis", "these passages don't establish").
+- usefulness, 1–5: would this genuinely help a real person who asked it? 1 not at all; 3 somewhat; 5 clearly, they'd know what to think or do.
+- specificity, 1–5: 1 generic advice anyone could give; 3 mentions what a conversation said; 5 draws on specific moments, arguments and how different conversations agree or differ.
 - note: one short sentence on the biggest weakness.
 Grade what is written, not what you would have written. A clear "see a professional" line on a medical, legal or money question is good practice, not a hedge.`;
 
@@ -82,6 +92,8 @@ export async function judge(
     decisiveness: clamp(j.decisiveness),
     actionability: clamp(j.actionability),
     hedges: Math.max(0, Math.round(Number(j.hedges) || 0)),
+    usefulness: clamp(j.usefulness),
+    specificity: clamp(j.specificity),
     note: String(j.note ?? '').slice(0, 300),
   };
 }
@@ -100,5 +112,7 @@ export function rubric(judgements: Judgement[]) {
     decisiveness: Math.round(avg(judgements.map((j) => j.decisiveness)) * 100) / 100,
     actionability: Math.round(avg(judgements.map((j) => j.actionability)) * 100) / 100,
     hedgesPerAnswer: Math.round(avg(judgements.map((j) => j.hedges)) * 100) / 100,
+    usefulness: Math.round(avg(judgements.map((j) => j.usefulness)) * 100) / 100,
+    specificity: Math.round(avg(judgements.map((j) => j.specificity)) * 100) / 100,
   };
 }

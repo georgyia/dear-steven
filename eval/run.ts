@@ -16,7 +16,7 @@ import {
 } from '@dear-steven/core/answer';
 import { findRepoRoot, readConfig } from '@dear-steven/core/config';
 import { detectLanguage } from '@dear-steven/core/language';
-import { answerCostUsd, embeddingCostUsd, MODELS } from '@dear-steven/core/models';
+import { ANSWER_BUDGET, answerCostUsd, embeddingCostUsd, MODELS } from '@dear-steven/core/models';
 import { createOpenAI, moderate, openAIEmbedder } from '@dear-steven/core/openai';
 import { hybridSearch } from '@dear-steven/core/retrieval';
 import type { FinalAnswer } from '@dear-steven/core/schema';
@@ -61,7 +61,12 @@ const root = findRepoRoot();
 if (existsSync(join(root, '.env'))) process.loadEnvFile(join(root, '.env'));
 const config = readConfig(process.env, root);
 const { values } = parseArgs({
-  options: { answers: { type: 'boolean', default: false }, only: { type: 'string' } },
+  options: {
+    answers: { type: 'boolean', default: false },
+    only: { type: 'string' },
+    /** Also search two more phrasings of each question (P6-07; off in the app by default). */
+    'multi-query': { type: 'boolean', default: false },
+  },
 });
 
 const set = JSON.parse(readFileSync(join(root, 'eval', 'questions.json'), 'utf8')) as {
@@ -74,6 +79,8 @@ const store = KnowledgeStore.open(config.dbPath);
 const client = config.openaiApiKey ? createOpenAI(config.openaiApiKey) : null;
 /** What this run spent, estimated from reported token use (core `PRICES`). */
 let costUsd = 0;
+/** Answer-model input tokens so far, to report what each answer used (P6-07). */
+let inputTokens = 0;
 const embedder = client
   ? openAIEmbedder(client, MODELS.embedding, {
       onTokens: (tokens) => {
@@ -120,6 +127,7 @@ const model = client
   ? openAIAnswerModel(client, MODELS.answer, {
       onUsage: (usage) => {
         costUsd += answerCostUsd(usage);
+        inputTokens += usage.inputTokens;
       },
     })
   : null;
@@ -174,6 +182,7 @@ failed ||= routingProblems.length > 0 || overRefused.rate > THRESHOLDS.falseRefu
 
 // ------------------------------------------------------------------ answers
 let personaRubric: ReturnType<typeof rubric> | null = null;
+let answerDensity: Record<string, number> | null = null;
 const languageAnswers: {
   id: string;
   problems: string[];
@@ -195,6 +204,8 @@ const answers: {
   record: AnswerRecord | null;
   check: ReturnType<typeof checkAnswer> | null;
   judgement?: Judgement;
+  /** What this answer cost and how much context it sent (P6-07). */
+  usage?: { usd: number; inputTokens: number };
   error?: string;
 }[] = [];
 if (values.answers) {
@@ -203,13 +214,21 @@ if (values.answers) {
   const moderator = (text: string, signal: AbortSignal) => moderate(client, text, signal);
   for (const q of questions) {
     const t0 = Date.now();
+    const before = { usd: costUsd, inputTokens };
     let ttfb: number | null = null;
     let final: FinalAnswer | null = null;
     let record: AnswerRecord | null = null;
     let error: string | undefined;
     try {
       for await (const e of composeAnswer(
-        { store, model, embedder, moderate: moderator, onComplete: (r) => (record = r) },
+        {
+          store,
+          model,
+          embedder,
+          moderate: moderator,
+          multiQuery: values['multi-query'],
+          onComplete: (r) => (record = r),
+        },
         { question: q.question, history: [] },
         new AbortController().signal,
       )) {
@@ -221,6 +240,11 @@ if (values.answers) {
       error = e instanceof Error ? e.message : String(e);
     }
     const check = final ? checkAnswer(final, store) : null;
+    // Taken before grading, so the judge's own tokens never count against the answer.
+    const usage = {
+      usd: Math.round((costUsd - before.usd) * 1e6) / 1e6,
+      inputTokens: inputTokens - before.inputTokens,
+    };
     let judgement: Judgement | undefined;
     if (final && !q.unanswerable) {
       try {
@@ -229,7 +253,7 @@ if (values.answers) {
         // A failed grading leaves the answer ungraded; the integrity checks above still count.
       }
     }
-    answers.push({ id: q.id, ttfbMs: ttfb, final, record, check, error, judgement });
+    answers.push({ id: q.id, ttfbMs: ttfb, final, record, check, error, judgement, usage });
     const ok =
       check?.citationsResolve &&
       check.quotesMatch &&
@@ -243,9 +267,26 @@ if (values.answers) {
   const done = answers.filter((a) => a.check);
   const graded = rubric(answers.flatMap((a) => (a.judgement ? [a.judgement] : [])));
   console.log(
-    `\npersona rubric: opens with a position ${graded.opensWithPosition}/${graded.adviceSeeking} advice-seeking · decisiveness ${graded.decisiveness}/5 · actionability ${graded.actionability}/5 · hedges ${graded.hedgesPerAnswer}/answer (${graded.judged} graded)`,
+    `\npersona rubric: opens with a position ${graded.opensWithPosition}/${graded.adviceSeeking} advice-seeking · decisiveness ${graded.decisiveness}/5 · actionability ${graded.actionability}/5 · usefulness ${graded.usefulness}/5 · specificity ${graded.specificity}/5 · hedges ${graded.hedgesPerAnswer}/answer (${graded.judged} graded)`,
   );
   personaRubric = graded;
+  // Citation density and what each answer costs (P6-07).
+  const answered = answers.filter((a) => a.final && a.final.mode !== 'insufficient');
+  const per = (f: (a: (typeof answers)[number]) => number) =>
+    answered.length ? answered.reduce((n, a) => n + f(a), 0) / answered.length : 0;
+  const density = {
+    citationsPerAnswer: Math.round(per((a) => a.final?.citations.length ?? 0) * 100) / 100,
+    episodesPerAnswer: Math.round(per((a) => a.final?.episodes.length ?? 0) * 100) / 100,
+    usdPerAnswer: Math.round(per((a) => a.usage?.usd ?? 0) * 1e6) / 1e6,
+    inputTokensPerAnswer: Math.round(per((a) => a.usage?.inputTokens ?? 0)),
+  };
+  console.log(
+    `per answer: ${density.citationsPerAnswer} citations from ${density.episodesPerAnswer} conversations · ${density.inputTokensPerAnswer.toLocaleString('en-GB')} input tokens · $${density.usdPerAnswer.toFixed(4)} (budget ${ANSWER_BUDGET.inputTokens.toLocaleString('en-GB')} tokens, $${ANSWER_BUDGET.usd})`,
+  );
+  answerDensity = density;
+  failed ||=
+    density.inputTokensPerAnswer > ANSWER_BUDGET.inputTokens ||
+    density.usdPerAnswer > ANSWER_BUDGET.usd;
   const resolveRate = done.length
     ? done.filter((a) => a.check?.citationsResolve).length / done.length
     : 0;
@@ -360,6 +401,7 @@ writeFileSync(
       retrieval,
       safety: { routingProblems, overRefused: overRefused.refused, redTeam: redTeamResults },
       personaRubric,
+      answerDensity,
       languages: { recall: translatedRecall, answers: languageAnswers },
       answers,
       costUsd,

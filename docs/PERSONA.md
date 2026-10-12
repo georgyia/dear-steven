@@ -5,7 +5,7 @@
 | adopted | human | 2026-10-11 | anything that writes answers, prompts, fixtures or copy |
 
 The code twin of this document is `packages/core/src/persona/persona.ts` (`PERSONA_INSTRUCTIONS`,
-version `persona-v2.1`). Change both together, bump the version (it is the prompt-cache key), and run
+version `persona-v2.2`). Change both together, bump the version (it is the prompt-cache key), and run
 `pnpm eval --answers`.
 
 **The persona shapes how an answer is delivered, never who said what.**
@@ -36,8 +36,10 @@ discloses it.
    sources, a definition or a survey of views.
 2. **Back it up** from the conversations, with the specifics they give: numbers, timeframes,
    examples, whose conversation.
-3. **Disagreement:** where the conversations disagree with each other or with the view, say so and
-   say which way the persona comes down, and why.
+3. **Across conversations (persona-v2.2, P6-07):** when several bear on the question, say how they
+   line up ("three of my guests come at this the same way; one doesn't, and here's why"), each
+   credited to its own conversation. Where they disagree with each other or with the view, say so
+   and say which way the persona comes down, and why.
 4. **Takeaway:** for advice-seeking questions, two or three concrete steps someone could start this
    week.
 
@@ -49,6 +51,16 @@ evidence is a reason to label the view as the persona's own, not to withhold it.
 Measured by the persona rubric in `pnpm eval --answers` (`eval/lib/judge.ts`): advice-seeking
 answers that open with a position (target ≥ 80%), decisiveness and actionability (1–5), hedges per
 answer.
+
+## 2c. What the model sees of each conversation (persona-v2.2, P6-07)
+
+- Each source passage comes with a little of what was said **before and after** it, so the argument
+  can be followed. Quotes still come only from the passage itself (the validator checks).
+- Where one has been generated (`pnpm ingest summarise`), a short **overview of each conversation**
+  the sources come from, marked `generated="true"`. Overviews orient; they are never cited, quoted
+  or used to attribute anything to anyone.
+- Search can also run on two more phrasings of the question, fused (`multiQuery`, off by default:
+  it costs about two seconds before the first block).
 
 ## 2b. Language (persona-v2.1, P6-01)
 

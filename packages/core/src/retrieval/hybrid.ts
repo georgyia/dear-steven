@@ -10,6 +10,8 @@ export interface RetrievalOptions {
   take: number;
   /** More texts to search by meaning alongside the query — the question in its own language. */
   alsoSemantic?: string[];
+  /** More phrasings to search for by keyword and by meaning (P6-07), fused with the query. */
+  alternates?: string[];
 }
 
 export const DEFAULT_RETRIEVAL: RetrievalOptions = {
@@ -47,12 +49,16 @@ export async function hybridSearch(
   const opts = { ...DEFAULT_RETRIEVAL, ...options };
   const lists: { source: HitSource; hits: ReturnType<KnowledgeStore['ftsSearch']> }[] = [];
 
-  const keyword = store.ftsSearch(query, opts.candidates);
-  lists.push({ source: 'keyword', hits: keyword });
+  const alternates = (opts.alternates ?? []).filter((t) => t && t !== query);
+  for (const text of [query, ...alternates]) {
+    lists.push({ source: 'keyword', hits: store.ftsSearch(text, opts.candidates) });
+  }
 
   if (embedder && store.hasEmbeddings()) {
     // The question in its own language too (P6-01): meaning survives where a translation slips.
-    const texts = [query, ...(opts.alsoSemantic ?? []).filter((t) => t && t !== query)];
+    const texts = [
+      ...new Set([query, ...alternates, ...(opts.alsoSemantic ?? []).filter(Boolean)]),
+    ];
     for (const vector of await embedder.embed(texts, signal)) {
       lists.push({ source: 'semantic', hits: store.vectorSearch(vector, opts.candidates) });
     }
@@ -66,6 +72,10 @@ export async function hybridSearch(
   });
   return {
     passages,
-    modes: lists.filter((l) => l.source === 'keyword' || l.hits.length > 0).map((l) => l.source),
+    modes: [
+      ...new Set(
+        lists.filter((l) => l.source === 'keyword' || l.hits.length > 0).map((l) => l.source),
+      ),
+    ],
   };
 }

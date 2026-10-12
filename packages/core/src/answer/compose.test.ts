@@ -12,7 +12,7 @@ const SENTENCES = [
 
 /** A model that replays a scripted answer in small chunks, and a scripted repair. */
 function scripted(answer: ModelAnswer | string, repair?: { index: number; block: ModelBlock }[]) {
-  const calls = { stream: 0, repair: 0, condense: 0 };
+  const calls = { stream: 0, repair: 0, condense: 0, alternates: 0 };
   const model: AnswerModel = {
     async *streamJson() {
       calls.stream += 1;
@@ -24,8 +24,9 @@ function scripted(answer: ModelAnswer | string, repair?: { index: number; block:
       if (!repair) throw new Error('no repair scripted');
       return JSON.stringify({ blocks: repair });
     },
-    async completeText() {
-      calls.condense += 1;
+    async completeText(r) {
+      if (r.instructions.includes('standalone')) calls.condense += 1;
+      else calls.alternates += 1;
       return 'procrastination avoidance';
     },
   };
@@ -151,6 +152,7 @@ describe('composeAnswer — happy path', () => {
     const s = scripted(good);
     await run(store1(), s.model);
     expect(s.calls.condense).toBe(0);
+    expect(s.calls.alternates).toBe(0); // other phrasings only when asked for (P6-07)
     await run(store1(), s.model, 'And what about that?', [
       { question: 'Why?', answer: 'Because.' },
     ] as never);
@@ -459,5 +461,21 @@ describe('composeAnswer — interface language (P6-02)', () => {
     const final = events.find((e) => e.type === 'final');
     expect(final?.type === 'final' && final.answer.language).toBe('de');
     expect(JSON.stringify(final)).toMatch(/noch keines meiner Gespräche/);
+  });
+});
+
+describe('composeAnswer — multi-query (P6-07)', () => {
+  it('searches more phrasings only when asked to', async () => {
+    const s = scripted(good);
+    const events: AskEvent[] = [];
+    for await (const e of composeAnswer(
+      { store: store1(), model: s.model, embedder: null, multiQuery: true },
+      { question: 'Why do I procrastinate?', history: [] },
+      new AbortController().signal,
+    )) {
+      events.push(e);
+    }
+    expect(s.calls.alternates).toBe(1);
+    expect(events.at(-1)?.type).toBe('final');
   });
 });
