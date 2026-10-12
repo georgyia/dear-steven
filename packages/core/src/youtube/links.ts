@@ -1,4 +1,4 @@
-import type { TimestampState, YouTubeAlignment } from '../schema/index.ts';
+import type { OffsetStep, TimestampState, YouTubeAlignment } from '../schema/index.ts';
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 
@@ -12,7 +12,24 @@ export interface VideoMoment {
   startMs: number;
   /** Video position minus podcast position (positive when the video runs ahead). */
   offsetMs: number;
+  /** Where the offset changes later in the episode (see `OffsetStep`); absent = never. */
+  offsetSteps?: readonly OffsetStep[];
   alignment: YouTubeAlignment;
+}
+
+/** The offset in force at the moment's podcast position: the last step at or before it. */
+export function offsetAt(
+  moment: Pick<VideoMoment, 'startMs' | 'offsetMs' | 'offsetSteps'>,
+): number {
+  let offset = moment.offsetMs;
+  let from = -1;
+  for (const step of moment.offsetSteps ?? []) {
+    if (step.fromMs <= moment.startMs && step.fromMs > from) {
+      offset = step.offsetMs;
+      from = step.fromMs;
+    }
+  }
+  return offset;
 }
 
 export interface ResolvedMoment {
@@ -58,7 +75,7 @@ export function resolveMoment(moment: VideoMoment): ResolvedMoment {
   if (!videoId) return { url: null, embedUrl: null, ms: startMs, state: 'unknown' };
   if (moment.alignment === 'unknown')
     return { ...linksAt(videoId, startMs, 'unknown'), ms: startMs, state: 'unknown' };
-  const ms = Math.max(0, startMs + Math.round(moment.offsetMs));
+  const ms = Math.max(0, startMs + Math.round(offsetAt(moment)));
   return { ...linksAt(videoId, ms, moment.alignment), ms, state: moment.alignment };
 }
 

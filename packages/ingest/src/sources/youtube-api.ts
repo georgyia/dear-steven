@@ -9,7 +9,7 @@ const API = 'https://www.googleapis.com/youtube/v3';
 interface PlaylistPage {
   nextPageToken?: string;
   items?: {
-    snippet?: { title?: string };
+    snippet?: { title?: string; description?: string };
     contentDetails?: { videoId?: string; videoPublishedAt?: string };
   }[];
 }
@@ -20,8 +20,9 @@ interface VideosPage {
 
 /**
  * Lists every upload with its duration. Costs ~1 quota unit per 50 videos for each of the two
- * calls (the free daily quota is 10,000). Titles and dates come from YouTube only for matching —
- * what we display comes from the RSS feed, which sidesteps the API's 30-day refresh rule.
+ * calls (the free daily quota is 10,000). Titles, dates and descriptions (for chapter timestamps)
+ * come from YouTube only for matching and are never stored — what we display comes from the RSS
+ * feed, which sidesteps the API's 30-day refresh rule.
  */
 export async function listUploads(
   apiKey: string,
@@ -44,7 +45,13 @@ export async function listUploads(
       const videoId = item.contentDetails?.videoId;
       const publishedAt = item.contentDetails?.videoPublishedAt;
       if (videoId && publishedAt) {
-        videos.push({ videoId, title: item.snippet?.title ?? '', publishedAt, durationMs: null });
+        videos.push({
+          videoId,
+          title: item.snippet?.title ?? '',
+          description: item.snippet?.description ?? '',
+          publishedAt,
+          durationMs: null,
+        });
       }
     }
     onPage?.(videos.length);

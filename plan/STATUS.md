@@ -12,7 +12,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
   Phase 6 / M4 *Reach and trust* planned (`plan/04-issues/phase-6.md`).
 - **Done:** M0 (except GitHub publishing and third-party skills), M1 in code, M2; from M3: P5-03, P5-04, P5-05, P5-07, P5-11, P5-12.
 - **Next to pick (M4, since Phase 5 has nothing pickable):** P6-08 (P0, before any public
-  deploy), then P6-01, P6-15, P6-12; P6-03 is unblocked. Phase 5's P5-01/02/06/09 wait on the first live
+  deploy), then P6-01, P6-12, P6-14; P6-03 is unblocked. Phase 5's P5-01/02/06/09 wait on the first live
   eval (H-07), P5-08 on H-09, P5-10 on H-08 and now P6-08 + P6-12.
 - **Critical path:** H-03 → `pnpm ingest index` → H-07 / P3-08 → P5-01.
 
@@ -34,6 +34,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | First CI run on GitHub (2026-10-10) | `check`, `e2e`, `docker` green; `gitleaks` errored on the first push only (its scan range starts at the root commit's missing parent) and reported no leaks |
 | Live keys (H-03) | OpenAI and YouTube keys valid; all five configured models available. The web app ignored the root `.env` and stayed in demo mode until `next.config.ts` loaded it |
 | Security scans (P6-10) | `pnpm audit --prod`: no known vulnerabilities; weekly full-history gitleaks, audit and (once public) CodeQL in `security.yml`; Dependabot updates + alerts on |
+| YouTube matching (P6-15, real feed) | 536 of 739 full episodes linked: 535 of 548 full conversations since the channel's first upload (the rest are podcast-only compilations); 218 `exact` from shared chapters (58 with a mid-episode step), predicting 99.3% of 6,735 shared chapters within 2 s; 318 `estimated` (≈ two in three within 10 s, held-out); human spot check H-10 |
 | Strict CSP (P6-09) | every e2e test fails on a CSP violation: none; injected inline script, event handler and foreign `<script src>` refused; `next dev` answers with no console errors |
 | Answers from the real model | **not yet run** — P3-08 / H-07 |
 
@@ -49,6 +50,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | H-06 | Agent identity + human reviewers | `risk:high` merge gate | `human/agent-identity.md` | 2026-10-10 |
 | H-08 | Hosting account and secrets | P5-10 | `human/deploy.md` | 2026-10-10 |
 | H-09 | Wake-word model + ~20 min of recorded audio | P5-08 | `human/wake-word-spike.md` | 2026-10-10 |
+| H-10 | Spot-check 20 YouTube links and 20 estimated timestamps | P6-15 acceptance | `human/youtube-spot-check.md` | 2026-10-10 |
 
 ## Decisions waiting (`needs:decision`)
 
@@ -143,7 +145,7 @@ answers `track:answers` (P6-06–07), security `track:security` (P6-08–11), po
 | P6-12 | #12 | docs: terms of use, disclaimer and no liability — in the repo and in the app | P1 | medium | open | — | human |
 | P6-13 | #13 | chore(repo): a non-commercial licence | P1 | medium | done (owner chose PolyForm Noncommercial 1.0.0) | — | — |
 | P6-14 | #14 | feat(web): send people to the originals — YouTube on every episode, card and answer | P1 | low | open | P6-15 | — |
-| P6-15 | #15 | feat(ingest): match more episodes to their videos and get the timing right | P1 | medium | open | — | — |
+| P6-15 | #15 | feat(ingest): match more episodes to their videos and get the timing right | P1 | medium | done in code; spot check open | — | H-10 |
 | P6-16 | #16 | feat(ingest): stay current — pick up new episodes on a schedule | P2 | medium | open, blocked | P5-10 | — |
 | P6-17 | #17 | feat(web): share an answer with its sources | P2 | medium | open | P6-12 | — |
 | P6-18 | #18 | feat(web): was this useful? — answer feedback that feeds the eval | P2 | medium | open, blocked | P3-08 | — |

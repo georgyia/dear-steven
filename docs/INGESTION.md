@@ -32,7 +32,7 @@ transcripts (1,621 passages) takes about 10 seconds; embedding them costs about 
 | Command | Does | Needs |
 |---------|------|-------|
 | `discover [--include-bonus] [--guests llm] [--feed <url>]` | Parse the RSS feed and upsert episodes. Bonus "Most Replayed" clips are skipped by default. Guest names come from titles (`extractGuestNames`); `--guests llm` fills the gaps from descriptions (names must appear verbatim in the listing). | network; key for `--guests llm` |
-| `match-youtube [--refresh]` | Match full episodes to uploads by title similarity within ±4 days. Durations within 8 s → `exact`, otherwise `estimated` (shown as `≈`). | `YOUTUBE_API_KEY` |
+| `match-youtube [--refresh]` | Match full episodes to full-length uploads (Shorts and clips skipped) one-to-one, scoring publication date (±4 days), running time, the guest's surname, title words and shared chapter titles. `exact` only when shared chapters measure the offset, including where it changes mid-episode; otherwise `estimated` (shown as `≈`). Writes `data/reports/youtube-match.md`: unmatched and low-confidence matches, and a spot-check sample (H-10). | `YOUTUBE_API_KEY` |
 | `transcribe --from vtt [--limit N] [--episode <ref>] [--force]` | Fetch the publisher's VTT (3 at a time), parse, store cue-level segments (speaker `unknown`, attribution `none`). Never overwrites a diarized transcript without `--force`. | network |
 | `transcribe --diarize --budget <usd> --host-clip <file> …` | Download audio (cached in `data/cache/audio/`), split into ≤ 1,380 s mono chunks with ffmpeg, diarize each with the host clip enrolled as "Steven". Stops before an episode would exceed the budget; records the cost per run. | key, ffmpeg, a 2–10 s clip of the host (`plan/human/host-voice-clip.md`) |
 | `attribute` | QA report for diarized episodes: host share, guest count, flags (enrolment failure, multi-guest panels). | — |
@@ -75,8 +75,10 @@ transcripts (1,621 passages) takes about 10 seconds; embedding them costs about 
 ## 7. Known limitations (tracked in `plan/11-research/R-02`)
 
 - FlightCast transcripts cover recent episodes only; the back catalogue needs diarization.
-- RSS ↔ YouTube alignment is estimated for most episodes; dynamic ad insertion can shift podcast
-  timestamps relative to the video.
+- RSS ↔ YouTube alignment is measured (`exact`) only where both descriptions list chapters —
+  218 of 536 matched episodes on 2026-10-10, mostly 2024 onwards. Elsewhere it is estimated from the
+  length difference or nearby measured episodes, which lands within ten seconds about two times in
+  three; the UI shows `≈`. Better needs captions or audio alignment (out of scope for P6-15).
 - Multi-guest panels keep guest speech anonymous unless labelled manually.
 - Guest names from titles: 413 of 739 full episodes are named by the heuristic; the rest need
   `--guests llm` or remain unnamed (chips then show a shortened title).
