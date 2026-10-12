@@ -27,7 +27,9 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | Lighthouse 13.5 accessibility, home | 100 (375 px) · 100 (desktop) |
 | axe-core WCAG 2.1 A/AA, interactive states (e2e) | clean at 375 and 1280 after one fix (P1-08) |
 | In-drawer player and podcast audio (P5-05) | no third-party request before a click (request log, e2e); iOS Safari playback **not checked on a device** |
-| `docker build` | not run locally (Docker daemon not running); runs in CI (`docker` job) |
+| `docker build` | passed in CI on the first push to GitHub (2026-10-10); not run locally (no Docker daemon) |
+| First CI run on GitHub (2026-10-10) | `check`, `e2e`, `docker` green; `gitleaks` errored on the first push only (its scan range starts at the root commit's missing parent) and reported no leaks |
+| Live keys (H-03) | OpenAI and YouTube keys valid; all five configured models available. The web app ignored the root `.env` and stayed in demo mode until `next.config.ts` loaded it |
 | Security scans (P6-10) | `pnpm audit --prod`: no known vulnerabilities; weekly full-history gitleaks, audit and (once public) CodeQL in `security.yml`; Dependabot updates + alerts on |
 | Answers from the real model | **not yet run** — P3-08 / H-07 |
 
@@ -35,9 +37,9 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 
 | Task | What | Blocks | Runbook | Since |
 |------|------|--------|---------|-------|
-| H-01 | Publish to GitHub, branch protection, labels | P0-06, CI enforcement, issue sync | `human/github-setup.md` | 2026-10-10 |
+| H-01 | ~~Publish to GitHub~~ (done 2026-10-10, private repo); branch protection, merge settings, labels still open | P0-06, CI enforcement, issue sync | `human/github-setup.md` | 2026-10-10 |
 | H-02 | Harness decisions (third-party skills, MCP) | P0-05 | `human/harness-decisions.md` | 2026-10-10 |
-| H-03 | OpenAI (+ optional YouTube) keys in `.env` | live answers, embeddings, video links, P3-08 | `human/api-keys.md` | 2026-10-10 |
+| H-03 | ~~OpenAI + YouTube keys in `.env`~~ — done 2026-10-10 | — | `human/api-keys.md` | 2026-10-10 |
 | H-07 | First live eval + usefulness notes | M1 exit, P5-01 | `human/first-live-eval.md` | 2026-10-10 |
 | H-04 / H-05 | Host voice clip + diarization budget | P2-08 (verified speakers) | `human/host-voice-clip.md`, `human/transcription-budget.md` | 2026-10-10 |
 | H-06 | Agent identity + human reviewers | `risk:high` merge gate | `human/agent-identity.md` | 2026-10-10 |
