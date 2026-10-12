@@ -631,35 +631,44 @@ None. **Size:** M.
 
 ## Suggested
 
-### P6-16 — feat(ingest): stay current — pick up new episodes on a schedule
+### P6-16 — feat(ingest): bring in the latest episodes — one command, one button, and a schedule
 
-<!-- issue {"id":"P6-16","title":"feat(ingest): stay current — pick up new episodes on a schedule","labels":["type:infra","stage:m4","track:ingest","track:infra","owner:ai","risk:medium","P2","size:M"],"milestone":"M4 Reach and trust","depends":["P5-10"],"github":16} -->
+<!-- issue {"id":"P6-16","title":"feat(ingest): bring in the latest episodes — one command, one button, and a schedule","labels":["type:service","stage:m5","track:ingest","track:setup","owner:ai","risk:medium","P1","size:M"],"milestone":"M5 Conversations","depends":[],"github":16} -->
 
 #### Context
-The show publishes several episodes a week. The knowledge base only grows when someone runs
-`pnpm ingest`.
+The show publishes several episodes a week. The knowledge base only grows when someone runs the
+ingest stages one by one. Re-scoped on 2026-10-13 (the owner asked for "the feature to onboard the
+latest videos"): it no longer waits for a hosted deployment.
 
 #### Goal
-New episodes appear within a day, without a person in the loop, inside a spend cap.
+Bringing in the newest episodes is one step: a command, a button in the local setup panel, or an
+optional schedule — inside a spend cap.
 
 #### Scope
-**In** — a scheduled job on the deployment (discover → free transcripts → chunk → embed → YouTube)
-with a per-run budget; a "new this week" line in the explorer.
+**In** — `pnpm ingest latest [--days N] --dry-run | --budget <usd>`: discover from the feed, then for
+new episodes only, free RSS transcripts, passages, embeddings, conversation overviews (when P6-07's
+`summarise` is present) and YouTube links; the estimate first, stopping before the budget; a
+summary of what arrived. The local setup panel (P6-04) gets "Bring in the latest episodes" with
+the estimate and a budget. A schedule recipe (cron or launchd locally, a scheduled machine on
+Fly) in `docs/INGESTION.md`. A "new this week" marker in the episode explorer.
 **Out** — scheduled paid diarization.
 
 #### Acceptance criteria
-- [ ] An episode published yesterday is answerable today on the deployment.
-- [ ] A run over budget stops before spending and reports it.
+- [ ] With a fixture feed one episode newer than the knowledge base, `latest` adds exactly that
+  episode, answerable afterwards; a second run adds nothing and spends nothing.
+- [ ] A run whose estimate exceeds the budget stops before any paid call and says so.
+- [ ] The setup panel's button runs the same code path (no re-implementation) and shows progress.
 
 #### Tests required
-Dry-run of the scheduled command in CI against a fixture feed.
+Command test against a fixture feed (new episode, nothing new, over budget); route test for the
+setup action; e2e for the "new" marker.
 
 #### Security notes
-Unattended paid calls: the budget cap is mandatory.
+Unattended paid calls: the budget is mandatory; the setup route keeps P6-04's localhost-and-token
+guard.
 
 #### Dependencies
-P5-10 (a deployment to run on). **Size:** M.
-
+None (was P5-10). **Size:** M.
 ---
 
 ### P6-17 — feat(web): share an answer with its sources
