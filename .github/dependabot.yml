@@ -1,0 +1,35 @@
+# Weekly dependency updates (plan/07-ci-cd.md § 2). Titles must pass the pr-title check:
+# `chore(deps): bump …` and `ci(deps): bump …` use an allowed type and scope. Actions stay pinned
+# by SHA — Dependabot updates the SHA and the version comment together.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories:
+      - /
+      - /apps/web
+      - /packages/core
+      - /packages/ingest
+      - /eval
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(deps)
+    labels: [type:infra, track:infra, risk:low]
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci(deps)
+    labels: [type:infra, track:infra, risk:low]
+    groups:
+      actions:
+        patterns: ['*']
