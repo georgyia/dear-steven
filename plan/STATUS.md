@@ -14,7 +14,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 - **Next to pick (M4, since Phase 5 has nothing pickable):** P6-12, P6-01; P6-03 is unblocked.
   P6-08 (P0) is built and waits for human review. Phase 5's P5-01/02/06/09 wait on the first live
   eval (H-07), P5-08 on H-09, P5-10 on H-08 and now P6-08 + P6-12.
-- **Critical path:** H-03 → `pnpm ingest index` → H-07 / P3-08 → P5-01.
+- **Critical path:** H-07 (read five live answers) → P5-01 (first block p50 is 3.7 s against a 3 s target) and P6-06 (18 of 20 live answers are hedged `partial`).
 
 ## Verified in the first pass (2026-10-10)
 
@@ -37,7 +37,8 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | Spend cap and access gate (P6-08) | past the cap `/api/ask` gives the resting reply with no network call (route test); every API route on disk answers 401 without the cookie (proxy test); passcode screen, wrong code, rate limit and axe audit against a gated server (e2e) |
 | YouTube matching (P6-15, real feed) | 536 of 739 full episodes linked: 535 of 548 full conversations since the channel's first upload (the rest are podcast-only compilations); 218 `exact` from shared chapters (58 with a mid-episode step), predicting 99.3% of 6,735 shared chapters within 2 s; 318 `estimated` (≈ two in three within 10 s, held-out); human spot check H-10 |
 | Strict CSP (P6-09) | every e2e test fails on a CSP violation: none; injected inline script, event handler and foreign `<script src>` refused; `next dev` answers with no console errors |
-| Answers from the real model | **not yet run** — P3-08 / H-07 |
+| Embeddings (`pnpm ingest index`, 2026-10-10) | 8,394 passages from 114 episodes embedded, $0.077; retrieval eval recall@10 95% (19/20, hybrid) |
+| Answers from the real model (P3-08, `pnpm eval --answers`) | citations resolve 100% · 0 attribution violations · 0 quote mismatches · persona lint clean · unanswerable 3/3 · 2 violations caught before display · **first block p50 3,666 ms (target < 3 s: missed)** · modes: 2 grounded, 18 partial, 3 insufficient · $0.019 a run. Baseline: `eval/baselines/2026-10-10-first-live.json` |
 
 ## Waiting on a human
 
@@ -97,7 +98,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | P3-05 | — | feat(web): live /api/ask over SSE with real passages | P0 | high | done | P3-04, P2-07 | human review |
 | P3-06 | — | feat(web): rate limits and input validation | P0 | high | done | P3-05 | human review |
 | P3-07 | — | test(eval): answer metrics | P0 | low | done | P3-04, P2-05 | — |
-| P3-08 | — | test(eval): first live evaluation against the real model | P0 | medium | open | P3-07 | H-03, H-07 |
+| P3-08 | #27 | test(eval): first live evaluation against the real model | P0 | medium | run; latency target missed (P5-01); H-07 notes open | P3-07 | H-07 |
 
 ### M2 Voice
 

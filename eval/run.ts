@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { type AnswerRecord, composeAnswer, openAIAnswerModel } from '@dear-steven/core/answer';
 import { findRepoRoot, readConfig } from '@dear-steven/core/config';
+import { answerCostUsd, embeddingCostUsd, MODELS } from '@dear-steven/core/models';
 import { createOpenAI, openAIEmbedder } from '@dear-steven/core/openai';
 import { hybridSearch } from '@dear-steven/core/retrieval';
 import type { FinalAnswer } from '@dear-steven/core/schema';
@@ -46,7 +47,15 @@ const questions = set.questions.filter((q) => !only || only.includes(q.id));
 
 const store = KnowledgeStore.open(config.dbPath);
 const client = config.openaiApiKey ? createOpenAI(config.openaiApiKey) : null;
-const embedder = client ? openAIEmbedder(client) : null;
+/** What this run spent, estimated from reported token use (core `PRICES`). */
+let costUsd = 0;
+const embedder = client
+  ? openAIEmbedder(client, MODELS.embedding, {
+      onTokens: (tokens) => {
+        costUsd += embeddingCostUsd(tokens);
+      },
+    })
+  : null;
 const indexedGuids = new Set(
   store
     .listEpisodes()
@@ -92,7 +101,11 @@ const answers: {
 }[] = [];
 if (values.answers) {
   if (!client) throw new Error('--answers needs OPENAI_API_KEY in .env');
-  const model = openAIAnswerModel(client);
+  const model = openAIAnswerModel(client, MODELS.answer, {
+    onUsage: (usage) => {
+      costUsd += answerCostUsd(usage);
+    },
+  });
   for (const q of questions) {
     const t0 = Date.now();
     let ttfb: number | null = null;
@@ -155,8 +168,9 @@ mkdirSync(dir, { recursive: true });
 const file = join(dir, `${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
 writeFileSync(
   file,
-  JSON.stringify({ thresholds: THRESHOLDS, recall, retrieval, answers }, null, 2),
+  JSON.stringify({ thresholds: THRESHOLDS, recall, retrieval, answers, costUsd }, null, 2),
 );
+if (costUsd > 0) console.log(`\nestimated cost of this run: $${costUsd.toFixed(4)}`);
 console.log(`\nresults → ${file.slice(root.length + 1)}`);
 store.close();
 process.exitCode = failed ? 1 : 0;

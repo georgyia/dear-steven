@@ -7,7 +7,8 @@ The pipeline is verified with scripted models; this is the first run against the
 
 ## Steps
 
-1. `pnpm eval --answers` — 23 questions through the full pipeline (≈ $0.05–0.15). It prints, per
+1. `pnpm eval --answers` — 23 questions through the full pipeline (≈ $0.02 a run on 2026-10-10;
+   the run prints its own estimate). It prints, per
    question: mode, citation count, time to first block, and any problem; then the totals against
    the thresholds (citations resolve 100%, 0 attribution violations, 0 quote mismatches, persona
    lint clean, unanswerable handled, first block p50 < 3 s). Results land in `eval/results/`.

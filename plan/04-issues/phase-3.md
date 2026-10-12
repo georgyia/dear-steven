@@ -88,7 +88,7 @@ p50). **State:** done; first run is P3-08.
 
 ### P3-08 — test(eval): first live evaluation against the real model
 
-<!-- issue {"id":"P3-08","title":"test(eval): first live evaluation against the real model","labels":["type:test","stage:m1","track:eval","needs:human","risk:medium","P0","size:S"],"milestone":"M1 Answers","depends":["P3-07"],"github":null} -->
+<!-- issue {"id":"P3-08","title":"test(eval): first live evaluation against the real model","labels":["type:test","stage:m1","track:eval","needs:human","risk:medium","P0","size:S"],"milestone":"M1 Answers","depends":["P3-07"],"github":27} -->
 
 #### Context
 Every part of the answer pipeline is verified with scripted models. Nobody has yet seen
