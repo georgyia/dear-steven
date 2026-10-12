@@ -14,7 +14,8 @@
 | 3 Grounded answers | M1 exit | Persona, structured answers, validator, repair, SSE, live wiring | P3-* | done in code; **P3-08 (live eval) waits on H-03/H-07** |
 | 4 Voice | M2 | Web Speech + recorder fallback, TTS, choreography | P4-* | done |
 | 5 Depth and polish | M3 | Each item evaluated individually | P5-* | open; the rest waits on humans |
-| 6 Reach and trust | M4 | Languages, setup in the app, concrete answers, security, policies, YouTube | P6-* | open (`plan/04-issues/phase-6.md`) |
+| 6 Reach and trust | M4 | Languages, setup in the app, concrete answers, security, policies, YouTube | P6-* | merged 2026-10-13 (`plan/04-issues/phase-6.md`) |
+| 7 Conversations | M5 | Talk mode, interviews and practice, design polish, the latest episodes | P7-* | open (`plan/04-issues/phase-7.md`) |
 
 A later-phase issue may be taken only when the current phase has nothing pickable.
 

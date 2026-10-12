@@ -8,14 +8,12 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 
 ## Now
 
-- **Phase:** 0–4 built in the first implementation pass; Phase 5 open (the rest waits on humans);
-  Phase 6 / M4 *Reach and trust* planned (`plan/04-issues/phase-6.md`).
-- **Done:** M0 (except GitHub publishing and third-party skills), M1 in code, M2; from M3: P5-03, P5-04, P5-05, P5-07, P5-11, P5-12.
-- **Next to pick (M4, since Phase 5 has nothing pickable):** nothing unblocked — P6-04 (builds on
-  P6-03) waits for human review, P6-17 is in review; P6-05 and P6-18 wait on P3-08, P6-16 on P5-10.
-  P6-08 (P0) is built and waits for human review. Phase 5's P5-01/02/06/09 wait on the first live
-  eval (H-07), P5-08 on H-09, P5-10 on H-08 and now P6-08 + P6-12.
-- **Critical path:** H-07 (read five live answers) → P5-01 (first block p50 3.5–4 s against a 3 s target; the unanswerable u03 flips to `partial` on a passage that mentions Pokémon cards).
+- **Phase:** M4 *Reach and trust* merged to `main` on 2026-10-13 (18 PRs, squash, linear; `main`'s
+  tree is identical to the CI-tested top of the stack). Phase 7 / M5 *Conversations* planned
+  (`plan/04-issues/phase-7.md`).
+- **Next to pick (M5):** P7-01, P7-09, P7-04, P7-02, P7-03, P6-16, P7-05, P7-06, P7-07, P7-08.
+- **Waiting on the owner:** the P6-07 decision (draft #33), P6-12 wording and takedown contact,
+  H-07 (five live answers), H-10 (YouTube spot check), H-11 (crisis copy and helplines).
 
 ## Verified in the first pass (2026-10-10)
 
@@ -142,21 +140,40 @@ answers `track:answers` (P6-06–07), security `track:security` (P6-08–11), po
 
 | Id | # | Issue | Pri | Risk | State | Depends on | Needs |
 |----|---|-------|-----|------|-------|------------|-------|
-| P6-01 | #1 | feat(core): ask and answer in any language | P1 | medium | done | — | — |
-| P6-02 | #2 | feat(web): the interface and voice in the visitor's language | P2 | low | in review | P6-01 | — |
-| P6-03 | #3 | feat(web): bring your own API keys from the setup panel | P1 | high | in review (needs human review) | P6-09 | human review |
-| P6-04 | #4 | feat(web): guided local setup — keys, knowledge base and budget from the browser | P2 | high | in review (needs human review) | P6-03 | human review |
+| P6-01 | #1 | feat(core): ask and answer in any language | P1 | medium | done, merged 2026-10-13 | — | — |
+| P6-02 | #2 | feat(web): the interface and voice in the visitor's language | P2 | low | done, merged 2026-10-13 | P6-01 | — |
+| P6-03 | #3 | feat(web): bring your own API keys from the setup panel | P1 | high | done, merged 2026-10-13 (merged on the owner's instruction without a separate review) | P6-09 | — |
+| P6-04 | #4 | feat(web): guided local setup — keys, knowledge base and budget from the browser | P2 | high | done, merged 2026-10-13 (merged on the owner's instruction without a separate review) | P6-03 | — |
 | P6-05 | #5 | chore(core): spike — a second LLM provider behind the model adapter | P2 | medium | open, blocked | P3-08 | — |
-| P6-06 | #6 | feat(core): persona v2 — a concrete opinion and what I'd do, grounded in the interviews | P1 | medium | done (human spot check of five answers open) | P3-08, P6-11 | — |
-| P6-07 | #7 | feat(core): answers that use more of each conversation | P1 | medium | open, blocked | P3-08 | — |
-| P6-08 | #8 | feat(security): protect a public deployment — access gate and a daily spend cap | P0 | high | in review (needs human review) | — | human review |
-| P6-09 | #9 | feat(security): strict Content-Security-Policy with per-request nonces, and HSTS | P1 | medium | done | — | — |
-| P6-10 | #10 | ci(security): dependency and code scanning, and a full-history secret scan | P1 | medium | done (post-merge checks open) | — | — |
-| P6-11 | #11 | feat(security): safety rails for high-stakes questions | P1 | high | in review (needs human review, H-11) | — | human review, H-11 |
-| P6-12 | #12 | docs: terms of use, disclaimer and no liability — in the repo and in the app | P1 | medium | in review (wording and takedown contact need the owner) | — | human |
-| P6-13 | #13 | chore(repo): a non-commercial licence | P1 | medium | done (owner chose PolyForm Noncommercial 1.0.0) | — | — |
-| P6-14 | #14 | feat(web): send people to the originals — YouTube on every episode, card and answer | P1 | low | done | P6-15 | — |
-| P6-15 | #15 | feat(ingest): match more episodes to their videos and get the timing right | P1 | medium | done in code; spot check open | — | H-10 |
-| P6-16 | #16 | feat(ingest): stay current — pick up new episodes on a schedule | P2 | medium | open, blocked | P5-10 | — |
-| P6-17 | #17 | feat(web): share an answer with its sources | P2 | medium | in review | P6-12 | — |
+| P6-06 | #6 | feat(core): persona v2 — a concrete opinion and what I'd do, grounded in the interviews | P1 | medium | done, merged 2026-10-13; human spot check of five answers open | P3-08, P6-11 | H-07 |
+| P6-07 | #7 | feat(core): answers that use more of each conversation | P1 | medium | draft PR #33: acceptance not met on the judge; owner decides | P3-08 | decision |
+| P6-08 | #8 | feat(security): protect a public deployment — access gate and a daily spend cap | P0 | high | done, merged 2026-10-13 (merged on the owner's instruction without a separate review) | — | — |
+| P6-09 | #9 | feat(security): strict Content-Security-Policy with per-request nonces, and HSTS | P1 | medium | done, merged 2026-10-13 | — | — |
+| P6-10 | #10 | ci(security): dependency and code scanning, and a full-history secret scan | P1 | medium | done, merged 2026-10-13 | — | — |
+| P6-11 | #11 | feat(security): safety rails for high-stakes questions | P1 | high | done, merged 2026-10-13; crisis copy and helplines still need H-11 | — | H-11 |
+| P6-12 | #12 | docs: terms of use, disclaimer and no liability — in the repo and in the app | P1 | medium | done, merged 2026-10-13; wording review and takedown contact still open | — | human |
+| P6-13 | #13 | chore(repo): a non-commercial licence | P1 | medium | done, merged 2026-10-13 | — | — |
+| P6-14 | #14 | feat(web): send people to the originals — YouTube on every episode, card and answer | P1 | low | done, merged 2026-10-13 | P6-15 | — |
+| P6-15 | #15 | feat(ingest): match more episodes to their videos and get the timing right | P1 | medium | done, merged 2026-10-13; spot check open | — | H-10 |
+| P6-16 | #16 | feat(ingest): bring in the latest episodes — one command, one button, and a schedule | P1 | medium | moved to M5 (re-scoped 2026-10-13) | — | — |
+| P6-17 | #17 | feat(web): share an answer with its sources | P2 | medium | done, merged 2026-10-13 | P6-12 | — |
 | P6-18 | #18 | feat(web): was this useful? — answer feedback that feeds the eval | P2 | medium | open, blocked | P3-08 | — |
+
+### M5 Conversations
+
+Categories are labels: conversations `track:conversation` (P7-05–08), design `track:design`
+(P7-02–03), bugs `bug` (P7-01, P7-04), knowledge base `track:ingest` (P6-16), maintenance
+`track:infra` (P7-09).
+
+| Id | # | Issue | Pri | Risk | State | Depends on | Needs |
+|----|---|-------|-----|------|-------|------------|-------|
+| P7-01 | #46 | fix(web): browser extensions that edit the page no longer cause a hydration error | P1 | low | open | — | — |
+| P7-02 | #48 | fix(design): no more "·" separators — structure through layout and wording | P1 | low | open | — | — |
+| P7-03 | #49 | feat(design): a proper quote preview when you hover a source | P1 | low | open | P7-02 | — |
+| P7-04 | #47 | fix(web): on phones the demo notice no longer hides the first-visit notice | P2 | low | open | — | — |
+| P6-16 | #16 | feat(ingest): bring in the latest episodes — one command, one button, and a schedule | P1 | medium | open | — | — |
+| P7-05 | #50 | feat(core): talk mode — just talk to Steven | P1 | medium | open | — | — |
+| P7-06 | #51 | feat(core): interview mode — Steven interviews you, the way he interviews his guests | P1 | medium | open | P7-05 | — |
+| P7-07 | #52 | feat(core): practise presenting your expertise — a mock interview with a debrief | P1 | medium | open | P7-06 | — |
+| P7-08 | #53 | feat(web): remember what Steven learned about you — opt-in, on this device | P2 | medium | open | P7-06 | — |
+| P7-09 | #54 | chore(ci): keep TypeScript and Node's types on the versions the stack needs | P2 | low | open | — | — |
