@@ -4,6 +4,7 @@ import { formatTimestamp, spokenTimestamp } from '@dear-steven/core/format';
 import type { Citation } from '@dear-steven/core/schema';
 import WarmTooltip from '@/components/vendor/react-bits/WarmTooltip';
 import { useI18n } from '@/i18n/I18nProvider';
+import { QuotePreview } from './QuotePreview';
 import { initials, speakerLabel } from './speaker';
 
 interface CitationChipProps {
@@ -11,8 +12,6 @@ interface CitationChipProps {
   active: boolean;
   onOpen: (citationId: string) => void;
 }
-
-const preview = (text: string) => (text.length > 120 ? `${text.slice(0, 118).trimEnd()}…` : text);
 
 /**
  * The inline evidence chip. Colour carries meaning (docs/DESIGN.md §2): ember = verified host,
@@ -33,19 +32,10 @@ export function CitationChip({ citation, active, onOpen }: CitationChipProps) {
     <WarmTooltip
       wrap
       side="top"
-      surfaceColor="var(--ivory-0)"
-      inkColor="var(--ink-0)"
-      size="md"
-      content={
-        <span className="flex flex-col gap-1">
-          <span className="font-mono text-[10.5px] tracking-[0.08em] uppercase opacity-70">
-            {who.long}
-          </span>
-          <span className="font-normal" lang="en">
-            “{preview(citation.excerpt)}”
-          </span>
-        </span>
-      }
+      surfaceColor="var(--ink-2)"
+      inkColor="var(--ivory-1)"
+      size="lg"
+      content={<QuotePreview citation={citation} time={time} />}
     >
       <button
         type="button"

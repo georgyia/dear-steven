@@ -4,7 +4,8 @@
  * Copyright (c) 2026 David Haz. MIT + Commons Clause License Condition v1.0 — see ./LICENSE.md.
  * Used as part of this application only; these components are not redistributed on their own.
  * Local changes: opt-in `wrap` prop — the label may wrap to a max width (citation previews are
- * a sentence long). Off by default, so behaviour is unchanged elsewhere.
+ * a sentence long). Off by default, so behaviour is unchanged elsewhere. The wrap width is
+ * min(24rem, 100vw − 32px), so a quote preview (P7-03) can set its own width up to that.
  */
 'use client';
 
@@ -469,7 +470,7 @@ export const WarmTooltipGroup = forwardRef<WarmTooltipGroupHandle, WarmTooltipGr
                       ref={el => {
                         if (el) textRef.current = el;
                       }}
-                      className={`inline-flex items-center gap-[7px] font-medium tracking-[-0.01em] [font-size:var(--wt-font)] ${current.wrap ? 'w-max max-w-[min(20rem,calc(100vw-48px))] whitespace-normal text-left leading-[1.4]' : 'whitespace-nowrap leading-[1.2]'}`}
+                      className={`inline-flex items-center gap-[7px] font-medium tracking-[-0.01em] [font-size:var(--wt-font)] ${current.wrap ? 'w-max max-w-[min(24rem,calc(100vw-32px))] whitespace-normal text-left leading-[1.4]' : 'whitespace-nowrap leading-[1.2]'}`}
                     >
                       {current.content}
                       {current.shortcut ? (
