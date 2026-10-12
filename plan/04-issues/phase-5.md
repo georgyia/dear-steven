@@ -285,9 +285,9 @@ P4-02. **Size:** M.
 
 ---
 
-### P5-08 — spike(voice): "Hey Steven" wake word in the browser
+### P5-08 — chore(voice): spike — "Hey Steven" wake word in the browser
 
-<!-- issue {"id":"P5-08","title":"spike(voice): Hey Steven wake word in the browser","labels":["type:spike","stage:m3","track:voice","owner:ai","risk:medium","P2","size:M"],"milestone":"M3 Depth","depends":["P5-07"],"github":null} -->
+<!-- issue {"id":"P5-08","title":"chore(voice): spike — Hey Steven wake word in the browser","labels":["type:spike","stage:m3","track:voice","owner:ai","risk:medium","P2","size:M"],"milestone":"M3 Depth","depends":["P5-07"],"github":null} -->
 
 #### Context
 R-03: openWakeWord can run in the browser via ONNX with a custom model; it needs an always-open
@@ -347,7 +347,7 @@ P3-08. **Size:** M.
 
 ### P5-10 — chore(infra): deploy to Fly.io with a persistent volume
 
-<!-- issue {"id":"P5-10","title":"chore(infra): deploy to Fly.io with a persistent volume","labels":["type:infra","stage:m3","track:infra","owner:ai","risk:high","needs:human-review","P2","size:S"],"milestone":"M3 Depth","depends":["P0-03"],"github":null} -->
+<!-- issue {"id":"P5-10","title":"chore(infra): deploy to Fly.io with a persistent volume","labels":["type:infra","stage:m3","track:infra","owner:ai","risk:high","needs:human-review","P2","size:S"],"milestone":"M3 Depth","depends":["P0-03","P6-08","P6-12"],"github":null} -->
 
 #### Goal
 `fly.toml` committed; the image deployed with the knowledge base on a volume; access decided.
@@ -367,7 +367,8 @@ Production secret handling and public exposure of a paid API: `risk:high`.
 H-08.
 
 #### Dependencies
-P0-03, H-08. **Size:** S.
+P0-03, H-08, and before anything public: P6-08 (access gate and spend cap) and P6-12 (terms and
+disclaimer). **Size:** S.
 
 ---
 
