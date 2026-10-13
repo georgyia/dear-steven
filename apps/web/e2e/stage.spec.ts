@@ -262,6 +262,17 @@ test.describe('reduced motion', () => {
     expect(looks.length).toBeGreaterThan(0);
     expect(new Set(looks)).toEqual(new Set(['1 none none']));
     expect(errors).toEqual([]); // no hydration mismatch (P5-12)
+    // The rest of the home screen settles sharp and in place: no blur, no offset (P7-10).
+    const unsettled = () =>
+      page.locator('main *').evaluateAll((els) =>
+        els.flatMap((el) => {
+          const c = getComputedStyle(el);
+          const blurred = c.filter !== 'none' && c.filter !== 'blur(0px)';
+          const moved = c.transform !== 'none' && c.transform !== 'matrix(1, 0, 0, 1, 0, 0)';
+          return blurred || moved ? [`${el.tagName} ${c.filter} ${c.transform}`] : [];
+        }),
+      );
+    await expect.poll(unsettled, { timeout: 4000 }).toEqual([]);
     await ask(page, 'Should I start a business?');
     await answered(page);
     await expect(page.locator('[data-citation]').first()).toBeVisible();
