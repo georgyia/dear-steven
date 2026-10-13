@@ -90,3 +90,20 @@ describe('ShareTokenSchema (P6-17)', () => {
     expect(ShareRequestSchema.safeParse({ token, answer: {} }).success).toBe(false);
   });
 });
+
+describe('AskRequestSchema: mode and about (P7-05, P7-08)', () => {
+  it('takes ask or talk, and nothing else', () => {
+    expect(AskRequestSchema.parse({ question: 'Hi?', mode: 'talk' }).mode).toBe('talk');
+    expect(AskRequestSchema.safeParse({ question: 'Hi?', mode: 'interview' }).success).toBe(false);
+  });
+
+  it('takes up to 600 characters about the visitor, trimmed, never empty', () => {
+    expect(AskRequestSchema.parse({ question: 'Hi?', about: '  You run a studio.  ' }).about).toBe(
+      'You run a studio.',
+    );
+    expect(AskRequestSchema.safeParse({ question: 'Hi?', about: 'x'.repeat(601) }).success).toBe(
+      false,
+    );
+    expect(AskRequestSchema.safeParse({ question: 'Hi?', about: '   ' }).success).toBe(false);
+  });
+});

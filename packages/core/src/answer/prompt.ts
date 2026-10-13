@@ -1,6 +1,11 @@
 import { zodTextFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
-import { PERSONA_INSTRUCTIONS, PERSONA_VERSION, TALK_STYLE } from '../persona/persona.ts';
+import {
+  ABOUT_THE_USER,
+  PERSONA_INSTRUCTIONS,
+  PERSONA_VERSION,
+  TALK_STYLE,
+} from '../persona/persona.ts';
 import {
   type AskMode,
   type HistoryTurn,
@@ -8,7 +13,7 @@ import {
   ModelBlockSchema,
 } from '../schema/index.ts';
 import type { AnswerContext } from './context.ts';
-import { renderSources } from './context.ts';
+import { neutralise, renderSources } from './context.ts';
 import type { JsonFormat, ModelMessage } from './model.ts';
 import type { Violation } from './validate.ts';
 
@@ -36,8 +41,8 @@ export function historyMessages(history: HistoryTurn[], turns = 6): ModelMessage
 
 /**
  * The question with its sources. `guidance` is per-question care (P6-11: high stakes, sensitive
- * topics) and the talk-mode style (P7-05); both travel here rather than in the instructions, so
- * the cached prefix never changes.
+ * topics), the talk-mode style (P7-05) and what the visitor kept about themselves (P7-08); all travel
+ * here rather than in the instructions, so the cached prefix never changes.
  */
 export function answerInput(
   question: string,
@@ -45,14 +50,18 @@ export function answerInput(
   ctx: AnswerContext,
   guidance: string | null = null,
   mode: AskMode = 'ask',
+  about?: string,
 ): ModelMessage[] {
   const care = guidance ? `\n\n<care>\n${guidance}\n</care>` : '';
   const style = mode === 'talk' ? `\n\n<style>\n${TALK_STYLE}\n</style>` : '';
+  const user = about
+    ? `\n\n<about_the_user>\n${neutralise(about)}\n</about_the_user>\n${ABOUT_THE_USER}`
+    : '';
   return [
     ...historyMessages(history),
     {
       role: 'user',
-      content: `${renderSources(ctx)}\n\n<question>\n${question}\n</question>${care}${style}\n\nAnswer the question as Dear Steven, following every rule in your instructions. Return only the JSON answer object.`,
+      content: `${renderSources(ctx)}\n\n<question>\n${question}\n</question>${care}${style}${user}\n\nAnswer the question as Dear Steven, following every rule in your instructions. Return only the JSON answer object.`,
     },
   ];
 }

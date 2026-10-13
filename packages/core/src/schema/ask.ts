@@ -27,6 +27,11 @@ export const AskRequestSchema = z.strictObject({
   /** `ask` when absent. */
   mode: AskModeSchema.optional(),
   /**
+   * What the visitor chose to keep about themselves (P7-08), exactly as shown to them: for
+   * relevance only, never evidence.
+   */
+  about: z.string().trim().min(1).max(LIMITS.aboutChars).optional(),
+  /**
    * The visitor's BCP 47 locale (`en-GB`): which crisis helpline to show (P6-11), later the answer
    * language. Optional; the server falls back to Accept-Language.
    */

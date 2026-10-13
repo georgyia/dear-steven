@@ -8,4 +8,6 @@ export const LIMITS = {
   speechChars: 1200,
   /** A share token (P6-17): a compressed answer and its signature. Long answers stay well under. */
   shareTokenChars: 24_000,
+  /** What the visitor chose to keep about themselves (P7-08), sent with their questions. */
+  aboutChars: 600,
 } as const;

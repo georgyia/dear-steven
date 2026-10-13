@@ -1,6 +1,6 @@
 'use client';
 
-import type { InterviewFlavour } from '@dear-steven/core/schema';
+import type { InterviewFlavour, LearnedLine } from '@dear-steven/core/schema';
 import { motion } from 'motion/react';
 import { type FormEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { AnswerBlocks } from '@/components/answer/AnswerBlocks';
@@ -8,6 +8,7 @@ import { ListenButton } from '@/components/answer/SpokenControls';
 import { ThinkingDots } from '@/components/ui/ThinkingDots';
 import GradualBlur from '@/components/vendor/react-bits/GradualBlur';
 import { useI18n } from '@/i18n/I18nProvider';
+import { aboutFromLearned } from '@/lib/aboutYou';
 import type { InterviewAction, InterviewState } from '@/lib/interview';
 import { DebriefView } from './DebriefView';
 import { button, display, eyebrow, field, primary } from './styles';
@@ -20,6 +21,13 @@ interface InterviewViewProps {
   dock: ReactNode;
   demo: boolean;
   onBack: () => void;
+  /** What Dear Steven keeps about the visitor (P7-08), and a way to keep what was learned. */
+  about: {
+    text: string | null;
+    supported: boolean;
+    failed: boolean;
+    keep: (text: string) => Promise<boolean>;
+  };
 }
 
 /**
@@ -27,7 +35,15 @@ interface InterviewViewProps {
  * visitor answers in the composer, by typing or voice. At the end, "What I learned about you":
  * each line with the visitor's own words beneath it, quoted exactly.
  */
-export function InterviewView({ state, dispatch, header, dock, demo, onBack }: InterviewViewProps) {
+export function InterviewView({
+  state,
+  dispatch,
+  header,
+  dock,
+  demo,
+  onBack,
+  about,
+}: InterviewViewProps) {
   const { t } = useI18n();
   const copy = t.interview;
   return (
@@ -48,7 +64,7 @@ export function InterviewView({ state, dispatch, header, dock, demo, onBack }: I
             <Question state={state} dispatch={dispatch} />
           ) : null}
           {state.phase === 'learned' ? (
-            <Learned state={state} dispatch={dispatch} onBack={onBack} />
+            <Learned state={state} dispatch={dispatch} onBack={onBack} about={about} />
           ) : null}
           {state.phase === 'debrief' ? (
             <DebriefView state={state} dispatch={dispatch} onBack={onBack} />
@@ -316,7 +332,8 @@ function Learned({
   state,
   dispatch,
   onBack,
-}: Pick<InterviewViewProps, 'state' | 'dispatch' | 'onBack'>) {
+  about,
+}: Pick<InterviewViewProps, 'state' | 'dispatch' | 'onBack' | 'about'>) {
   const { t } = useI18n();
   const copy = t.interview;
   const learned = state.learned;
@@ -371,6 +388,10 @@ function Learned({
         </p>
       )}
 
+      {learned.lines.length && about.supported ? (
+        <KeepAbout lines={learned.lines} demo={learned.demo} about={about} />
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" onClick={() => dispatch({ type: 'reset' })} className={primary}>
           {copy.again}
@@ -379,6 +400,45 @@ function Learned({
           {copy.back}
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Keep what was learned on this device (P7-08): offered, never assumed. */
+function KeepAbout({
+  lines,
+  demo,
+  about,
+}: {
+  lines: LearnedLine[];
+  demo: boolean;
+  about: InterviewViewProps['about'];
+}) {
+  const { aboutYou: copy } = useI18n().t;
+  // Demo lines have fixed headings for text, so a demo keeps the visitor's own words instead.
+  const composed = aboutFromLearned(lines, demo ? 'evidence' : 'text');
+  const kept = about.text === composed;
+  return (
+    <div className="flex max-w-[34rem] flex-col gap-2 rounded-[var(--radius-card)] border border-ink-3 px-4 py-3.5">
+      {kept ? (
+        <p role="status" className="text-[14px] text-ivory-1">
+          {copy.kept}
+        </p>
+      ) : (
+        <>
+          <div>
+            <button type="button" onClick={() => void about.keep(composed)} className={button}>
+              {copy.keep}
+            </button>
+          </div>
+          <p className="text-[12.5px] leading-relaxed text-ivory-2">{copy.keepNote}</p>
+        </>
+      )}
+      {about.failed ? (
+        <p role="alert" className="text-[12.5px] text-oxblood-1">
+          {copy.failed}
+        </p>
+      ) : null}
     </div>
   );
 }

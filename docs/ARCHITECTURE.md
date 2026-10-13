@@ -70,7 +70,8 @@ Client-safe core entry points: `schema` (types only), `limits`, `copy`, `format`
 ## 4. Data flow — one question
 
 1. The client `POST /api/ask {question, history, mode?}` (≤ 2,000 chars; ≤ 11 earlier turns;
-   `mode` is `ask` or `talk`, P7-05: talk adds a style note to the model input, nothing else).
+   `mode` is `ask` or `talk`, P7-05: talk adds a style note to the model input, nothing else;
+   `about`, P7-08: what the visitor kept about themselves, ≤ 600 chars, for relevance only).
 2. The route validates with zod, rate-limits (live only), and calls `composeAnswer`. The
    response is `text/event-stream`.
 3. `composeAnswer`: empty knowledge base → in-persona "nothing loaded" reply, no model call.
