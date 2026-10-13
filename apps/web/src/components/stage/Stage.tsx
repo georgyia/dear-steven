@@ -1,7 +1,7 @@
 'use client';
 
 import { LIMITS } from '@dear-steven/core/limits';
-import type { AskErrorCode, KnowledgeStatus, SetupState } from '@dear-steven/core/schema';
+import type { AskErrorCode, Citation, KnowledgeStatus, SetupState } from '@dear-steven/core/schema';
 import { InformationCircleIcon, VoiceIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { LayoutGroup, MotionConfig } from 'motion/react';
@@ -87,7 +87,10 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const [stage, send] = useReducer(transition, initialStage);
   const [conversation, dispatch] = useReducer(conversationReducer, initialConversation);
   const [draft, setDraft] = useState('');
-  const [drawer, setDrawer] = useState<{ turnId: string; citationId: string } | null>(null);
+  /** A citation of an answer, or one of a summary's moments (P8-04), stepping through its list. */
+  const [drawer, setDrawer] = useState<
+    { turnId: string; citationId: string } | { summary: Citation[]; index: number } | null
+  >(null);
   const [dialog, setDialog] = useState<'setup' | 'about' | 'episodes' | 'voice' | null>(null);
   /** The setup panel was opened to add a key (P8-02): its key field takes the focus. */
   const [focusKey, setFocusKey] = useState(false);
@@ -402,6 +405,12 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
 
   const target = useMemo<(EvidenceTarget & { order: string[]; turnId: string }) | null>(() => {
     if (!drawer) return null;
+    if ('summary' in drawer) {
+      const citation = drawer.summary[drawer.index];
+      if (!citation) return null;
+      const order = drawer.summary.map((c) => c.id);
+      return { citation, index: drawer.index, total: order.length, order, turnId: '' };
+    }
     const turn = turns.find((t) => t.id === drawer.turnId);
     if (!turn) return null;
     const order = citationOrder(turn);
@@ -414,14 +423,24 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const stepCitation = useCallback(
     (dir: 1 | -1) => {
       if (!target) return;
+      if (drawer && 'summary' in drawer) {
+        setDrawer({ ...drawer, index: (target.index + dir + target.total) % target.total });
+        return;
+      }
       const next = target.order[(target.index + dir + target.total) % target.total];
       if (!next) return;
       setDrawer({ turnId: target.turnId, citationId: next });
       const chip = document.querySelector(`#turn-${target.turnId} [data-citation="${next}"]`);
       chip?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     },
-    [target],
+    [target, drawer],
   );
+
+  /** Closing a moment a summary opened goes back to that summary. */
+  const closeDrawer = useCallback(() => {
+    if (drawer && 'summary' in drawer) setDialog('episodes');
+    setDrawer(null);
+  }, [drawer]);
 
   useKeydown((e) => {
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || dialog) return;
@@ -434,7 +453,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
         voice.stopSpeaking();
       } else if (drawer) {
         e.preventDefault();
-        setDrawer(null);
+        closeDrawer();
       }
       return;
     }
@@ -685,7 +704,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
         target={target}
         onPrev={() => stepCitation(-1)}
         onNext={() => stepCitation(1)}
-        onClose={() => setDrawer(null)}
+        onClose={closeDrawer}
       />
       <ToastViewport
         className={
@@ -711,7 +730,14 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
           }
         }
       />
-      <EpisodeExplorer open={dialog === 'episodes'} onClose={() => setDialog(null)} />
+      <EpisodeExplorer
+        open={dialog === 'episodes'}
+        onClose={() => setDialog(null)}
+        onOpenMoment={(summary, index) => {
+          setDialog(null);
+          setDrawer({ summary, index });
+        }}
+      />
       <AboutDialog open={dialog === 'about'} onClose={() => setDialog(null)} />
       <VoiceSettings
         open={dialog === 'voice'}

@@ -16,3 +16,4 @@ export {
   summaryEstimateUsd,
   writtenProblems,
 } from './summary.ts';
+export { summaryView } from './view.ts';

@@ -1,5 +1,6 @@
 import {
   CitationSchema,
+  ConversationSummaryViewSchema,
   RelatedMomentsSchema,
   ResolvedBlockSchema,
 } from '@dear-steven/core/schema';
@@ -9,6 +10,7 @@ import {
   demoEpisodePage,
   demoPassageContext,
   demoRelatedMoments,
+  demoSummaryView,
   pickDemoAnswer,
 } from './demo-fixtures.ts';
 import { GERMAN, inGerman } from './demo-fixtures-de.ts';
@@ -152,5 +154,20 @@ describe('demoRelatedMoments', () => {
       }
     expect(demoRelatedMoments('demo_ps_problem')).toEqual({ passages: [] });
     expect(demoRelatedMoments('ps_real_1')).toBe(null);
+  });
+});
+
+describe('demo summaries (P8-04)', () => {
+  it('summarise every fixture episode, quoting only fixture passages, labelled demo', () => {
+    for (const episode of demoEpisodePage('', 0).episodes) {
+      const view = ConversationSummaryViewSchema.parse(demoSummaryView(episode.id));
+      expect(view.summary?.demo).toBe(true);
+      expect(view.summary?.about).toMatch(/^Demo summary \(fixture\):/);
+      for (const m of view.summary?.moments ?? []) {
+        const passage = demoPassageContext(m.citation.passageId)?.citation.text ?? '';
+        expect(passage).toContain(m.citation.excerpt);
+      }
+    }
+    expect(demoSummaryView('not-a-fixture')).toBe(null);
   });
 });
