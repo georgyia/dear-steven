@@ -115,6 +115,30 @@ export function accessCodeFrom(env: Env = process.env): string | null {
   return clean(env.DEAR_STEVEN_ACCESS_CODE);
 }
 
+/**
+ * Where the web app finds a request's client address (P8-01), for rate limits. Read per request,
+ * like the access code, so it never touches the filesystem.
+ *
+ * - `DEAR_STEVEN_CLIENT_IP_HEADER`: a header the platform sets and the client can't
+ *   (`fly-client-ip`, `cf-connecting-ip`). When set, it is the only source.
+ * - Otherwise `X-Forwarded-For`, counted from the right: each proxy appends the address it saw, so
+ *   only the last `DEAR_STEVEN_TRUSTED_PROXIES` entries (default 1) were written by this
+ *   deployment. The first entry is whatever the client chose to send.
+ */
+export interface ClientAddressPolicy {
+  header: string | null;
+  trustedProxies: number;
+}
+
+export function clientAddressFrom(env: Env = process.env): ClientAddressPolicy {
+  const header = clean(env.DEAR_STEVEN_CLIENT_IP_HEADER)?.toLowerCase() ?? null;
+  const proxies = Number(env.DEAR_STEVEN_TRUSTED_PROXIES?.trim() || '1');
+  return {
+    header: header && /^[a-z0-9-]{1,64}$/.test(header) ? header : null,
+    trustedProxies: Number.isInteger(proxies) && proxies >= 1 && proxies <= 10 ? proxies : 1,
+  };
+}
+
 /** Throws a readable error for CLI commands that cannot run without a key. */
 export function requireKey(
   name: 'OPENAI_API_KEY' | 'YOUTUBE_API_KEY',

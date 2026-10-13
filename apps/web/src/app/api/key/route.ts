@@ -4,7 +4,7 @@ import { MESSAGES } from '@/i18n';
 import { describeFailure } from '@/server/errors';
 import { getOpenAI } from '@/server/knowledge';
 import { requestUiLocale } from '@/server/locale';
-import { clientKey, takeToken } from '@/server/rate-limit';
+import { clientKey, EVERYONE, takeToken } from '@/server/rate-limit';
 import { requestConfig } from '@/server/request-config';
 import { jsonError } from '@/server/sse';
 
@@ -20,7 +20,7 @@ const NO_STORE = { 'Cache-Control': 'no-store' };
 export async function POST(req: Request) {
   const locale = await requestUiLocale();
   const copy = MESSAGES[locale].serverErrors;
-  if (!takeToken('keyCheck', clientKey(req)).ok || !takeToken('keyCheckAll', 'all').ok) {
+  if (!takeToken('keyCheck', clientKey(req)).ok || !takeToken('keyCheckAll', EVERYONE).ok) {
     return jsonError(429, 'rate_limited', copy.keyChecks, NO_STORE);
   }
   const { config, refused } = requestConfig(req, locale);

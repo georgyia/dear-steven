@@ -113,7 +113,7 @@ export function createSpeaker(
       try {
         const res = await fetch('/api/speech', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...keyHeaders() },
+          headers: { 'Content-Type': 'application/json', ...(await keyHeaders()) },
           body: JSON.stringify({
             text,
             language,

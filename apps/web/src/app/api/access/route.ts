@@ -1,6 +1,6 @@
 import { readConfig } from '@dear-steven/core/config';
 import { accessCookie, codeMatches, issueAccessToken } from '@/server/access';
-import { clientKey, takeToken } from '@/server/rate-limit';
+import { clientKey, EVERYONE, takeToken } from '@/server/rate-limit';
 import { jsonError } from '@/server/sse';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   const code = readConfig().accessCode;
   if (!code) return jsonError(404, 'bad_request', 'There is no passcode to enter.');
   const perClient = takeToken('access', clientKey(req));
-  const limit = perClient.ok ? takeToken('accessAll', 'everyone') : perClient;
+  const limit = perClient.ok ? takeToken('accessAll', EVERYONE) : perClient;
   if (!limit.ok) {
     return jsonError(429, 'rate_limited', 'Too many tries. Wait a minute, then try again.', {
       'Retry-After': String(limit.retryAfter),

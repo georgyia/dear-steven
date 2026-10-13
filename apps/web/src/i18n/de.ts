@@ -405,14 +405,14 @@ export const de: Messages = {
       label: 'Dein OpenAI-Schlüssel',
       using: (remembered) =>
         remembered
-          ? 'Dein Schlüssel ist aktiv und auf diesem Gerät gespeichert, bis du ihn vergisst.'
-          : 'Dein Schlüssel ist aktiv und bleibt in diesem Tab, bis du ihn schließt.',
-      remember: 'Auf diesem Gerät merken',
+          ? 'Dein Schlüssel ist aktiv und verschlüsselt auf diesem Gerät gespeichert, für 30 Tage oder bis du ihn vergisst.'
+          : 'Dein Schlüssel ist aktiv und bleibt verschlüsselt in diesem Tab, bis du ihn schließt.',
+      remember: 'Auf diesem Gerät 30 Tage merken',
       use: 'Prüfen und nutzen',
       testing: 'Wird geprüft …',
       forget: 'Meinen Schlüssel vergessen',
       privacy:
-        'Er bleibt in diesem Browser und geht nur an diese Seite, mit deinen Anfragen. Der Server nutzt ihn für die jeweilige Anfrage und speichert oder protokolliert ihn nie.',
+        'Er bleibt verschlüsselt in diesem Browser und geht nur an diese Seite, mit deinen Anfragen. Der Server nutzt ihn für die jeweilige Anfrage und speichert oder protokolliert ihn nie. Am sichersten: ein Projektschlüssel mit Monatsbudget.',
       insecure: 'Deinen eigenen Schlüssel kann ich nur über HTTPS nutzen.',
       failed: 'Ich konnte den Schlüssel gerade nicht prüfen. Noch einmal?',
       noStorage:

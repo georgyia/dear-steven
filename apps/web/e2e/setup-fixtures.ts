@@ -1,8 +1,13 @@
 // The guided-setup e2e builds its knowledge base from here, never from the real feed or OpenAI: a
 // two-episode RSS feed whose VTT transcripts are labelled fixture text, and a fake embeddings
 // endpoint. `node e2e/setup-fixtures.ts <port>`; started by playwright.config.ts.
+//
+// It is also the live e2e server's OpenAI (P8-01): a call made with the canary operator key is
+// rejected the way OpenAI rejects a key, echoing its last four characters, so the canary test sees
+// what the app does with a provider's echo.
 import { rmSync } from 'node:fs';
 import { createServer } from 'node:http';
+import { E2E_OPERATOR_CANARY } from './live-env.ts';
 import { E2E_SETUP_DB, E2E_SETUP_ENV_FILE } from './setup-env.ts';
 
 const port = Number(process.argv[2]);
@@ -61,7 +66,17 @@ function vector(text: string, dimensions: number): number[] {
 
 createServer((req, res) => {
   const vttMatch = req.url?.match(/^\/vtt\/(\d+)\.vtt$/);
-  if (req.method === 'GET' && req.url === '/feed.xml') {
+  if (req.headers.authorization === `Bearer ${E2E_OPERATOR_CANARY}`) {
+    res.writeHead(401, { 'Content-Type': 'application/json' }).end(
+      JSON.stringify({
+        error: {
+          message: `Incorrect API key provided: sk-proj-****${E2E_OPERATOR_CANARY.slice(-4)}.`,
+          type: 'invalid_request_error',
+          code: 'invalid_api_key',
+        },
+      }),
+    );
+  } else if (req.method === 'GET' && req.url === '/feed.xml') {
     res.writeHead(200, { 'Content-Type': 'application/rss+xml' }).end(feed);
   } else if (req.method === 'GET' && vttMatch && EPISODES.includes(Number(vttMatch[1]))) {
     res.writeHead(200, { 'Content-Type': 'text/vtt' }).end(vtt(Number(vttMatch[1])));

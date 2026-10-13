@@ -51,11 +51,48 @@ async function standIn(page: Page) {
   return sent;
 }
 
+/**
+ * Where the key is kept, as the browser holds it (P8-01): what each storage contains, whether the
+ * key appears as plain text anywhere a program reading the browser's files could find it, and
+ * whether the key that sealed it can be exported.
+ */
 const stored = (page: Page) =>
-  page.evaluate(
-    (k) => ({ tab: sessionStorage.getItem(k), device: localStorage.getItem(k) }),
-    STORAGE,
-  );
+  page.evaluate(async (k) => {
+    const everything = [sessionStorage, localStorage].flatMap((store) =>
+      Object.keys(store).map((name) => `${name}=${store.getItem(name)}`),
+    );
+    // Opened only if it exists: opening a database that doesn't creates it.
+    const exists = (await indexedDB.databases()).some((d) => d.name === 'dear-steven-key-vault');
+    const vault = !exists
+      ? null
+      : await new Promise<CryptoKey | null>((resolve) => {
+          const req = indexedDB.open('dear-steven-key-vault');
+          req.onsuccess = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains('keys')) {
+              db.close();
+              return resolve(null);
+            }
+            const get = db.transaction('keys').objectStore('keys').get('seal');
+            get.onsuccess = () => {
+              db.close();
+              resolve((get.result as CryptoKey | undefined) ?? null);
+            };
+          };
+          req.onerror = () => resolve(null);
+        });
+    return {
+      tab: sessionStorage.getItem(k),
+      device: localStorage.getItem(k),
+      plain: everything.some((entry) => entry.includes('sk-')),
+      sealingKey: vault && { extractable: vault.extractable, type: vault.algorithm.name },
+    };
+  }, STORAGE);
+
+const SEALED_IN_TAB = /^v1\.tab\.0\.[\w-]+\.[\w-]+$/;
+const SEALED_ON_DEVICE = /^v1\.device\.\d{13}\.[\w-]+\.[\w-]+$/;
+const NON_EXPORTABLE = { extractable: false, type: 'AES-GCM' };
+const NOTHING = { tab: null, device: null, plain: false, sealingKey: null };
 
 const openSetup = async (page: Page) => {
   await page.getByTestId('status-pill').click();
@@ -78,7 +115,7 @@ test('paste a key, test it, ask on it, then forget it', async ({ page }) => {
   await field.fill(`sk-wrong-${'0'.repeat(30)}`);
   await page.getByRole('button', { name: copy.use }).click();
   await expect(setup.getByRole('alert')).toHaveText(en.serverErrors.yourKeyRejected);
-  expect(await stored(page)).toEqual({ tab: null, device: null });
+  expect(await stored(page)).toEqual(NOTHING);
 
   await field.fill('not a key');
   await page.getByRole('button', { name: copy.use }).click();
@@ -89,7 +126,12 @@ test('paste a key, test it, ask on it, then forget it', async ({ page }) => {
   await expect(page.getByText(copy.using(false))).toBeVisible();
   await expect(page.getByLabel(copy.label)).toHaveCount(0);
   await expect(page.getByTestId('status-pill')).toContainText('on your key');
-  expect(await stored(page)).toEqual({ tab: CANARY, device: null });
+  expect(await stored(page)).toEqual({
+    tab: expect.stringMatching(SEALED_IN_TAB),
+    device: null,
+    plain: false,
+    sealingKey: NON_EXPORTABLE,
+  });
 
   const audit = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
@@ -108,7 +150,7 @@ test('paste a key, test it, ask on it, then forget it', async ({ page }) => {
   await page.getByRole('button', { name: copy.forget }).click();
   await expect(page.getByLabel(copy.label)).toBeVisible();
   await expect(page.getByTestId('status-pill')).not.toContainText('on your key');
-  expect(await stored(page)).toEqual({ tab: null, device: null });
+  expect(await stored(page)).toEqual(NOTHING);
 
   await closeSetup(page);
   await composer.fill('And how do I keep going?');
@@ -130,14 +172,56 @@ test('"remember on this device" survives a reload, and Forget clears it', async 
   await page.getByLabel(copy.remember).check();
   await page.getByRole('button', { name: copy.use }).click();
   await expect(page.getByText(copy.using(true))).toBeVisible();
-  expect(await stored(page)).toEqual({ tab: null, device: CANARY });
+  const remembered = await stored(page);
+  expect(remembered).toEqual({
+    tab: null,
+    device: expect.stringMatching(SEALED_ON_DEVICE),
+    plain: false,
+    sealingKey: NON_EXPORTABLE,
+  });
+  // Remembered for 30 days from now.
+  const expires = Number(remembered.device?.split('.')[2]);
+  expect(Math.round((expires - Date.now()) / 86_400_000)).toBe(30);
 
   await page.reload();
   await expect(page.getByTestId('status-pill')).toContainText('on your key');
   await openSetup(page);
   await expect(page.getByText(copy.using(true))).toBeVisible();
   await page.getByRole('button', { name: copy.forget }).click();
-  expect(await stored(page)).toEqual({ tab: null, device: null });
+  await expect(page.getByLabel(copy.label)).toBeVisible();
+  expect(await stored(page)).toEqual(NOTHING);
+});
+
+test('a sealed key that was altered, or kept as plain text before, is never sent as it was', async ({
+  page,
+}) => {
+  const sent = await standIn(page);
+  await page.goto('/');
+  await openSetup(page);
+  await page.getByLabel(copy.label).fill(CANARY);
+  await page.getByLabel(copy.remember).check();
+  await page.getByRole('button', { name: copy.use }).click();
+  await expect(page.getByText(copy.using(true))).toBeVisible();
+
+  // Given a longer life by hand: the expiry is sealed with the key, so it no longer opens.
+  await page.evaluate((k) => {
+    const [v, where, , iv, data] = (localStorage.getItem(k) ?? '').split('.');
+    localStorage.setItem(k, [v, where, String(Date.now() + 20 * 86_400_000), iv, data].join('.'));
+  }, STORAGE);
+  sent.length = 0;
+  await page.reload();
+  await expect(page.getByTestId('status-pill')).not.toContainText('on your key');
+  expect((await stored(page)).device).toBe(null);
+  expect(sent.filter((r) => r.key)).toEqual([]);
+
+  // A key kept as plain text by an earlier version is sealed on first use, and still works.
+  await page.evaluate(([k, key]) => sessionStorage.setItem(k, key), [STORAGE, CANARY]);
+  await page.reload();
+  await expect(page.getByTestId('status-pill')).toContainText('on your key');
+  expect(await stored(page)).toMatchObject({
+    tab: expect.stringMatching(SEALED_IN_TAB),
+    plain: false,
+  });
 });
 
 test('with storage blocked, says the key can’t be kept and never sends it', async ({ page }) => {

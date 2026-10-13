@@ -9,7 +9,8 @@ import { canUseOwnKey, forgetKey, saveKey, storedKey } from '@/lib/visitor-key';
 
 /**
  * "Bring your own key" in the setup panel (P6-03): paste, test (free), use; or forget. The key is
- * only stored once the server has confirmed it works, and the field is cleared straight after.
+ * only stored once the server has confirmed it works, sealed (P8-01), and the field is cleared
+ * straight after.
  */
 export function OwnKey({ onChange }: { onChange: () => void }) {
   const id = useId();
@@ -26,8 +27,13 @@ export function OwnKey({ onChange }: { onChange: () => void }) {
 
   useEffect(() => {
     setSecure(canUseOwnKey());
-    const stored = storedKey();
-    setInUse(stored && { remembered: stored.remembered });
+    let live = true;
+    storedKey().then((stored) => {
+      if (live) setInUse(stored && { remembered: stored.remembered });
+    });
+    return () => {
+      live = false;
+    };
   }, []);
 
   async function use(event: React.FormEvent) {
@@ -46,7 +52,7 @@ export function OwnKey({ onChange }: { onChange: () => void }) {
         setProblem(failure);
         return;
       }
-      if (!saveKey(key, remember)) {
+      if (!(await saveKey(key, remember))) {
         setProblem(copy.noStorage);
         return;
       }
@@ -60,8 +66,8 @@ export function OwnKey({ onChange }: { onChange: () => void }) {
     }
   }
 
-  function forget() {
-    forgetKey();
+  async function forget() {
+    await forgetKey();
     setInUse(null);
     onChange();
   }
