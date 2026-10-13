@@ -8,12 +8,13 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 
 ## Now
 
-- **Phase:** M4 *Reach and trust* merged to `main` on 2026-10-13 (18 PRs, squash, linear; `main`'s
-  tree is identical to the CI-tested top of the stack). Phase 7 / M5 *Conversations* planned
-  (`plan/04-issues/phase-7.md`).
-- **Next to pick (M5):** P7-01, P7-09, P7-04, P7-02, P7-03, P6-16, P7-05, P7-06, P7-07, P7-08.
-- **Waiting on the owner:** the P6-07 decision (draft #33), P6-12 wording and takedown contact,
-  H-07 (five live answers), H-10 (YouTube spot check), H-11 (crisis copy and helplines).
+- **Phase:** M5 *Conversations* merged to `main` on 2026-10-13 (13 PRs, squash): talk mode,
+  interviews and practice, remembering what Steven learned about you, design polish, the latest
+  episodes. Phase 8 / M6 *Summaries and open access* planned (`plan/04-issues/phase-8.md`).
+- **Next to pick (M6):** P8-01, P8-03, P8-02, P8-04.
+- **Waiting on the owner:** the P6-07 decision (draft #33), P7-11 (how a deployment schedules
+  ingest), P8-05 (accounts with Supabase), P6-12 wording and takedown contact, H-07 (five live
+  answers), H-10 (YouTube spot check), H-11 (crisis copy and helplines).
 
 ## Verified in the first pass (2026-10-10)
 
@@ -163,7 +164,7 @@ answers `track:answers` (P6-06–07), security `track:security` (P6-08–11), po
 
 Categories are labels: conversations `track:conversation` (P7-05–08), design `track:design`
 (P7-02–03), bugs `bug` (P7-01, P7-04, P7-10), tests `type:test` (P7-12), knowledge base
-`track:ingest` (P6-16), maintenance `track:infra` (P7-09).
+`track:ingest` (P6-16, P7-11), maintenance `track:infra` (P7-09).
 
 | Id | # | Issue | Pri | Risk | State | Depends on | Needs |
 |----|---|-------|-----|------|-------|------------|-------|
@@ -179,3 +180,18 @@ Categories are labels: conversations `track:conversation` (P7-05–08), design `
 | P7-07 | #52 | feat(core): practise presenting your expertise — a mock interview with a debrief | P1 | medium | done | P7-06 | — |
 | P7-08 | #53 | feat(web): remember what Steven learned about you — opt-in, on this device | P2 | medium | done | P7-06 | — |
 | P7-09 | #54 | chore(ci): keep TypeScript and Node's types on the versions the stack needs | P2 | low | done | — | — |
+| P7-11 | #63 | chore(infra): keep a deployment up to date with new episodes on a schedule | P2 | medium | open, blocked | P6-16 | decision |
+
+### M6 Summaries and open access
+
+Categories are labels: security `track:security` (P8-01, P8-02, P8-05), summaries
+`track:summaries` (P8-03, P8-04). `risk:high` PRs in M6 merge after green CI on the owner's
+instruction (2026-10-13).
+
+| Id | # | Issue | Pri | Risk | State | Depends on | Needs |
+|----|---|-------|-----|------|-------|------------|-------|
+| P8-01 | #71 | fix(security): your own key, audited and kept encrypted, behind limits that can't be reset | P0 | high | open | — | — |
+| P8-02 | #72 | feat(security): three free questions on the operator's key, then your own | P1 | high | open | P8-01 | — |
+| P8-03 | #74 | feat(ingest): episode summaries, with every line quoted from the transcript | P1 | medium | open | — | — |
+| P8-04 | #75 | feat(web): read an episode's summary in the explorer | P1 | low | open | P8-03 | — |
+| P8-05 | #73 | chore(infra): accounts and server-side key storage with Supabase — decide first | P2 | high | open, blocked | P8-02 | decision |
