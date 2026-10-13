@@ -212,6 +212,8 @@ export const de: Messages = {
     host: 'Bestätigte Aussage des Gastgebers',
     guest: 'Bestätigte Aussage eines Gasts',
     unverified: 'Echte Passage, Sprecher nicht bestätigt',
+    previewVerified: 'Bestätigter Sprecher',
+    previewOpen: 'Klicken, um die Quelle zu öffnen',
     label: (who, time, note, spoken) => `${who}, ${time}. ${note}, bei ${spoken}. Quelle öffnen.`,
   },
   cards: {

@@ -206,6 +206,8 @@ export const en = {
     host: 'Verified host statement',
     guest: 'Verified guest statement',
     unverified: 'Real passage, speaker not verified',
+    previewVerified: 'Verified speaker',
+    previewOpen: 'Click to open the source',
     label: (who: string, time: string, note: string, spoken: string) =>
       `${who}, ${time}. ${note}, at ${spoken}. Open source.`,
   },
