@@ -21,6 +21,8 @@ export interface StoredTurn {
   steps: { step: AskStep; message: string }[];
   sources: { passages: number; episodes: number } | null;
   final: FinalAnswer;
+  /** Said in talk mode (P7-05). */
+  mode?: 'talk';
 }
 
 export interface StoredConversation {
@@ -45,6 +47,7 @@ export function toStored(turns: Turn[], now = new Date()): StoredConversation {
         steps: t.steps,
         sources: t.sources,
         final: t.final,
+        ...(t.mode === 'talk' ? { mode: 'talk' as const } : {}),
       })),
   };
 }
@@ -99,6 +102,7 @@ export function parseStored(raw: unknown): StoredTurn[] | null {
       steps,
       sources,
       final: relinked(final.data),
+      ...(t.mode === 'talk' ? { mode: 'talk' as const } : {}),
     });
   }
   return out;
@@ -119,6 +123,7 @@ export function restoredTurns(stored: StoredTurn[]): Turn[] {
     error: null,
     startedAt: 0,
     elapsedMs: s.final.elapsedMs,
+    ...(s.mode ? { mode: s.mode } : {}),
   }));
 }
 

@@ -37,9 +37,27 @@ export const de: Messages = {
     label: 'Frag Steven',
     placeholder: 'Dear Steven…',
     followUp: 'Stell eine Anschlussfrage…',
+    talkPlaceholder: 'Sag etwas…',
+    talkFollowUp: 'Antworte Steven…',
     listening: 'Ich höre zu…',
     send: 'Senden',
     stop: 'Stoppen',
+  },
+  modes: {
+    label: 'Wie Dear Steven antwortet',
+    ask: 'Fragen',
+    talk: 'Reden',
+    hint: {
+      ask: 'Eine durchdachte Antwort, mit allen Quellen.',
+      talk: 'Ein schnelles Hin und Her, gern auch laut.',
+    },
+  },
+  talk: {
+    label: 'Im Gespräch mit Dear Steven',
+    eyebrow: 'Reden',
+    you: 'Du',
+    steven: 'Dear Steven',
+    thinking: 'Dear Steven denkt nach…',
   },
   disclosure:
     'Dear Steven ist eine KI-Persona — nicht Steven Bartlett und nicht mit der Show verbunden.',
@@ -484,6 +502,9 @@ export const de: Messages = {
     alwaysSpeak: 'Antworten immer vorlesen',
     alwaysSpeakNote:
       'Jede Antwort laut vorlesen, ob getippt oder gesprochen. Es wird erst etwas abgespielt, wenn du bei diesem Besuch etwas gefragt hast.',
+    talkAloud: 'Antworten beim Reden vorlesen',
+    talkAloudNote:
+      'Beim Reden antwortet Dear Steven laut, nach deinem ersten Klick oder Tastendruck. Schalte es aus, um die Antworten stattdessen zu lesen.',
     onDevice: 'Spracherkennung auf dem Gerät',
     onDeviceNotes: {
       server:

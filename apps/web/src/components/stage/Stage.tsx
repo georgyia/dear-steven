@@ -6,8 +6,10 @@ import { InformationCircleIcon, VoiceIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { LayoutGroup, MotionConfig } from 'motion/react';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { TalkTurn } from '@/components/answer/TalkTurn';
 import { TurnView } from '@/components/answer/TurnView';
 import { Composer } from '@/components/composer/Composer';
+import { ModeSwitch } from '@/components/composer/ModeSwitch';
 import { EvidenceDrawer, type EvidenceTarget } from '@/components/evidence/EvidenceDrawer';
 import { ToastProvider, ToastViewport, useToast } from '@/components/ui/Toasts';
 import { VoiceControl } from '@/components/voice/VoiceControl';
@@ -17,11 +19,13 @@ import { AskError, askStream, fetchStatus, openShared } from '@/lib/api';
 import {
   citationOrder,
   conversationReducer,
+  groupTurns,
   historyFor,
   initialConversation,
 } from '@/lib/conversation';
 import { isTypingTarget, useKeydown } from '@/lib/hooks';
 import { restoredTurns } from '@/lib/memory';
+import { useAskMode } from '@/lib/mode';
 import { fetchSetup, forgetSetupToken, takeSetupToken } from '@/lib/setup';
 import { sharedToken } from '@/lib/share';
 import {
@@ -82,6 +86,9 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const [dialog, setDialog] = useState<'setup' | 'about' | 'episodes' | 'voice' | null>(null);
   const [guided, setGuided] = useState<{ token: string; state: SetupState } | null>(null);
   const { prefs, update: updatePrefs, persisted } = useVoicePreferences();
+  const [mode, setMode] = useAskMode();
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
   const { toast, dismiss } = useToast();
@@ -93,7 +100,10 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const seq = useRef(0);
-  /** Turns whose answer is read aloud: spoken questions, and every question with "always speak". */
+  /**
+   * Turns whose answer is read aloud: spoken questions, every question with "always speak", and
+   * talk-mode messages unless "read talk replies aloud" is off (P7-05).
+   */
   const spokenTurns = useRef(new Set<string>());
   const askRef = useRef<Ask>(async () => undefined);
   const stageRef = useRef(stage);
@@ -239,8 +249,10 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     if (voiceRef.current.speakingTurnId) voiceRef.current.stopSpeaking();
     seq.current += 1;
     const id = `t${Date.now().toString(36)}${seq.current}`;
+    const mode = modeRef.current;
+    const aloud = prefsRef.current.alwaysSpeak || (mode === 'talk' && prefsRef.current.talkAloud);
     if (options.voice) spokenTurns.current.add(id);
-    else if (prefsRef.current.alwaysSpeak && hasBeenActive()) {
+    else if (aloud && hasBeenActive()) {
       // A typed question: this key press or click is the gesture that lets the reply play later.
       unlockAudio();
       spokenTurns.current.add(id);
@@ -248,7 +260,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     const history = historyFor(turnsRef.current);
     setDraft('');
     setDrawer(null);
-    dispatch({ type: 'turn.start', id, question, at: performance.now() });
+    dispatch({ type: 'turn.start', id, question, at: performance.now(), mode });
     send({ type: 'ASK' });
 
     const ctrl = new AbortController();
@@ -256,7 +268,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     let settled = false;
     try {
       for await (const event of askStream(
-        { question, history, uiLocale: i18nRef.current.locale },
+        { question, history, uiLocale: i18nRef.current.locale, mode },
         ctrl.signal,
       )) {
         dispatch({ type: 'turn.event', id, event, at: performance.now() });
@@ -394,31 +406,39 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   });
 
   const listening = stage.kind === 'listening' || stage.kind === 'requestingMic';
+  const talking = mode === 'talk';
   const composer = (
-    <Composer
-      value={draft}
-      onValueChange={setDraft}
-      onSend={(q) => void ask(q)}
-      onStop={stop}
-      busy={busy}
-      placeholder={
-        listening
-          ? t.composer.listening
-          : inConversation
-            ? t.composer.followUp
-            : t.composer.placeholder
-      }
-      inputRef={inputRef}
-      voice={
-        <VoiceControl
-          voice={voice}
-          disabled={busy}
-          onUnavailable={() =>
-            toast({ id: 'no-voice', title: t.errors.micUnsupported, duration: 4000 })
-          }
-        />
-      }
-    />
+    <div className="flex flex-col gap-2">
+      <ModeSwitch mode={mode} onChange={setMode} />
+      <Composer
+        value={draft}
+        onValueChange={setDraft}
+        onSend={(q) => void ask(q)}
+        onStop={stop}
+        busy={busy}
+        placeholder={
+          listening
+            ? t.composer.listening
+            : talking
+              ? inConversation
+                ? t.composer.talkFollowUp
+                : t.composer.talkPlaceholder
+              : inConversation
+                ? t.composer.followUp
+                : t.composer.placeholder
+        }
+        inputRef={inputRef}
+        voice={
+          <VoiceControl
+            voice={voice}
+            disabled={busy}
+            onUnavailable={() =>
+              toast({ id: 'no-voice', title: t.errors.micUnsupported, duration: 4000 })
+            }
+          />
+        }
+      />
+    </div>
   );
 
   const pill = <StatusPill status={status} onOpen={() => setDialog('setup')} />;
@@ -467,15 +487,36 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
               </>
             }
           >
-            {turns.map((turn) => (
-              <TurnView
-                key={turn.id}
-                turn={turn}
-                activeCitationId={target?.turnId === turn.id ? target.citation.id : null}
-                onOpenCitation={(turnId, citationId) => setDrawer({ turnId, citationId })}
-                onRetry={(q) => void ask(q)}
-              />
-            ))}
+            {groupTurns(turns).map((group) =>
+              group.kind === 'ask' ? (
+                <TurnView
+                  key={group.turn.id}
+                  turn={group.turn}
+                  activeCitationId={target?.turnId === group.turn.id ? target.citation.id : null}
+                  onOpenCitation={(turnId, citationId) => setDrawer({ turnId, citationId })}
+                  onRetry={(q) => void ask(q)}
+                />
+              ) : (
+                <section
+                  key={group.turns[0]?.id}
+                  aria-label={t.talk.label}
+                  className="flex flex-col gap-8"
+                >
+                  <p className="font-mono text-[10.5px] tracking-[0.16em] text-steel uppercase">
+                    {t.talk.eyebrow}
+                  </p>
+                  {group.turns.map((turn) => (
+                    <TalkTurn
+                      key={turn.id}
+                      turn={turn}
+                      activeCitationId={target?.turnId === turn.id ? target.citation.id : null}
+                      onOpenCitation={(turnId, citationId) => setDrawer({ turnId, citationId })}
+                      onRetry={(q) => void ask(q)}
+                    />
+                  ))}
+                </section>
+              ),
+            )}
             <MemoryControl
               remember={memory.remember}
               supported={memory.supported}
@@ -510,7 +551,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       <ToastViewport
         className={
           inConversation
-            ? `right-4 bottom-[calc(env(safe-area-inset-bottom)+7.75rem)] sm:right-6 ${target ? 'lg:right-[calc(var(--drawer)+24px)]' : ''}`
+            ? `right-4 bottom-[calc(env(safe-area-inset-bottom)+10.25rem)] sm:right-6 ${target ? 'lg:right-[calc(var(--drawer)+24px)]' : ''}`
             : 'right-4 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] sm:right-6 sm:bottom-20'
         }
       />

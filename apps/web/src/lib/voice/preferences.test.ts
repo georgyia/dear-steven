@@ -29,6 +29,7 @@ describe('voice preferences', () => {
     const store = memory();
     const prefs = {
       alwaysSpeak: true,
+      talkAloud: false,
       onDevice: true,
       serverVoice: 'coral',
       browserVoice: 'x',
@@ -54,5 +55,12 @@ describe('voice preferences', () => {
     expect(parsePreferences(JSON.stringify({ onDevice: 'yes', browserVoice: '' }))).toEqual(
       DEFAULT_PREFERENCES,
     );
+  });
+
+  it('reads talk replies aloud unless that was turned off (P7-05)', () => {
+    expect(DEFAULT_PREFERENCES.talkAloud).toBe(true);
+    expect(parsePreferences(JSON.stringify({ alwaysSpeak: false })).talkAloud).toBe(true);
+    expect(parsePreferences(JSON.stringify({ talkAloud: false })).talkAloud).toBe(false);
+    expect(parsePreferences(JSON.stringify({ talkAloud: 'no' })).talkAloud).toBe(true);
   });
 });

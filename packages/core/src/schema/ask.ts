@@ -13,9 +13,19 @@ export const HistoryTurnSchema = z.object({
 });
 export type HistoryTurn = z.infer<typeof HistoryTurnSchema>;
 
+/**
+ * How Steven replies (P7-05): `ask`, a considered answer with its sources; `talk`, a quick
+ * back-and-forth, like across a table. Same retrieval, validation and safety rails either way.
+ */
+export const ASK_MODES = ['ask', 'talk'] as const;
+export const AskModeSchema = z.enum(ASK_MODES);
+export type AskMode = z.infer<typeof AskModeSchema>;
+
 export const AskRequestSchema = z.strictObject({
   question: z.string().trim().min(1).max(LIMITS.questionChars),
   history: z.array(HistoryTurnSchema).max(LIMITS.historyTurns).default([]),
+  /** `ask` when absent. */
+  mode: AskModeSchema.optional(),
   /**
    * The visitor's BCP 47 locale (`en-GB`): which crisis helpline to show (P6-11), later the answer
    * language. Optional; the server falls back to Accept-Language.

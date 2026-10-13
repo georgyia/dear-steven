@@ -19,10 +19,10 @@ import { detectLanguage } from '@dear-steven/core/language';
 import { answerCostUsd, embeddingCostUsd, MODELS } from '@dear-steven/core/models';
 import { createOpenAI, moderate, openAIEmbedder } from '@dear-steven/core/openai';
 import { hybridSearch } from '@dear-steven/core/retrieval';
-import type { FinalAnswer } from '@dear-steven/core/schema';
+import { AskModeSchema, type FinalAnswer } from '@dear-steven/core/schema';
 import { KnowledgeStore } from '@dear-steven/core/store';
 import { type Judgement, judge, rubric } from './lib/judge.ts';
-import { checkAnswer, median, recallAt } from './lib/metrics.ts';
+import { answerWords, checkAnswer, median, recallAt } from './lib/metrics.ts';
 import {
   checkRedTeamAnswer,
   falseRefusals,
@@ -52,6 +52,8 @@ const THRESHOLDS = {
   opensWithPosition: 0.8,
   /** P6-01: recall@10 on a translated set may trail English by at most this. */
   translatedRecallGap: 0.1,
+  /** P7-05: talk replies (`--mode talk`) average fewer words than this. */
+  talkWordsAvg: 60,
 };
 
 /** Translated versions of the retrieval questions (P6-01): eval/questions.<lang>.json. */
@@ -61,8 +63,16 @@ const root = findRepoRoot();
 if (existsSync(join(root, '.env'))) process.loadEnvFile(join(root, '.env'));
 const config = readConfig(process.env, root);
 const { values } = parseArgs({
-  options: { answers: { type: 'boolean', default: false }, only: { type: 'string' } },
+  options: {
+    answers: { type: 'boolean', default: false },
+    only: { type: 'string' },
+    /** `talk` (P7-05): every live answer, the red team included, in talk mode. */
+    mode: { type: 'string', default: 'ask' },
+  },
 });
+const parsedMode = AskModeSchema.safeParse(values.mode);
+if (!parsedMode.success) throw new Error('--mode is ask or talk');
+const mode = parsedMode.data;
 
 const set = JSON.parse(readFileSync(join(root, 'eval', 'questions.json'), 'utf8')) as {
   questions: Question[];
@@ -174,6 +184,8 @@ failed ||= routingProblems.length > 0 || overRefused.rate > THRESHOLDS.falseRefu
 
 // ------------------------------------------------------------------ answers
 let personaRubric: ReturnType<typeof rubric> | null = null;
+/** How long the live answers ran, and in which mode (P7-05). */
+let talkWords: { mode: typeof mode; average: number; perAnswer: number[] } | null = null;
 const languageAnswers: {
   id: string;
   problems: string[];
@@ -210,7 +222,7 @@ if (values.answers) {
     try {
       for await (const e of composeAnswer(
         { store, model, embedder, moderate: moderator, onComplete: (r) => (record = r) },
-        { question: q.question, history: [] },
+        { question: q.question, history: [], mode },
         new AbortController().signal,
       )) {
         if (e.type === 'block.done' && ttfb === null) ttfb = Date.now() - t0;
@@ -262,6 +274,11 @@ if (values.answers) {
   console.log(
     `\ncitations resolve ${(resolveRate * 100).toFixed(0)}% · attribution violations ${attributionViolations} · quote mismatches ${quoteFailures} · persona lint ${personaFailures} · unanswerable handled ${honest}/${unanswerable.length} · first block p50 ${Math.round(ttfbP50)}ms · violations caught before display ${preRepair}`,
   );
+  const words = done.flatMap((a) => (a.final ? [answerWords(a.final)] : []));
+  const wordsAvg = words.length ? words.reduce((n, w) => n + w, 0) / words.length : 0;
+  console.log(`mode ${mode} · answers average ${Math.round(wordsAvg)} words`);
+  talkWords = { mode, average: wordsAvg, perAnswer: words };
+  if (mode === 'talk') failed ||= wordsAvg >= THRESHOLDS.talkWordsAvg;
   // Other languages, live: a few answers each must come back in that language, quotes still the
   // stored English spans, and any quote carrying a translation (P6-01).
   for (const lang of LANGUAGES) {
@@ -311,7 +328,7 @@ if (values.answers) {
           moderate: moderator,
           onComplete: (r) => (record = r),
         },
-        { question: c.question, history: [], ...(c.locale ? { locale: c.locale } : {}) },
+        { question: c.question, history: [], mode, ...(c.locale ? { locale: c.locale } : {}) },
         new AbortController().signal,
       )) {
         if (e.type === 'final') final = e.answer;
@@ -360,6 +377,7 @@ writeFileSync(
       retrieval,
       safety: { routingProblems, overRefused: overRefused.refused, redTeam: redTeamResults },
       personaRubric,
+      length: talkWords,
       languages: { recall: translatedRecall, answers: languageAnswers },
       answers,
       costUsd,

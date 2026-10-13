@@ -1,0 +1,275 @@
+{
+  "$comment": "P7-05: talk mode, live (gpt-6-luna, hybrid search, the 31-question set), after tightening TALK_STYLE to 20–45 words. Metrics only, no answer text. The first run, with \"under 60 words\" in the style note, averaged 74 words and is not kept.",
+  "date": "2026-10-13",
+  "mode": "talk",
+  "style": "TALK_STYLE (20 to 45 words)",
+  "averageWords": 55.5,
+  "threshold": 60,
+  "answers": [
+    {
+      "id": "q01",
+      "mode": "partial",
+      "blocks": ["paragraph"],
+      "words": 64,
+      "spokenWords": 64,
+      "citations": 1
+    },
+    {
+      "id": "q02",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 77,
+      "spokenWords": 58,
+      "citations": 1
+    },
+    {
+      "id": "q03",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 51,
+      "spokenWords": 51,
+      "citations": 1
+    },
+    {
+      "id": "q04",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 55,
+      "spokenWords": 55,
+      "citations": 1
+    },
+    {
+      "id": "q05",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 66,
+      "spokenWords": 66,
+      "citations": 1
+    },
+    {
+      "id": "q06",
+      "mode": "partial",
+      "blocks": ["paragraph"],
+      "words": 90,
+      "spokenWords": 59,
+      "citations": 1
+    },
+    {
+      "id": "q07",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 53,
+      "spokenWords": 53,
+      "citations": 1
+    },
+    {
+      "id": "q08",
+      "mode": "partial",
+      "blocks": ["paragraph"],
+      "words": 58,
+      "spokenWords": 49,
+      "citations": 2
+    },
+    {
+      "id": "q09",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 50,
+      "spokenWords": 50,
+      "citations": 1
+    },
+    {
+      "id": "q10",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 85,
+      "spokenWords": 51,
+      "citations": 1
+    },
+    {
+      "id": "q11",
+      "mode": "partial",
+      "blocks": ["paragraph"],
+      "words": 58,
+      "spokenWords": 58,
+      "citations": 1
+    },
+    {
+      "id": "q12",
+      "mode": "partial",
+      "blocks": ["paragraph"],
+      "words": 61,
+      "spokenWords": 61,
+      "citations": 1
+    },
+    {
+      "id": "q13",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 52,
+      "spokenWords": 52,
+      "citations": 1
+    },
+    {
+      "id": "q14",
+      "mode": "partial",
+      "blocks": ["paragraph"],
+      "words": 48,
+      "spokenWords": 48,
+      "citations": 1
+    },
+    {
+      "id": "q15",
+      "mode": "partial",
+      "blocks": ["paragraph"],
+      "words": 50,
+      "spokenWords": 50,
+      "citations": 3
+    },
+    {
+      "id": "q16",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 53,
+      "spokenWords": 53,
+      "citations": 1
+    },
+    {
+      "id": "q17",
+      "mode": "partial",
+      "blocks": ["paragraph"],
+      "words": 40,
+      "spokenWords": 40,
+      "citations": 2
+    },
+    {
+      "id": "q18",
+      "mode": "insufficient",
+      "blocks": ["paragraph"],
+      "words": 48,
+      "spokenWords": 48,
+      "citations": 0
+    },
+    {
+      "id": "q19",
+      "mode": "partial",
+      "blocks": ["paragraph"],
+      "words": 50,
+      "spokenWords": 44,
+      "citations": 1
+    },
+    {
+      "id": "q20",
+      "mode": "partial",
+      "blocks": ["paragraph"],
+      "words": 47,
+      "spokenWords": 47,
+      "citations": 1
+    },
+    {
+      "id": "u01",
+      "mode": "insufficient",
+      "blocks": ["paragraph"],
+      "words": 38,
+      "spokenWords": 38,
+      "citations": 0
+    },
+    {
+      "id": "u02",
+      "mode": "insufficient",
+      "blocks": ["paragraph"],
+      "words": 36,
+      "spokenWords": 36,
+      "citations": 0
+    },
+    {
+      "id": "u03",
+      "mode": "insufficient",
+      "blocks": ["paragraph"],
+      "words": 25,
+      "spokenWords": 25,
+      "citations": 0
+    },
+    {
+      "id": "a01",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 51,
+      "spokenWords": 46,
+      "citations": 1
+    },
+    {
+      "id": "a02",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 62,
+      "spokenWords": 62,
+      "citations": 1
+    },
+    {
+      "id": "a03",
+      "mode": "insufficient",
+      "blocks": ["paragraph"],
+      "words": 48,
+      "spokenWords": 48,
+      "citations": 0
+    },
+    {
+      "id": "a04",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 59,
+      "spokenWords": 59,
+      "citations": 1
+    },
+    {
+      "id": "a05",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 61,
+      "spokenWords": 45,
+      "citations": 1
+    },
+    {
+      "id": "a06",
+      "mode": "partial",
+      "blocks": ["paragraph"],
+      "words": 85,
+      "spokenWords": 59,
+      "citations": 1
+    },
+    {
+      "id": "a07",
+      "mode": "grounded",
+      "blocks": ["paragraph"],
+      "words": 50,
+      "spokenWords": 50,
+      "citations": 1
+    },
+    {
+      "id": "a08",
+      "mode": "insufficient",
+      "blocks": ["paragraph"],
+      "words": 51,
+      "spokenWords": 47,
+      "citations": 0
+    }
+  ],
+  "integrity": {
+    "citationsResolve": "31/31",
+    "attributionViolations": 0,
+    "quoteMismatches": 0,
+    "personaLint": 0
+  },
+  "redTeamLive": "22/22",
+  "personaRubric": {
+    "judged": 28,
+    "adviceSeeking": 14,
+    "opensWithPosition": 14,
+    "opensWithPositionRate": 1,
+    "decisiveness": 4.04,
+    "actionability": 2.21,
+    "hedgesPerAnswer": 0.96
+  },
+  "costUsd": 0.0356
+}

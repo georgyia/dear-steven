@@ -10,6 +10,8 @@ import { useCallback, useEffect, useState } from 'react';
 export interface VoicePreferences {
   /** Read every answer aloud, typed or spoken — still only after a gesture in this visit. */
   alwaysSpeak: boolean;
+  /** In talk mode (P7-05), read replies aloud by default — still only after a gesture. */
+  talkAloud: boolean;
   /** Ask Chrome to recognise speech on the device (`processLocally`) where it can. */
   onDevice: boolean;
   /** Stock OpenAI voice for server speech; `null` = the server default. */
@@ -20,6 +22,7 @@ export interface VoicePreferences {
 
 export const DEFAULT_PREFERENCES: VoicePreferences = {
   alwaysSpeak: false,
+  talkAloud: true,
   onDevice: false,
   serverVoice: null,
   browserVoice: null,
@@ -43,6 +46,8 @@ export function parsePreferences(raw: string | null): VoicePreferences {
   const o = value as Record<string, unknown>;
   return {
     alwaysSpeak: o.alwaysSpeak === true,
+    // On unless turned off: preferences saved before talk mode existed get the default.
+    talkAloud: o.talkAloud !== false,
     onDevice: o.onDevice === true,
     serverVoice: isStockVoice(o.serverVoice) ? o.serverVoice : null,
     browserVoice:

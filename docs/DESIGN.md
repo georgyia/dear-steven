@@ -61,6 +61,11 @@ Shape: chips 999px, composer 22px, cards 18px, panels 24px. Layout: column `44re
 - **Conversation**: fixed top bar (compact wordmark = new conversation; About; status pill), a
   44rem column of turns, the composer docked at the bottom under a scroll-edge blur, disclosure
   under it. The composer glides from home to dock (shared layout animation).
+- **Ask / Talk** (P7-05): a RubberSegment above the composer, with a one-line hint from `sm`. Talk
+  turns read as a **transcript, not chat bubbles**: a mono speaker label ("You", "Dear Steven")
+  beside each line (stacked under 640px), the reply in the display serif with its chips, a Listen
+  button, and nothing else: no pull quote panel, takeaway or conversation cards. Consecutive talk
+  turns sit together under a "Talk" eyebrow; Ask turns keep the editorial layout.
 - **Evidence inspector** (tabs Quote · Context · Video; Video holds the click-to-load player and
   the podcast audio): ≥ 1024px a 420px right panel; the column and composer shift left, never
   covered. < 1024px a bottom sheet (85dvh, drag handle, native modal dialog).

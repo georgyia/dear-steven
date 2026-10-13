@@ -38,9 +38,27 @@ export const en = {
     label: 'Ask Steven',
     placeholder: 'Dear Steven…',
     followUp: 'Ask a follow-up…',
+    talkPlaceholder: 'Say something…',
+    talkFollowUp: 'Say something back…',
     listening: 'Listening…',
     send: 'Send',
     stop: 'Stop',
+  },
+  modes: {
+    label: 'How Dear Steven replies',
+    ask: 'Ask',
+    talk: 'Talk',
+    hint: {
+      ask: 'A considered answer, with every source.',
+      talk: 'A quick back-and-forth, out loud if you like.',
+    },
+  },
+  talk: {
+    label: 'Talking with Dear Steven',
+    eyebrow: 'Talk',
+    you: 'You',
+    steven: 'Dear Steven',
+    thinking: 'Dear Steven is thinking…',
   },
   disclosure:
     'Dear Steven is an AI persona — not Steven Bartlett, and not affiliated with the show.',
@@ -473,6 +491,9 @@ export const en = {
     alwaysSpeak: 'Always speak replies',
     alwaysSpeakNote:
       'Read every answer aloud, typed or spoken. Nothing plays until you’ve asked something during this visit.',
+    talkAloud: 'Read talk replies aloud',
+    talkAloudNote:
+      'In Talk, Dear Steven answers out loud, after your first click or key press. Turn this off to read the replies instead.',
     onDevice: 'On-device speech recognition',
     onDeviceNotes: {
       server:

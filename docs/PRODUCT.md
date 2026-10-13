@@ -26,6 +26,9 @@
 - Inline citation chips open an evidence inspector: verbatim passage, speaker state, episode,
   podcast timestamp, surrounding transcript, the model's note on relevance, and the YouTube moment.
 - Follow-up questions within a session (history is sent by the client; nothing is stored).
+- Two ways to talk: **Ask** for a considered answer with its sources, or **Talk** for a quick
+  back-and-forth (one to three sentences, read aloud by default when voice is available, still
+  cited). The mode is kept for the visit; switching never loses the conversation.
 - Voice in (Web Speech, or recorder + server transcription) and voice out (stock voice, or the
   browser's), only on a user gesture.
 - Demo mode with clearly labelled fixtures when no OpenAI key is configured.
@@ -57,6 +60,7 @@
 | **synthesis** | The persona's own reasoning and advice; never cited | "opinion of Steven" |
 | **stage** | The single-page interface | "dashboard", "chat" |
 | **evidence inspector** / drawer / sheet | The source panel (desktop) / bottom sheet (mobile) | "sidebar", "modal" |
+| **Ask** / **Talk** | The two reply modes: a considered, sourced answer; or a short spoken-style reply with its chips | "chat mode", "quick mode" |
 | **demo mode** | Fixture answers when no key is set; always labelled | "mock mode", "offline mode" |
 | **knowledge base** | The SQLite file with episodes, segments, passages, embeddings | "vector DB", "corpus" in UI |
 | **ingest** | Building the knowledge base with the CLI | "scrape", "crawl" |

@@ -1,3 +1,4 @@
+import type { ResolvedBlock } from '@dear-steven/core/schema';
 import type { DemoAnswer } from './demo-fixtures';
 
 /**
@@ -75,9 +76,41 @@ export const GERMAN: Record<string, string> = {
   'I looked, and none of the demo conversations really answer that — I’d rather say so than make something up. Try procrastination, discipline or starting a business.':
     'Ich habe nachgesehen, und keines der Demo-Gespräche beantwortet das wirklich — das sage ich lieber, als mir etwas auszudenken. Versuch es mit Aufschieben, Disziplin oder einer Unternehmensgründung.',
   'Demo mode only covers three topics.': 'Der Demo-Modus deckt nur drei Themen ab.',
+
+  // talk replies (P7-05)
+  'Honestly? It’s almost never about not knowing what to do.':
+    'Ehrlich? Es liegt fast nie daran, dass man nicht weiß, was zu tun ist.',
+  'In one of my conversations, the point came up that we delay what makes us feel something unpleasant far more than what’s simply hard.':
+    'In einem meiner Gespräche kam der Gedanke auf, dass wir viel eher aufschieben, was sich unangenehm anfühlt, als was einfach nur schwer ist.',
+  'So what does this one make you feel?': 'Also: Welches Gefühl löst diese Aufgabe in dir aus?',
+  'Honestly, it’s almost never about not knowing what to do. One of my conversations made the point that we delay what makes us feel something unpleasant far more than what’s simply hard. So what does this one make you feel?':
+    'Ehrlich, es liegt fast nie daran, dass man nicht weiß, was zu tun ist. In einem meiner Gespräche ging es darum, dass wir viel eher aufschieben, was sich unangenehm anfühlt, als was einfach nur schwer ist. Also: Welches Gefühl löst diese Aufgabe in dir aus?',
+  'Stop waiting to feel like it.': 'Hör auf zu warten, bis du Lust hast.',
+  'The performance coach in this demo called motivation the weather, and said to decide in advance what the minimum looks like on a bad day.':
+    'Der Coach in dieser Demo nannte Motivation das Wetter und riet, im Voraus festzulegen, wie das Minimum an einem schlechten Tag aussieht.',
+  'What’s your minimum?': 'Was ist dein Minimum?',
+  'Stop waiting to feel like it. The coach in this demo called motivation the weather, and said to decide your bad-day minimum in advance. So, what’s your minimum?':
+    'Hör auf zu warten, bis du Lust hast. Der Coach in dieser Demo nannte Motivation das Wetter und riet, dein Minimum für schlechte Tage im Voraus festzulegen. Also, was ist dein Minimum?',
+  'Start, but start smaller than you think.': 'Fang an, aber kleiner, als du denkst.',
+  'The founder in this demo had a simple test: if you can’t find ten people who’ll pay for the ugly first version, it isn’t a business yet.':
+    'Der Gründer in dieser Demo hatte einen einfachen Test: Wenn du keine zehn Leute findest, die für die hässliche erste Version zahlen, ist es noch kein Geschäft.',
+  'Who are your first ten?': 'Wer sind deine ersten zehn?',
+  'Start, but start smaller than you think. The founder in this demo had a simple test: if you can’t find ten people who’ll pay for the ugly first version, it isn’t a business yet. Who are your first ten?':
+    'Fang an, aber kleiner, als du denkst. Der Gründer in dieser Demo hatte einen einfachen Test: Wenn du keine zehn Leute findest, die für die hässliche erste Version zahlen, ist es noch kein Geschäft. Wer sind deine ersten zehn?',
+  'That’s outside the conversations in this demo, and I’d rather say so than make something up.':
+    'Das liegt außerhalb der Gespräche in dieser Demo, und das sage ich lieber, als mir etwas auszudenken.',
+  'Try me on procrastination, discipline or starting a business?':
+    'Frag mich doch nach Aufschieben, Disziplin oder einer Unternehmensgründung?',
+  'That’s outside the conversations in this demo, and I’d rather say so than make something up. Try me on procrastination, discipline or starting a business?':
+    'Das liegt außerhalb der Gespräche in dieser Demo, und das sage ich lieber, als mir etwas auszudenken. Frag mich doch nach Aufschieben, Disziplin oder einer Unternehmensgründung?',
 };
 
 const german = (text: string) => GERMAN[text] ?? text;
+
+const inGermanBlock = (b: ResolvedBlock): ResolvedBlock =>
+  b.kind === 'quote'
+    ? { ...b, lead: b.lead === null ? null : german(b.lead), translation: german(b.text) }
+    : { ...b, segments: b.segments.map((s) => ({ ...s, text: german(s.text) })) };
 
 /** A fixture answer for a question asked in German: the prose in German, quotes still verbatim. */
 export function inGerman(answer: DemoAnswer): DemoAnswer {
@@ -87,12 +120,9 @@ export function inGerman(answer: DemoAnswer): DemoAnswer {
       ...c,
       relevance: c.relevance === null ? null : german(c.relevance),
     })),
-    blocks: answer.blocks.map((b) =>
-      b.kind === 'quote'
-        ? { ...b, lead: b.lead === null ? null : german(b.lead), translation: german(b.text) }
-        : { ...b, segments: b.segments.map((s) => ({ ...s, text: german(s.text) })) },
-    ),
+    blocks: answer.blocks.map(inGermanBlock),
     spoken: german(answer.spoken),
     caveats: answer.caveats.map(german),
+    talk: { block: inGermanBlock(answer.talk.block), spoken: german(answer.talk.spoken) },
   };
 }

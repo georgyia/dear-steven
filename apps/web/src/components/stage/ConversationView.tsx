@@ -33,7 +33,7 @@ export function ConversationView({
       </header>
 
       <main className={`relative z-10 ${shift}`}>
-        <div className="mx-auto flex w-full max-w-[var(--column)] flex-col gap-20 px-5 pt-28 pb-[calc(var(--composer-h)+10rem)] sm:px-6">
+        <div className="mx-auto flex w-full max-w-[var(--column)] flex-col gap-20 px-5 pt-28 pb-[calc(var(--composer-h)+14rem)] sm:px-6">
           {children}
         </div>
       </main>

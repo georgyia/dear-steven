@@ -20,6 +20,15 @@ export interface AnswerCheck {
   problems: string[];
 }
 
+/** How long an answer reads: its words, quotes included (talk replies must stay short, P7-05). */
+export function answerWords(final: Pick<FinalAnswer, 'blocks'>): number {
+  return final.blocks
+    .map((b) => (b.kind === 'quote' ? b.text : b.segments.map((s) => s.text).join(' ')))
+    .join(' ')
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
 export function recallAt(k: number, retrievedEpisodeGuids: string[], expected: string[]): boolean {
   return retrievedEpisodeGuids.slice(0, k).some((g) => expected.includes(g));
 }

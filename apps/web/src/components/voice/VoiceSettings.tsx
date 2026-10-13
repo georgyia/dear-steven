@@ -83,6 +83,17 @@ export function VoiceSettings({
             />
           )}
         </SettingRow>
+        <SettingRow title={copy.talkAloud} note={copy.talkAloudNote}>
+          {(ids) => (
+            <SquishSwitch
+              id={ids.control}
+              ariaDescribedBy={ids.note}
+              checked={prefs.talkAloud}
+              onChange={(next) => update({ talkAloud: next })}
+              {...SWITCH_COLOURS}
+            />
+          )}
+        </SettingRow>
         <SettingRow title={copy.onDevice} note={onDeviceNote}>
           {(ids) => (
             <SquishSwitch
