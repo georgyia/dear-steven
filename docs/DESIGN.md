@@ -76,6 +76,9 @@ Shape: chips 999px, composer 22px, cards 18px, panels 24px. Layout: column `44re
   confidence in a source); what worked and what to work on, each over the visitor's own words; the
   rewrite in the display serif behind the ember hairline under the original; "Practise the weakest
   answer again" as the primary action.
+- **About you** (P7-08): "Keep this on this device" under "What I learned"; afterwards, an "About
+  you" block after the conversation-memory switch, with the same rules: the exact text in an
+  editable field, a character count, Save, and Forget with undo.
 - **Evidence inspector** (tabs Quote · Context · Video; Video holds the click-to-load player and
   the podcast audio): ≥ 1024px a 420px right panel; the column and composer shift left, never
   covered. < 1024px a bottom sheet (85dvh, drag handle, native modal dialog).

@@ -56,7 +56,7 @@ export function buildContext(store: KnowledgeStore, passages: RetrievedPassage[]
 }
 
 /** Transcript text cannot open or close our tags. */
-const neutralise = (text: string) => text.replace(/</g, '‹').replace(/>/g, '›');
+export const neutralise = (text: string) => text.replace(/</g, '‹').replace(/>/g, '›');
 
 const attr = (v: string) => neutralise(v).replace(/"/g, "'");
 

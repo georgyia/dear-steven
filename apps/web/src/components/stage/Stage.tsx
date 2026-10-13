@@ -36,12 +36,14 @@ import {
   type StageErrorKind,
   transition,
 } from '@/lib/stage-machine';
+import { useAboutYou } from '@/lib/useAboutYou';
 import { useConversationMemory } from '@/lib/useConversationMemory';
 import { useInterview } from '@/lib/useInterview';
 import { useVoicePreferences } from '@/lib/voice/preferences';
 import { unlockAudio } from '@/lib/voice/speaker';
 import { useVoice, VoiceContext } from '@/lib/voice/useVoice';
 import { AboutDialog } from './AboutDialog';
+import { AboutYouControl } from './AboutYouControl';
 import { AmbientLayer } from './AmbientLayer';
 import { ConversationView } from './ConversationView';
 import { useFirstVisitNotice } from './Disclosure';
@@ -134,6 +136,10 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   voiceRef.current = voice;
 
   const interview = useInterview(locale);
+  /** What the visitor chose to keep about themselves (P7-08): sent with questions, exactly. */
+  const aboutYou = useAboutYou();
+  const aboutRef = useRef(aboutYou.text);
+  aboutRef.current = aboutYou.text;
   const interviewRef = useRef(interview.dispatch);
   interviewRef.current = interview.dispatch;
   /** The last interview answer was spoken: read the next question aloud (P7-06). */
@@ -289,7 +295,13 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     let settled = false;
     try {
       for await (const event of askStream(
-        { question, history, uiLocale: i18nRef.current.locale, mode },
+        {
+          question,
+          history,
+          uiLocale: i18nRef.current.locale,
+          mode,
+          ...(aboutRef.current ? { about: aboutRef.current } : {}),
+        },
         ctrl.signal,
       )) {
         dispatch({ type: 'turn.event', id, event, at: performance.now() });
@@ -537,6 +549,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
             dock={interviewDock}
             demo={status.mode === 'demo'}
             onBack={() => setMode('ask')}
+            about={aboutYou}
             header={
               <>
                 <CompactWordmark
@@ -606,6 +619,15 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
               onForget={() => void memory.forget()}
               onUndo={() => memory.setRemember(true)}
             />
+            {aboutYou.text || aboutYou.undo ? (
+              <AboutYouControl
+                text={aboutYou.text ?? aboutYou.undo ?? ''}
+                failed={aboutYou.failed}
+                demo={status.mode === 'demo'}
+                onKeep={aboutYou.keep}
+                onForget={() => void aboutYou.forget()}
+              />
+            ) : null}
           </ConversationView>
         ) : (
           <HomeView

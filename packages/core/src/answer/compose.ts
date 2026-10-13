@@ -158,6 +158,7 @@ export async function* composeAnswer(
       ctx,
       stakesGuidance(route.stakes, route.sensitive),
       request.mode,
+      request.about,
     ),
     format: ANSWER_FORMAT,
     cacheKey: ANSWER_CACHE_KEY,

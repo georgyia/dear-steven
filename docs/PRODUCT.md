@@ -34,6 +34,8 @@
   Or **practise presenting your expertise**: a tougher interview about what you know, then a
   debrief (what came across, where you were vague, scores, one answer said the way it could land)
   and another go at the weakest answer.
+- After an interview, **keep what I learned about you** on this device: answers then take it into
+  account. You see exactly what is sent, can edit it, and Forget deletes it at once.
 - Voice in (Web Speech, or recorder + server transcription) and voice out (stock voice, or the
   browser's), only on a user gesture.
 - Demo mode with clearly labelled fixtures when no OpenAI key is configured.

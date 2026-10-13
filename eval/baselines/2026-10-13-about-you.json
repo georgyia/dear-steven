@@ -1,0 +1,42 @@
+{
+  "$comment": "P7-08: what Dear Steven keeps about you, live (gpt-6-luna, hybrid search). Five fictional profiles (eval/about.ts), one advice question each, with the profile sent as `about`. Judged: the answer takes the profile into account; it never presents the profile as something a guest, a conversation or the show said. Two runs on 2026-10-13, both 5/5 used and 0 misattributed; this file is the second. Notes only, no answer text.",
+  "date": "2026-10-13",
+  "results": [
+    {
+      "id": "studio",
+      "usesProfile": true,
+      "misattributed": 0,
+      "integrityProblems": 0,
+      "note": "It tailors the advice to your four-person studio and its exposure to one client."
+    },
+    {
+      "id": "nurse",
+      "usesProfile": true,
+      "misattributed": 0,
+      "integrityProblems": 0,
+      "note": "The answer explicitly draws on the user's ICU experience and transition to health tech."
+    },
+    {
+      "id": "founder",
+      "usesProfile": true,
+      "misattributed": 0,
+      "integrityProblems": 0,
+      "note": "It tailors the advice to the user's decision to leave a bank job and build a physio-clinic scheduling app, and to the father's doubts."
+    },
+    {
+      "id": "carpenter",
+      "usesProfile": true,
+      "misattributed": 0,
+      "integrityProblems": 0,
+      "note": "It tailors the advice to your workshop, young daughter, and history of back problems."
+    },
+    {
+      "id": "student",
+      "usesProfile": true,
+      "misattributed": 0,
+      "integrityProblems": 0,
+      "note": "It tailors the advice to your final-year engineering studies and graduate job offer."
+    }
+  ],
+  "costUsd": 0.0037
+}
