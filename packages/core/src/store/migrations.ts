@@ -111,4 +111,14 @@ export const MIGRATIONS: readonly string[] = [
   `
   ALTER TABLE episodes ADD COLUMN youtube_offset_steps TEXT NOT NULL DEFAULT '[]';
   `,
+  // 3 — conversation summaries (P8-03): one per episode, a ConversationSummary as JSON
+  `
+  CREATE TABLE episode_summaries (
+    episode_id TEXT PRIMARY KEY REFERENCES episodes (id) ON DELETE CASCADE,
+    version    TEXT NOT NULL,
+    model      TEXT NOT NULL,
+    summary    TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  ) WITHOUT ROWID;
+  `,
 ];

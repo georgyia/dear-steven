@@ -16,6 +16,7 @@
     "./retrieval": "./src/retrieval/index.ts",
     "./answer": "./src/answer/index.ts",
     "./interview": "./src/interview/index.ts",
+    "./summary": "./src/summary/index.ts",
     "./persona": "./src/persona/persona.ts",
     "./copy": "./src/persona/copy.ts",
     "./ingest": "./src/ingest/index.ts",

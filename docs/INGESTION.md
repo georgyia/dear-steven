@@ -33,7 +33,7 @@ pnpm ingest latest --budget 0.05      # bring it in; stops before paying if over
 `latest` reads the feed, then runs the stages for new episodes only: anything published in the
 last 14 days (`--days N`) or since the newest episode you already have, never the back catalogue.
 Transcripts and video links are free; embeddings run only with `--budget`, and only if the exact
-estimate fits under it. Without a key or a budget the new episodes are still found by keyword. A
+estimate fits under it; summaries of the new episodes (below) then take what is left of it. Without a key or a budget the new episodes are still found by keyword. A
 second run with nothing new fetches the feed and nothing else. The setup panel's "Bring in new
 episodes" button runs this same command.
 
@@ -71,7 +71,8 @@ The explorer marks episodes published in the last 7 days as new.
 | `attribute` | QA report for diarized episodes: host share, guest count, flags (enrolment failure, multi-guest panels). | — |
 | `chunk [--force] [--episode <ref>]` | Speaker-turn-aware passages of ~350–500 tokens with a short overlap, plus a deterministic context prefix (`title · guests · date`). Keyword search works from here. | — |
 | `index [--dry-run] [--budget <usd>]` | Embed passages lacking a current embedding (`text-embedding-3-small`, 1,536 dims) in batches of 128. `--dry-run` prints tokens and cost; with `--budget`, nothing is embedded if the estimate is over it. | key |
-| `latest [--days 14] [--dry-run \| --budget <usd>] [--feed <url>]` | Discover, then transcribe, chunk, embed (within the budget) and link only the new episodes. Prints the list and an estimate first. Safe to schedule. | network; key and `--budget` to embed |
+| `summarise --dry-run \| --budget <usd> [--limit N] [--episode <ref>] [--force]` | A summary of each indexed episode (P8-03): an overview, its topics, its most interesting moments and its best questions and answers. Prints the estimate first, spends nothing without `--budget`, and stops before an episode would take it over. Episodes already summarised are skipped unless `--force`. About half a cent an episode. | key |
+| `latest [--days 14] [--dry-run \| --budget <usd>] [--feed <url>]` | Discover, then transcribe, chunk, embed and summarise (within the budget) and link only the new episodes. Prints the list and an estimate first. Safe to schedule. | network; key and `--budget` to embed and summarise |
 | `status [--episodes]` | Counts per stage, recent failures, recorded spend, the next command. | — |
 | `doctor [--online]` | Checks Node, keys, ffmpeg, SQLite + sqlite-vec, the feed. | — |
 | `align <episode> [--video <id>] [--offset <s>] [--exact \| --unknown]` | Hand-correct a video link or its timing. | — |
@@ -91,6 +92,28 @@ The explorer marks episodes published in the last 7 days as new.
    tokens of trailing overlap. A short final passage folds into the previous one.
 4. Passage text is **raw transcript only** (turns separated by newlines). Speaker labels are added
    at prompt time from the segments, so quotes are always matched against what was said.
+
+### Summaries (P8-03)
+
+`pnpm ingest summarise --dry-run` prints what summarising every indexed episode would cost;
+`--budget <usd>` runs it. One call per episode reads its whole transcript and returns:
+
+- an overview, machine-written and labelled so;
+- its topics, each where it starts;
+- its most interesting moments;
+- its best questions and answers.
+
+Every moment, question and answer is then located in its passage (`locateQuote`), and only the
+stored span is kept, timed at the caption it starts in. An item that can't be located, was
+shortened with "…", or (for an exchange) doesn't follow its question is dropped, never repaired.
+The overview may not quote, may use only numbers and names the conversation does, and may not
+say who said what. If it fails, it gets one cheap second try without the transcript; failing
+that, it is left out.
+
+RSS transcripts don't say who speaks, so summaries never name a speaker. Re-chunking an episode
+drops its summary (its passages changed). `pnpm ingest status` counts summaries;
+`pnpm eval:summaries` re-checks them all and has a judge read ten against their transcripts
+(`eval/baselines/2026-10-13-summaries.json`). The first full run, 114 episodes, cost about $0.42.
 
 ## 5. Behaviour with an empty or partial knowledge base
 

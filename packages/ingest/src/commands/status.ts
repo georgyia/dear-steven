@@ -1,6 +1,7 @@
 import { relative } from 'node:path';
 import { formatDate } from '@dear-steven/core/format';
 import { MODELS } from '@dear-steven/core/models';
+import { SUMMARY_VERSION } from '@dear-steven/core/schema';
 import type { Context } from '../context.ts';
 import { c, table, usd } from '../lib/output.ts';
 
@@ -19,6 +20,7 @@ export function status(ctx: Context, opts: { episodes: boolean }) {
   const coverage = full.length ? Math.round((linked / full.length) * 100) : 0;
   const pending = ctx.store.countNeedingEmbedding(MODELS.embedding).passages;
   const pct = s.passages ? Math.round((s.embeddedPassages / s.passages) * 100) : 0;
+  const summarised = ctx.store.summaryCount(SUMMARY_VERSION);
 
   console.log(c.bold('Dear Steven — knowledge base'));
   console.log(`  ${c.dim('database')}   ${relative(ctx.root, ctx.config.dbPath)}`);
@@ -33,6 +35,9 @@ export function status(ctx: Context, opts: { episodes: boolean }) {
   );
   console.log(
     `  ${c.dim('youtube')}    ${linked} of ${full.length} full episodes linked (${coverage}%) · ${exact} exact · ${estimated} estimated (≈) · ${linked - exact - estimated} no timing`,
+  );
+  console.log(
+    `  ${c.dim('summaries')}  ${summarised} of ${s.episodes} indexed episodes (pnpm ingest summarise)`,
   );
   console.log(`  ${c.dim('spend')}      ${usd(ctx.store.spentUsd())} recorded by paid stages`);
 

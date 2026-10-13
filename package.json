@@ -25,6 +25,7 @@
     "eval:interviews": "node eval/interviews.ts",
     "eval:practice": "node eval/practice.ts",
     "eval:about": "node eval/about.ts",
+    "eval:summaries": "node eval/summaries.ts",
     "policies": "node scripts/write-policies.ts"
   },
   "devDependencies": {

@@ -7,3 +7,4 @@ export * from './episode.ts';
 export * from './interview.ts';
 export * from './passage.ts';
 export * from './setup.ts';
+export * from './summary.ts';

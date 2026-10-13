@@ -9,6 +9,7 @@ import { index } from './commands/index.ts';
 import { latest } from './commands/latest.ts';
 import { purge } from './commands/purge.ts';
 import { status } from './commands/status.ts';
+import { summarise } from './commands/summarise.ts';
 import { transcribe } from './commands/transcribe.ts';
 import { align, matchYouTube } from './commands/youtube.ts';
 import { createContext } from './context.ts';
@@ -33,6 +34,9 @@ ${c.ember('Stages')} ${c.dim('(each idempotent and resumable)')}
   chunk [--force] [--episode <ref>] split transcripts into passages (keyword search works now)
   index [--dry-run] [--budget <usd>]
                                    embed passages for semantic search (prints cost first)
+  summarise --dry-run | --budget <usd> [--limit N] [--episode <ref>] [--force]
+                                   paid: a summary of each conversation, quoted from its
+                                   transcript (prints cost first)
 
 ${c.ember('Inspect & maintain')}
   status [--episodes]              counts, failures, spend, and what to run next
@@ -131,6 +135,16 @@ async function main(argv: string[]) {
           dryRun: values['dry-run'],
           budget: num(values.budget, 'budget'),
         });
+      case 'summarise':
+      case 'summarize':
+        await summarise(ctx, {
+          dryRun: values['dry-run'],
+          budget: num(values.budget, 'budget'),
+          limit: num(values.limit, 'limit'),
+          episode: values.episode,
+          force: values.force,
+        });
+        return;
       case 'status':
         return status(ctx, { episodes: values.episodes });
       case 'doctor':

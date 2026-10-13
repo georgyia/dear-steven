@@ -7,6 +7,7 @@ import { c, usd } from '../lib/output.ts';
 import { chunk } from './chunk.ts';
 import { discover } from './discover.ts';
 import { index } from './index.ts';
+import { summarise } from './summarise.ts';
 import { transcribe } from './transcribe.ts';
 import { matchYouTube } from './youtube.ts';
 
@@ -18,7 +19,7 @@ export interface LatestOptions {
   /** Also catch up on episodes published in the last N days that have no transcript yet. */
   days: number;
   dryRun: boolean;
-  /** The most the paid stage (embeddings) may spend. Without it, only free stages run. */
+  /** The most the paid stages (embeddings, then summaries) may spend. Without it, only free stages run. */
   budget?: number;
   feed?: string;
 }
@@ -112,6 +113,23 @@ export async function latest(ctx: Context, opts: LatestOptions) {
     );
   } else {
     await index(ctx, { dryRun: false, budget: opts.budget });
+  }
+  const embedded = opts.budget !== undefined && pending.usd <= opts.budget ? pending.usd : 0;
+
+  step('summarise');
+  const fresh = targets.filter((e) => ctx.store.passageCount(e.id) > 0).map((e) => e.id);
+  if (fresh.length === 0) console.log('Nothing to summarise.');
+  else if (!ctx.config.openaiApiKey) console.log(c.yellow('Skipped: no OPENAI_API_KEY.'));
+  else if (opts.budget === undefined) {
+    await summarise(ctx, { dryRun: true, ids: fresh, force: false });
+    console.log(c.yellow('Skipped: add --budget to summarise them.'));
+  } else {
+    await summarise(ctx, {
+      dryRun: false,
+      budget: Math.max(0, opts.budget - embedded),
+      ids: fresh,
+      force: false,
+    });
   }
 
   step('match-youtube');

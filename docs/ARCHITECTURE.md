@@ -28,6 +28,8 @@ packages/core/                framework-free domain — every decision lives her
   src/persona/                persona instructions + lint; thinking copy; talk style
   src/interview/              interview mode: the arc, the interviewer prompt, question checks,
                               "what I learned" with its evidence located in the visitor's words
+  src/summary/                conversation summaries: the prompt, every quote located in its
+                              passage, checks on the machine-written overview
   src/ingest/                 pure ingest logic: VTT parser, cue→segment, chunker, guest names
   src/openai/                 client factory, embedder, transcription + speech
   src/youtube/, src/format/   deep links; timestamp/date formatting
@@ -62,6 +64,7 @@ Client-safe core entry points: `schema` (types only), `limits`, `copy`, `format`
 | Who a citation's speaker is | `answer/resolve.ts` (`CitationRegistry`) + `answer/citations.ts` (`speakerOf`) |
 | The answer's final mode | `answer/resolve.ts` (`finalMode`) |
 | The next interview question, and what was learned | `interview/interview.ts` (`interviewStep`, `questionProblems`, `checkLearned`), `interview/arc.ts` |
+| What a conversation's summary may say, and the exact words it quotes | `summary/summary.ts` (`checkSummary`, `writtenProblems`) |
 | The YouTube link and its timing state | `youtube/links.ts` (`resolveMoment`) |
 | How transcripts become passages | `ingest/chunk.ts` |
 | Which voice path a browser gets | `apps/web/src/lib/voice/capabilities.ts` (UI concern, pure) |
@@ -126,9 +129,11 @@ line's evidence located in the visitor's own words). JSON in, JSON out; nothing 
 ### Server: SQLite, `data/dear-steven.db`
 
 Tables: `episodes`, `segments` (speaker truth), `passages` (+ `passages_fts` FTS5 external
-content, `passages_vec` vec0 cosine, both maintained by triggers), `ingestion_runs`, `kb_meta`.
-Migrations are numbered SQL in `store/migrations.ts`, tracked by `PRAGMA user_version`. Purging an
-episode cascades to segments, passages, FTS rows, vectors and runs (tested).
+content, `passages_vec` vec0 cosine, both maintained by triggers), `ingestion_runs`, `kb_meta`,
+`episode_summaries` (one `ConversationSummary` an episode, as JSON, validated on the way in and
+out; dropped when the episode's passages are rebuilt). Migrations are numbered SQL in
+`store/migrations.ts`, tracked by `PRAGMA user_version`. Purging an episode cascades to segments,
+passages, FTS rows, vectors, summaries and runs (tested).
 
 Beside it: `spend.json` (today's estimated spend) and `share-secret` (the key share links are
 signed with, created on first use, owner-only).
