@@ -129,8 +129,14 @@ test.describe('evidence inspector', () => {
 
     const chip = page.locator('[data-citation]').first();
     if (!isMobile) {
-      await chip.hover();
-      await expect(page.getByRole('tooltip')).toContainText('speaker not verified');
+      // The answer can still settle (the thought line folding away) just after it completes, moving
+      // the chip from under the pointer; like a person, move onto it again until the preview opens.
+      await expect(async () => {
+        await chip.hover();
+        await expect(page.getByRole('tooltip')).toContainText('speaker not verified', {
+          timeout: 1500,
+        });
+      }).toPass();
     }
     await chip.click();
 
