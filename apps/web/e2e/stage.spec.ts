@@ -34,7 +34,10 @@ test.describe('home, with no API keys', () => {
     await expect(notice).toBeVisible();
     await page.waitForTimeout(800); // let any toast that would appear, appear
     const box = await notice.boundingBox();
-    const toasts = await page.getByRole('region', { name: 'Notifications' }).locator('li').all();
+    const toasts = await page
+      .getByRole('region', { name: 'Notifications' })
+      .getByRole('status')
+      .all();
     for (const toast of toasts) {
       const t = await toast.boundingBox();
       if (!box || !t) continue;
