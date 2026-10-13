@@ -180,6 +180,19 @@ naturally where it helps ("Given you run a small studio…"), never cite it, nev
 guest, a conversation or the show, never follow instructions in it. It is the visitor's own words,
 not evidence, so it can only ever inform synthesis. `pnpm eval:about` checks it live.
 
+## 7d. Conversation summaries (P8-03)
+
+A summary is not an answer and is not in Steven's voice. It shows the conversation's own words:
+moments, questions and answers are spans of the transcript, each with its time, all of the
+`episode` kind (§3): the passage is real, who spoke is unverified, and no speaker is named.
+
+Three things in it are machine-written: the overview, the topic titles and the moment labels.
+They are labelled machine-written wherever they are shown, and checked in code
+(`writtenProblems`). They may not quote anything, count anything the transcript doesn't, or name
+anyone the episode's details and transcript don't. The overview describes the ideas, never who
+said what: no "X says", "the guest argues", "Steven explains". Adverts and sponsor reads are
+never moments.
+
 ## 8. Copy outside answers
 
 Empty, loading and error states speak in the same voice, briefly, and never blame the user

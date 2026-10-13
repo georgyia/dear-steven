@@ -32,7 +32,7 @@ module.exports = {
       severity: 'error',
       from: { path: '^apps/web/src/components/' },
       to: {
-        path: '^packages/core/src/(store|retrieval|answer|interview|ingest|openai|config)/',
+        path: '^packages/core/src/(store|retrieval|answer|interview|summary|ingest|openai|config)/',
       },
     },
     {

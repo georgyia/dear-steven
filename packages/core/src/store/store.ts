@@ -4,6 +4,8 @@ import { EMBEDDING_DIMENSIONS } from '../config/models.ts';
 import type { PassageDraft } from '../ingest/chunk.ts';
 import {
   type AttributionMethod,
+  type ConversationSummary,
+  ConversationSummarySchema,
   type Episode,
   type EpisodeType,
   type OffsetStep,
@@ -371,6 +373,8 @@ export class KnowledgeStore {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
     this.db.transaction(() => {
       this.db.prepare('DELETE FROM passages WHERE episode_id = ?').run(episodeId);
+      // A summary points into the old passages: it goes with them (P8-03).
+      this.db.prepare('DELETE FROM episode_summaries WHERE episode_id = ?').run(episodeId);
       this.db.prepare('DELETE FROM segments WHERE episode_id = ?').run(episodeId);
       for (const s of segments) {
         insert.run(
@@ -457,6 +461,92 @@ export class KnowledgeStore {
       )
       .all(limit)
       .map((r) => r.text);
+  }
+
+  /** An episode's passages in order, with the episode. */
+  episodePassages(episodeId: string): StoredPassage[] {
+    const rows = this.db
+      .prepare<[string], PassageRow>('SELECT * FROM passages WHERE episode_id = ? ORDER BY idx')
+      .all(episodeId);
+    return this.withEpisodes(rows);
+  }
+
+  // ---------------------------------------------------------------------------- summaries
+
+  /** Stored only once it has passed `ConversationSummarySchema`; replaces any earlier one. */
+  saveConversationSummary(episodeId: string, summary: ConversationSummary) {
+    const valid = ConversationSummarySchema.parse(summary);
+    this.db
+      .prepare(
+        `INSERT INTO episode_summaries (episode_id, version, model, summary, created_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT (episode_id) DO UPDATE SET version = excluded.version, model = excluded.model,
+           summary = excluded.summary, created_at = excluded.created_at`,
+      )
+      .run(episodeId, valid.version, valid.model, JSON.stringify(valid), valid.createdAt);
+  }
+
+  /** The stored summary, or `null`; one that no longer matches the schema is treated as none. */
+  conversationSummary(episodeId: string): ConversationSummary | null {
+    const row = this.db
+      .prepare<[string], { summary: string }>(
+        'SELECT summary FROM episode_summaries WHERE episode_id = ?',
+      )
+      .get(episodeId);
+    if (!row) return null;
+    try {
+      const parsed = ConversationSummarySchema.safeParse(JSON.parse(row.summary));
+      return parsed.success ? parsed.data : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Indexed episodes without a summary of `version` (all of them with `force`), newest first,
+   * with how many passages, and passage tokens, each would send.
+   */
+  episodesToSummarise(options: {
+    version: string;
+    limit?: number;
+    episodeId?: string;
+    force?: boolean;
+  }): (Episode & { passages: number; passageTokens: number })[] {
+    const rows = this.db
+      .prepare<unknown[], EpisodeRow & { passages: number; passage_tokens: number }>(
+        `SELECT e.*,
+           (SELECT COUNT(*) FROM passages p WHERE p.episode_id = e.id) AS passages,
+           (SELECT SUM(p.token_count) FROM passages p WHERE p.episode_id = e.id) AS passage_tokens
+         FROM episodes e
+         WHERE e.indexed_at IS NOT NULL
+           AND EXISTS (SELECT 1 FROM passages p WHERE p.episode_id = e.id)
+           AND (? IS NULL OR e.id = ?)
+           AND (? = 1 OR NOT EXISTS (
+             SELECT 1 FROM episode_summaries s WHERE s.episode_id = e.id AND s.version = ?))
+         ORDER BY e.published_at DESC LIMIT ?`,
+      )
+      .all(
+        options.episodeId ?? null,
+        options.episodeId ?? null,
+        options.force ? 1 : 0,
+        options.version,
+        Math.max(1, Math.floor(options.limit ?? 1_000_000)),
+      );
+    return rows.map((r) => ({
+      ...toEpisode(r),
+      passages: r.passages,
+      passageTokens: r.passage_tokens ?? 0,
+    }));
+  }
+
+  summaryCount(version: string): number {
+    return (
+      this.db
+        .prepare<[string], { n: number }>(
+          'SELECT COUNT(*) AS n FROM episode_summaries WHERE version = ?',
+        )
+        .get(version)?.n ?? 0
+    );
   }
 
   passageCount(episodeId: string): number {

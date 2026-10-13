@@ -5,6 +5,7 @@ import Database from 'better-sqlite3';
 import * as sqliteVec from 'sqlite-vec';
 import { describe, expect, it } from 'vitest';
 import { embeddingInput } from '../openai/embedder.ts';
+import { type ConversationSummary, SUMMARY_VERSION } from '../schema/index.ts';
 import { episodeInput, fakeEmbedder, seedEpisode, tempStore } from '../test/fixtures.ts';
 import { toFtsQuery } from './fts.ts';
 import { episodeIdFor, KnowledgeStore, StoreMissingError } from './index.ts';
@@ -316,5 +317,100 @@ describe('KnowledgeStore — similar passages', () => {
     const episodes = store.similarPassages(first(one), loose).map((r) => r.passage.episodeId);
     expect(episodes).toEqual([three]);
     expect(store.similarPassages('missing_p0001', loose)).toEqual([]);
+  });
+});
+
+describe('KnowledgeStore — conversation summaries (P8-03)', () => {
+  const summary = (
+    passageId: string,
+    over: Partial<ConversationSummary> = {},
+  ): ConversationSummary => ({
+    version: SUMMARY_VERSION,
+    model: 'test-model',
+    createdAt: '2026-10-13T12:00:00.000Z',
+    speakers: 'unverified',
+    about: 'The conversation covers procrastination and how to start.',
+    topics: [{ title: 'Starting', passageId, startMs: 0 }],
+    moments: [],
+    exchanges: [],
+    ...over,
+  });
+
+  it('keeps one summary an episode, replaced when written again', () => {
+    const store = tempStore();
+    const id = seedEpisode(store, 1, [
+      'Procrastination is a feeling problem, not a time problem at all.',
+    ]);
+    const passage = store.episodePassages(id)[0]?.id as string;
+    expect(store.conversationSummary(id)).toBe(null);
+    store.saveConversationSummary(id, summary(passage));
+    store.saveConversationSummary(id, summary(passage, { about: 'Second.' }));
+    expect(store.conversationSummary(id)?.about).toBe('Second.');
+    expect(store.summaryCount(SUMMARY_VERSION)).toBe(1);
+  });
+
+  it('refuses to store, or to return, anything that is not a summary', () => {
+    const store = tempStore();
+    const id = seedEpisode(store, 1, [
+      'Procrastination is a feeling problem, not a time problem at all.',
+    ]);
+    expect(() =>
+      store.saveConversationSummary(id, {
+        ...summary('x'),
+        speakers: 'maybe',
+      } as unknown as ConversationSummary),
+    ).toThrow();
+    store.db
+      .prepare('INSERT INTO episode_summaries VALUES (?, ?, ?, ?, ?)')
+      .run(id, SUMMARY_VERSION, 'm', '{"about": 1}', 'now');
+    expect(store.conversationSummary(id)).toBe(null);
+  });
+
+  it('drops a summary when its passages are rebuilt, and with its episode', () => {
+    const store = tempStore();
+    const id = seedEpisode(store, 1, [
+      'Procrastination is a feeling problem, not a time problem at all.',
+    ]);
+    const other = seedEpisode(store, 2, ['Something else entirely about sleep and recovery.']);
+    store.saveConversationSummary(id, summary(store.episodePassages(id)[0]?.id as string));
+    store.saveConversationSummary(other, summary(store.episodePassages(other)[0]?.id as string));
+    seedEpisode(store, 1, ['Procrastination, again, rebuilt from a fresh transcript of it.']);
+    expect(store.conversationSummary(id)).toBe(null);
+    store.purgeEpisode(other);
+    expect(store.summaryCount(SUMMARY_VERSION)).toBe(0);
+  });
+
+  it('lists the episodes still to summarise, newest first, with what they would send', () => {
+    const store = tempStore();
+    const a = seedEpisode(store, 1, [
+      'Procrastination is a feeling problem, not a time problem at all.',
+    ]);
+    const b = seedEpisode(store, 2, ['Something else entirely about sleep and recovery.']);
+    store.saveConversationSummary(a, summary(store.episodePassages(a)[0]?.id as string));
+    const todo = store.episodesToSummarise({ version: SUMMARY_VERSION });
+    expect(todo.map((e) => e.id)).toEqual([b]);
+    expect(todo[0]).toMatchObject({ passages: 1, passageTokens: expect.any(Number) });
+    expect(
+      store.episodesToSummarise({ version: SUMMARY_VERSION, force: true }).map((e) => e.id),
+    ).toEqual([b, a]); // episode 2 was published after episode 1
+    expect(store.episodesToSummarise({ version: 'summary-v2' })).toHaveLength(2);
+    expect(
+      store
+        .episodesToSummarise({ version: SUMMARY_VERSION, force: true, episodeId: a })
+        .map((e) => e.id),
+    ).toEqual([a]);
+  });
+
+  it('upgrades a database made before summaries existed', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'dear-steven-v2-'));
+    const path = join(dir, 'kb.db');
+    const v2 = new Database(path);
+    sqliteVec.load(v2);
+    for (const sql of MIGRATIONS.slice(0, 2)) v2.exec(sql);
+    v2.pragma('user_version = 2');
+    v2.close();
+    const store = KnowledgeStore.open(path);
+    expect(Number(store.db.pragma('user_version', { simple: true }))).toBe(3);
+    expect(store.summaryCount(SUMMARY_VERSION)).toBe(0);
   });
 });
