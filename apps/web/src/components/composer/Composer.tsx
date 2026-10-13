@@ -15,6 +15,8 @@ interface ComposerProps {
   /** The microphone, when voice is available. */
   voice?: ReactNode;
   inputRef?: Ref<HTMLTextAreaElement>;
+  /** The field's accessible name, when it isn't a question for Dear Steven (an interview answer). */
+  label?: string;
 }
 
 /**
@@ -30,13 +32,14 @@ export function Composer({
   placeholder,
   voice,
   inputRef,
+  label,
 }: ComposerProps) {
   const { composer } = useI18n().t;
   return (
     <div className="composer-shell w-full rounded-[var(--radius-field)] border border-ink-3 bg-ink-2 shadow-[0_24px_60px_-28px_rgb(0_0_0/0.85)] transition-shadow duration-300">
       <PromptBar
         id="composer"
-        ariaLabel={composer.label}
+        ariaLabel={label ?? composer.label}
         sendLabel={composer.send}
         stopLabel={composer.stop}
         value={value}

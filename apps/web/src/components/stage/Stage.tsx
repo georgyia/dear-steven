@@ -11,6 +11,7 @@ import { TurnView } from '@/components/answer/TurnView';
 import { Composer } from '@/components/composer/Composer';
 import { ModeSwitch } from '@/components/composer/ModeSwitch';
 import { EvidenceDrawer, type EvidenceTarget } from '@/components/evidence/EvidenceDrawer';
+import { InterviewView } from '@/components/interview/InterviewView';
 import { ToastProvider, ToastViewport, useToast } from '@/components/ui/Toasts';
 import { VoiceControl } from '@/components/voice/VoiceControl';
 import { VoiceSettings } from '@/components/voice/VoiceSettings';
@@ -25,7 +26,7 @@ import {
 } from '@/lib/conversation';
 import { isTypingTarget, useKeydown } from '@/lib/hooks';
 import { restoredTurns } from '@/lib/memory';
-import { useAskMode } from '@/lib/mode';
+import { useStageMode } from '@/lib/mode';
 import { fetchSetup, forgetSetupToken, takeSetupToken } from '@/lib/setup';
 import { sharedToken } from '@/lib/share';
 import {
@@ -36,6 +37,7 @@ import {
   transition,
 } from '@/lib/stage-machine';
 import { useConversationMemory } from '@/lib/useConversationMemory';
+import { useInterview } from '@/lib/useInterview';
 import { useVoicePreferences } from '@/lib/voice/preferences';
 import { unlockAudio } from '@/lib/voice/speaker';
 import { useVoice, VoiceContext } from '@/lib/voice/useVoice';
@@ -86,7 +88,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const [dialog, setDialog] = useState<'setup' | 'about' | 'episodes' | 'voice' | null>(null);
   const [guided, setGuided] = useState<{ token: string; state: SetupState } | null>(null);
   const { prefs, update: updatePrefs, persisted } = useVoicePreferences();
-  const [mode, setMode] = useAskMode();
+  const [mode, setMode] = useStageMode();
   const modeRef = useRef(mode);
   modeRef.current = mode;
   const prefsRef = useRef(prefs);
@@ -119,12 +121,31 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     serverVoice: status.mode === 'live',
     send,
     setDraft,
-    onTranscript: (text) => void askRef.current(text, { voice: true }),
+    onTranscript: (text) => {
+      if (modeRef.current !== 'interview') return void askRef.current(text, { voice: true });
+      setDraft('');
+      interviewSpoke.current = true;
+      interviewRef.current({ type: 'answer', text });
+    },
     notify: (title, description) => toast({ title, description, tone: 'error', duration: 5200 }),
     preferences: prefs,
   });
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
+
+  const interview = useInterview(locale);
+  const interviewRef = useRef(interview.dispatch);
+  interviewRef.current = interview.dispatch;
+  /** The last interview answer was spoken: read the next question aloud (P7-06). */
+  const interviewSpoke = useRef(false);
+  const question = interview.state.current;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: speak each new question once
+  useEffect(() => {
+    if (!question || interview.state.phase !== 'asking') return;
+    if (interviewSpoke.current || prefsRef.current.alwaysSpeak) {
+      voiceRef.current.speak(`interview-${question.index}`, question.question, question.language);
+    }
+  }, [question]);
 
   const memory = useConversationMemory(conversation.turns, {
     restore: (restored) => dispatch({ type: 'restore', turns: restored }),
@@ -161,7 +182,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   // Demo mode is announced, never implied. Each answer also carries its own "demo fixture" tag.
   // One message at a time (P7-04): while the first-visit notice is on the home screen, the demo
   // notice waits — on a phone it would otherwise sit on top of it. The status pill says "demo".
-  const noticeShowing = notice.pending !== false && !inConversation;
+  const noticeShowing = notice.pending !== false && !inConversation && mode !== 'interview';
   useEffect(() => {
     if (status.mode !== 'demo' || noticeShowing) {
       dismiss('demo');
@@ -249,7 +270,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     if (voiceRef.current.speakingTurnId) voiceRef.current.stopSpeaking();
     seq.current += 1;
     const id = `t${Date.now().toString(36)}${seq.current}`;
-    const mode = modeRef.current;
+    const mode = modeRef.current === 'talk' ? 'talk' : 'ask';
     const aloud = prefsRef.current.alwaysSpeak || (mode === 'talk' && prefsRef.current.talkAloud);
     if (options.voice) spokenTurns.current.add(id);
     else if (aloud && hasBeenActive()) {
@@ -441,6 +462,43 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     </div>
   );
 
+  const modeSwitch = <ModeSwitch mode={mode} onChange={setMode} />;
+  const interviewing =
+    interview.state.current !== null &&
+    (interview.state.phase === 'asking' ||
+      interview.state.phase === 'waiting' ||
+      interview.state.phase === 'error');
+  const interviewDock = interviewing ? (
+    <div className="flex flex-col gap-2">
+      {modeSwitch}
+      <Composer
+        value={draft}
+        onValueChange={setDraft}
+        onSend={(text) => {
+          interviewSpoke.current = false;
+          setDraft('');
+          interview.dispatch({ type: 'answer', text });
+        }}
+        onStop={() => undefined}
+        busy={interview.state.phase !== 'asking'}
+        placeholder={listening ? t.composer.listening : t.interview.placeholder}
+        label={t.interview.answerLabel}
+        inputRef={inputRef}
+        voice={
+          <VoiceControl
+            voice={voice}
+            disabled={interview.state.phase !== 'asking'}
+            onUnavailable={() =>
+              toast({ id: 'no-voice', title: t.errors.micUnsupported, duration: 4000 })
+            }
+          />
+        }
+      />
+    </div>
+  ) : (
+    modeSwitch
+  );
+
   const pill = <StatusPill status={status} onOpen={() => setDialog('setup')} />;
   const voiceSettings = (
     <button
@@ -468,11 +526,34 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   return (
     <VoiceContext.Provider value={voice}>
       <AmbientLayer
-        level={ambientLevel(stage, inConversation)}
-        active={stage.kind === 'composing'}
+        level={ambientLevel(stage, inConversation || mode === 'interview')}
+        active={stage.kind === 'composing' || interview.state.phase === 'waiting'}
       />
       <LayoutGroup>
-        {inConversation ? (
+        {mode === 'interview' ? (
+          <InterviewView
+            state={interview.state}
+            dispatch={interview.dispatch}
+            dock={interviewDock}
+            demo={status.mode === 'demo'}
+            onBack={() => setMode('ask')}
+            header={
+              <>
+                <CompactWordmark
+                  onClick={() => {
+                    setMode('ask');
+                    reset();
+                  }}
+                />
+                <div className="flex items-center gap-1">
+                  {voiceSettings}
+                  {about}
+                  {pill}
+                </div>
+              </>
+            }
+          />
+        ) : inConversation ? (
           <ConversationView
             drawerOpen={target !== null}
             composer={composer}
@@ -550,7 +631,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       />
       <ToastViewport
         className={
-          inConversation
+          inConversation || mode === 'interview'
             ? `right-4 bottom-[calc(env(safe-area-inset-bottom)+10.25rem)] sm:right-6 ${target ? 'lg:right-[calc(var(--drawer)+24px)]' : ''}`
             : 'right-4 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] sm:right-6 sm:bottom-20'
         }

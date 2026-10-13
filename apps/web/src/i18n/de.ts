@@ -47,10 +47,43 @@ export const de: Messages = {
     label: 'Wie Dear Steven antwortet',
     ask: 'Fragen',
     talk: 'Reden',
+    interview: 'Frag mich aus',
     hint: {
       ask: 'Eine durchdachte Antwort, mit allen Quellen.',
       talk: 'Ein schnelles Hin und Her, gern auch laut.',
+      interview: 'Ich frage, du antwortest: eine Frage nach der anderen.',
     },
+  },
+  interview: {
+    label: 'Interview',
+    eyebrow: 'Interview',
+    title: 'Lass dich von mir interviewen.',
+    intro:
+      'Eine Frage nach der anderen, so wie die Show sie stellt: wer du bist, wo es angefangen hat, was sich verändert hat und was es gekostet hat. Sieben Fragen. Überspring, was du willst, und hör auf, wann du willst.',
+    privacy:
+      'Deine Antworten gehen an OpenAI, damit die nächste Frage entsteht, und werden nirgends gespeichert.',
+    privacyDemo:
+      'Demo-Modus: Die Fragen sind fest vorgegeben, und deine Antworten werden nirgends gespeichert.',
+    name: 'Wie soll ich dich nennen?',
+    about: 'Was machst du, in einem Satz?',
+    optional: 'optional',
+    start: 'Interview beginnen',
+    progress: (n, total) => `Frage ${n} von ${total}`,
+    starting: 'Ich bereite meine erste Frage vor…',
+    answerLabel: 'Deine Antwort',
+    placeholder: 'Deine Antwort…',
+    skip: 'Überspringen',
+    end: 'Interview beenden',
+    lastAnswer: 'Du hast gesagt',
+    learnedEyebrow: 'Was ich über dich erfahren habe',
+    learnedTitle: (name) => (name ? `Danke, ${name}.` : 'Danke.'),
+    learnedNote: 'Jede Zeile stützt sich auf deine eigenen Worte, genau zitiert.',
+    learnedEmpty:
+      'Du hast jede Frage übersprungen, also gibt es nichts, was ich ehrlich über dich erfahren hätte. Völlig in Ordnung.',
+    evidence: (n) => `Du, Antwort ${n}`,
+    again: 'Noch ein Interview',
+    back: 'Zurück zum Fragen',
+    retry: 'Noch einmal versuchen',
   },
   talk: {
     label: 'Im Gespräch mit Dear Steven',
@@ -162,6 +195,9 @@ export const de: Messages = {
       'Speichere zuerst einen YouTube-Schlüssel: Das Verknüpfen der Videos läuft darüber.',
     setupOverBudget: (estimate: string, cap: string) =>
       `Das Einbetten würde etwa ${estimate} kosten, mehr als dein Limit von ${cap}. Es wurde nichts ausgegeben.`,
+    interviewBroken: 'Dieses Interview konnte ich nicht lesen. Fangen wir noch einmal an?',
+    interviewSlow:
+      'Das sind viele Antworten auf einmal. Atme kurz durch und schick das dann noch einmal.',
     shareSlow:
       'Gerade werden sehr viele geteilte Links geöffnet. Warte kurz und öffne ihn dann noch einmal.',
     shareGone:

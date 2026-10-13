@@ -31,6 +31,10 @@ const SAME_IN_GERMAN = new Set([
   'setup.optional',
   // A name.
   'talk.steven',
+  // "Interview" and "optional" are German words too.
+  'interview.label',
+  'interview.eyebrow',
+  'interview.optional',
   // Keys on a keyboard are the same keys in German.
   'home.shortcuts[0].keys',
   'home.shortcuts[1].keys',

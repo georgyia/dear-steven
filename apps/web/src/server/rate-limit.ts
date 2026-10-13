@@ -12,6 +12,8 @@ export interface Bucket {
 
 export const BUCKETS = {
   ask: { capacity: 8, refillPerMinute: 6 },
+  /** Interview steps (P7-06): one model call each, like a question. */
+  interview: { capacity: 8, refillPerMinute: 6 },
   transcribe: { capacity: 10, refillPerMinute: 10 },
   speech: { capacity: 10, refillPerMinute: 10 },
   passages: { capacity: 120, refillPerMinute: 120 },

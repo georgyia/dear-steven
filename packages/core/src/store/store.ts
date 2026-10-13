@@ -442,6 +442,23 @@ export class KnowledgeStore {
     return drafts.length;
   }
 
+  /**
+   * Transcript lines that ask something (P7-06): the interview mode's style references. Verified host
+   * turns first, then lines whose speaker is unknown; never a verified guest's, who isn't the one
+   * asking. A random sample, so interviews don't all lean on the same few.
+   */
+  questionLines(limit: number): string[] {
+    return this.db
+      .prepare<[number], { text: string }>(
+        `SELECT text FROM segments
+         WHERE speaker IN ('host', 'unknown') AND instr(text, '?') > 0
+           AND length(text) BETWEEN 20 AND 400
+         ORDER BY (speaker = 'host') DESC, random() LIMIT ?`,
+      )
+      .all(limit)
+      .map((r) => r.text);
+  }
+
   passageCount(episodeId: string): number {
     return (
       this.db

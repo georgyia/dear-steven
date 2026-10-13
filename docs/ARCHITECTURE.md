@@ -11,9 +11,9 @@ Binding for agents. The reasoning behind each choice is in `plan/12-adr/`; the o
 
 ```
 apps/web/                     Next.js 16 app — thin server shell + one client "stage"
-  src/app/                    layout, page (server), api/{ask,passages/[id],status,transcribe,speech}
+  src/app/                    layout, page (server), api/{ask,interview,passages/[id],status,transcribe,speech}
   src/server/                 server-only: store/model handles, SSE, rate limits, demo stream, errors
-  src/components/             stage/ composer/ answer/ evidence/ voice/ ui/ vendor/react-bits/
+  src/components/             stage/ composer/ answer/ interview/ evidence/ voice/ ui/ vendor/react-bits/
   src/lib/                    stage-machine, conversation reducer, SSE parser, api client, voice/*
   src/styles/                 tokens.css (design tokens), globals.css (Tailwind v4 theme)
   src/brand.ts                the product, host and show names
@@ -25,7 +25,9 @@ packages/core/                framework-free domain — every decision lives her
   src/retrieval/              hybrid search: FTS5 BM25 + vec0 KNN → RRF → per-episode cap
   src/answer/                 context, prompt, model adapter, stream parser, validate, quotes,
                               resolve (citations), condense, compose (the pipeline)
-  src/persona/                persona instructions + lint; thinking copy
+  src/persona/                persona instructions + lint; thinking copy; talk style
+  src/interview/              interview mode: the arc, the interviewer prompt, question checks,
+                              "what I learned" with its evidence located in the visitor's words
   src/ingest/                 pure ingest logic: VTT parser, cue→segment, chunker, guest names
   src/openai/                 client factory, embedder, transcription + speech
   src/youtube/, src/format/   deep links; timestamp/date formatting
@@ -59,6 +61,7 @@ Client-safe core entry points: `schema` (types only), `limits`, `copy`, `format`
 | Whether a quote is real, and its exact text | `answer/quotes.ts` (`locateQuote`) |
 | Who a citation's speaker is | `answer/resolve.ts` (`CitationRegistry`) + `answer/citations.ts` (`speakerOf`) |
 | The answer's final mode | `answer/resolve.ts` (`finalMode`) |
+| The next interview question, and what was learned | `interview/interview.ts` (`interviewStep`, `questionProblems`, `checkLearned`), `interview/arc.ts` |
 | The YouTube link and its timing state | `youtube/links.ts` (`resolveMoment`) |
 | How transcripts become passages | `ingest/chunk.ts` |
 | Which voice path a browser gets | `apps/web/src/lib/voice/capabilities.ts` (UI concern, pure) |
@@ -93,6 +96,15 @@ reads `GET /api/episodes?q=&offset=`: metadata only (title, guests, date, passag
 and video states), 30 per page, searched by title or guest (`KnowledgeStore.browseIndexed`). The inspector's "Related moments"
 reads `GET /api/passages/:id/related`: up to three passages from other episodes nearest the cited
 one by its stored embedding (`buildRelatedMoments`, no model call; empty until embeddings exist).
+
+## 4a. Data flow — an interview (P7-06)
+
+The client keeps the interview and `POST`s it whole to `/api/interview` at every step
+(`InterviewRequestSchema`: setup, ≤ 10 turns, `next` or `finish`; ≤ 48 KB). The route validates,
+answers from fixtures in demo mode, rate-limits live steps (`interview` bucket), respects the daily
+cap, and calls `interviewStep`: the safety rails on the latest answer, then one model call for
+the next question (checked; retried once; else a fixed question) or for what was learned (each
+line's evidence located in the visitor's own words). JSON in, JSON out; nothing is stored.
 
 ## 5. Trust boundaries
 

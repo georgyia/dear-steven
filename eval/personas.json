@@ -1,0 +1,77 @@
+{
+  "$comment": "P7-06: fictional visitors for the live interview check (pnpm eval:interviews). Six scripted answers each, one per stage of a six-question interview. Invented people; nothing here is anyone's real words.",
+  "personas": [
+    {
+      "id": "baker",
+      "language": "en",
+      "setup": { "name": "Priya", "about": "I run three neighbourhood bakeries in Bristol." },
+      "answers": [
+        "I run three bakeries in Bristol. We start at four every morning and most of what we sell is sourdough and cardamom buns.",
+        "It started in my mum's kitchen in Leicester. She baked for the whole street at Diwali and I was the one carrying trays door to door.",
+        "The second shop nearly sank us. The landlord tripled the rent after a year and I had to choose between closing it or taking a loan against my flat.",
+        "I took the loan. For eighteen months I didn't pay myself and I missed my brother's wedding because we were short-staffed that weekend.",
+        "Cost your time honestly. I used to think my hours were free, and they were the most expensive thing in the business.",
+        "Now it's the team. Two of my bakers started as weekend staff at sixteen and one of them is about to run the third shop."
+      ]
+    },
+    {
+      "id": "founder",
+      "language": "en",
+      "setup": {
+        "name": "Tom",
+        "about": "Software engineer, now building a scheduling app for clinics."
+      },
+      "answers": [
+        "I build software that helps small physio clinics fill cancelled appointments. Before that I was a backend engineer at a bank for nine years.",
+        "My wife is a physio. She'd come home furious about no-shows, and one night I wrote a script that texted her waiting list when a slot opened.",
+        "The turning point was when a clinic in Manchester asked to pay for the script. I quit the bank three months later, which terrified me.",
+        "Honestly, the fear was about being wrong in public. My dad thought leaving the bank was reckless and he still asks when I'll get a proper job.",
+        "Talk to ten customers before you write a line of code. I got lucky that my first customer lived in my house.",
+        "What matters now is that the product stays boring and reliable. Clinics don't want features, they want a full diary."
+      ]
+    },
+    {
+      "id": "nurse",
+      "language": "en",
+      "setup": { "about": "Former ICU nurse, now a product manager in health tech." },
+      "answers": [
+        "I spent eleven years as an ICU nurse and now I'm a product manager for software that monitors patients after surgery.",
+        "During the pandemic I was charting on paper at three in the morning while a monitor beeped at me, and I kept thinking someone should fix this.",
+        "A doctor I trusted introduced me to a start-up that needed a clinician. I said yes before I understood what a product manager did.",
+        "I felt like a fraud for the first year. Engineers would talk in acronyms and I'd nod along, then look everything up on the bus home.",
+        "Your frontline experience is the asset, not a gap. Stop apologising for not knowing the jargon and say what you've seen on the ward.",
+        "I want nurses to finish a shift with ten fewer minutes of paperwork. That's the whole goal, and it's harder than it sounds."
+      ]
+    },
+    {
+      "id": "carpenter",
+      "language": "de",
+      "uiLocale": "de",
+      "setup": {
+        "name": "Jonas",
+        "about": "Ich bin Tischler und habe eine kleine Werkstatt in Leipzig."
+      },
+      "answers": [
+        "Ich baue Möbel auf Maß in meiner Werkstatt in Leipzig, vor allem Küchen und Regale für Altbauwohnungen mit schiefen Wänden.",
+        "Angefangen hat es bei meinem Großvater in der Garage. Er hat mir mit zwölf einen Hobel geschenkt und gesagt, ich solle ihn nie verleihen.",
+        "Der Wendepunkt war ein Auftrag für ein Café, das plötzlich in einer Zeitschrift stand. Danach kamen drei Monate lang jeden Tag Anfragen.",
+        "Es hat mich meine Gesundheit gekostet. Ich habe zwei Jahre lang sechs Tage die Woche gearbeitet und irgendwann hatte ich Rückenprobleme.",
+        "Nimm nicht jeden Auftrag an. Die schlechtesten Kunden waren immer die, bei denen ich schon beim ersten Gespräch ein ungutes Gefühl hatte.",
+        "Heute ist mir wichtig, dass ich abends um sechs die Werkstatt zumache und meine Tochter vom Kindergarten abhole."
+      ]
+    },
+    {
+      "id": "terse",
+      "language": "en",
+      "setup": {},
+      "answers": [
+        "I'm an accountant.",
+        "Fell into it after uni.",
+        "Got made partner last year.",
+        "Long hours.",
+        "Get good at Excel.",
+        "My kids."
+      ]
+    }
+  ]
+}

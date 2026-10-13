@@ -66,6 +66,11 @@ Shape: chips 999px, composer 22px, cards 18px, panels 24px. Layout: column `44re
   beside each line (stacked under 640px), the reply in the display serif with its chips, a Listen
   button, and nothing else: no pull quote panel, takeaway or conversation cards. Consecutive talk
   turns sit together under a "Talk" eyebrow; Ask turns keep the editorial layout.
+- **Interview me** (P7-06): its own view, same frame (top bar, docked composer). Setup: eyebrow,
+  a display-serif title, two optional fields. Then one question at a time in the display serif,
+  a hairline progress bar in ember, the last answer quoted in a quiet left-ruled line for context,
+  Listen / Skip / End. "What I learned about you": each line in the display serif with the
+  visitor's own words beneath it behind the ember hairline, as quotes are.
 - **Evidence inspector** (tabs Quote · Context · Video; Video holds the click-to-load player and
   the podcast audio): ≥ 1024px a 420px right panel; the column and composer shift left, never
   covered. < 1024px a bottom sheet (85dvh, drag handle, native modal dialog).
