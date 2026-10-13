@@ -2,6 +2,7 @@ import { speechCostUsd } from '@dear-steven/core/models';
 import { synthesizeSpeech } from '@dear-steven/core/openai';
 import { SpeechRequestSchema } from '@dear-steven/core/schema';
 import { describeFailure } from '@/server/errors';
+import { freeLimitApplies } from '@/server/free-questions';
 import { getOpenAI } from '@/server/knowledge';
 import { clientKey, takeToken } from '@/server/rate-limit';
 import { requestConfig } from '@/server/request-config';
@@ -19,6 +20,10 @@ export async function POST(req: Request) {
   if (refused) return refused;
   const client = config.mode === 'live' ? getOpenAI(config) : null;
   if (!client) return jsonError(503, 'not_configured', 'Server speech needs an OpenAI key.');
+  // On free questions (P8-02) it would read any text for free: the browser's own voice reads instead.
+  if (freeLimitApplies(config)) {
+    return jsonError(402, 'needs_key', 'Server speech needs your own OpenAI key.');
+  }
   const limit = takeToken('speech', clientKey(req));
   if (!limit.ok) {
     return jsonError(429, 'rate_limited', 'Too many requests.', {

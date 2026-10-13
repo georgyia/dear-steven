@@ -4,6 +4,7 @@ import { routeQuestion, safetyReply } from '@dear-steven/core/safety';
 import { AskRequestSchema } from '@dear-steven/core/schema';
 import { MESSAGES } from '@/i18n';
 import { streamDemoAnswer } from '@/server/demo';
+import { type FreeQuestion, freeLimitApplies, takeFreeQuestion } from '@/server/free-questions';
 import {
   answerLogger,
   getAnswerModel,
@@ -25,7 +26,9 @@ const MAX_BODY_BYTES = 64 * 1024;
 /**
  * POST { question, history, uiLocale? } → text/event-stream of AskEvents (packages/core/src/schema/ask.ts).
  * Validates input, rate-limits live answers, and hands everything else to packages/core. Runs on the
- * visitor's own OpenAI key when they sent one (`requestConfig`, P6-03).
+ * visitor's own OpenAI key when they sent one (`requestConfig`, P6-03). On the operator's key with a
+ * limit set, each question counts as one of the visitor's free questions (P8-02), given back if it
+ * costs nothing.
  */
 export async function POST(req: Request) {
   const raw = await req.text();
@@ -86,8 +89,24 @@ export async function POST(req: Request) {
     );
   }
 
-  const model = getAnswerModel(config);
-  if (!model) return jsonError(503, 'not_configured', errors.noKey);
+  let free: FreeQuestion | null = null;
+  if (freeLimitApplies(config)) {
+    free = takeFreeQuestion(config, req);
+    if (!free.ok) return jsonError(402, 'needs_key', errors.needsKey(free.limit), NO_STORE);
+  }
+  const giveBack = () => {
+    if (free?.ok) free.giveBack();
+  };
+  let cost = 0;
+  const onCost = (usd: number) => {
+    cost += usd;
+  };
+
+  const model = getAnswerModel(config, onCost);
+  if (!model) {
+    giveBack();
+    return jsonError(503, 'not_configured', errors.noKey);
+  }
   let store: ReturnType<typeof getStore>;
   try {
     store = getStore(config);
@@ -96,10 +115,12 @@ export async function POST(req: Request) {
       '[ask] knowledge base unavailable',
       error instanceof Error ? error.message : error,
     );
+    giveBack();
     return jsonError(503, 'not_configured', errors.noKnowledgeBase);
   }
   if (!store) {
     // No database yet: the honest, in-persona empty answer (no model call is made).
+    giveBack();
     return sseResponse(
       async function* () {
         yield* emptyKnowledgeAnswer(uiLocale);
@@ -112,16 +133,38 @@ export async function POST(req: Request) {
   const deps = {
     store,
     model,
-    embedder: getEmbedder(config),
+    embedder: getEmbedder(config, onCost),
     moderate: getModerator(config),
     onComplete: answerLogger(config),
   };
-  return sseResponse(
-    (signal) => withShareToken(composeAnswer(deps, request, signal), config, request.question),
+  const res = sseResponse(
+    (signal) =>
+      countedOnlyIfPaid(
+        withShareToken(composeAnswer(deps, request, signal), config, request.question),
+        () => cost,
+        giveBack,
+      ),
     req.signal,
     uiLocale,
     config.keySource,
   );
+  if (free?.ok && free.cookie) res.headers.append('Set-Cookie', free.cookie);
+  return res;
+}
+
+const NO_STORE = { 'Cache-Control': 'no-store' };
+
+/** Passes the events on; when they end, a question that cost nothing (a safety reply) is given back. */
+async function* countedOnlyIfPaid<T>(
+  events: AsyncIterable<T>,
+  cost: () => number,
+  giveBack: () => void,
+): AsyncIterable<T> {
+  try {
+    yield* events;
+  } finally {
+    if (cost() === 0) giveBack();
+  }
 }
 
 /** The first Accept-Language tag, if it is a well-formed locale; it picks the crisis helpline. */

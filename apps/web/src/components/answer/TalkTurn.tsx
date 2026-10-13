@@ -13,6 +13,7 @@ interface TalkTurnProps {
   activeCitationId: string | null;
   onOpenCitation: (turnId: string, citationId: string) => void;
   onRetry: (question: string) => void;
+  onUseOwnKey?: () => void;
 }
 
 /**
@@ -20,7 +21,13 @@ interface TalkTurnProps {
  * speaking, then the line. Steven's line keeps its citation chips; the full answer furniture (pull
  * quotes, takeaway, conversation cards) stays with Ask.
  */
-export function TalkTurn({ turn, activeCitationId, onOpenCitation, onRetry }: TalkTurnProps) {
+export function TalkTurn({
+  turn,
+  activeCitationId,
+  onOpenCitation,
+  onRetry,
+  onUseOwnKey,
+}: TalkTurnProps) {
   const { t } = useI18n();
   const headingId = `q-${turn.id}`;
   const demo = turn.final?.demo ?? Object.values(turn.citations).some((c) => c.episode.demo);
@@ -71,7 +78,7 @@ export function TalkTurn({ turn, activeCitationId, onOpenCitation, onRetry }: Ta
             ) : null}
           </div>
         ) : null}
-        <TurnProblems turn={turn} onRetry={onRetry} />
+        <TurnProblems turn={turn} onRetry={onRetry} onUseOwnKey={onUseOwnKey} />
       </Line>
     </article>
   );

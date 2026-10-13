@@ -4,6 +4,15 @@ import { InterviewRequestSchema } from '@dear-steven/core/schema';
 import { MESSAGES } from '@/i18n';
 import { demoInterviewStep } from '@/server/demo-interview';
 import { describeFailure } from '@/server/errors';
+import {
+  type FreeQuestion,
+  freeLimitApplies,
+  issueTicket,
+  spendTicket,
+  TICKET_HEADER,
+  takeFreeQuestion,
+  visitorOf,
+} from '@/server/free-questions';
 import { getAnswerModel, getModerator, getStore } from '@/server/knowledge';
 import { clientKey, takeToken } from '@/server/rate-limit';
 import { requestConfig } from '@/server/request-config';
@@ -20,7 +29,9 @@ const NO_STORE = { 'Cache-Control': 'no-store' };
  * Interview mode (P7-06): POST the interview so far → the next question, what I learned, or an
  * ending. Nothing is kept here: the visitor's answers go to OpenAI to write the next step, and are
  * forgotten. The safety rails see every answer first; live steps are rate-limited and counted
- * against the daily spend cap, like answers.
+ * against the daily spend cap, like answers. On the operator's key with a limit set (P8-02), a whole
+ * interview counts as one free question: a step without a valid ticket (the first, or one after a
+ * ticket ran out) counts one and gets a ticket for the steps that follow.
  */
 export async function POST(req: Request) {
   const raw = await req.text();
@@ -52,8 +63,22 @@ export async function POST(req: Request) {
   }
   if (overBudget(config)) return Response.json(restingInterview(uiLocale), { headers: NO_STORE });
 
-  const model = getAnswerModel(config);
-  if (!model) return jsonError(503, 'not_configured', copy.noKey);
+  let free: FreeQuestion | null = null;
+  if (
+    freeLimitApplies(config) &&
+    !spendTicket(config, visitorOf(config, req), req.headers.get(TICKET_HEADER))
+  ) {
+    free = takeFreeQuestion(config, req);
+    if (!free.ok) return jsonError(402, 'needs_key', copy.needsKey(free.limit), NO_STORE);
+  }
+  let cost = 0;
+  const model = getAnswerModel(config, (usd) => {
+    cost += usd;
+  });
+  if (!model) {
+    if (free?.ok) free.giveBack();
+    return jsonError(503, 'not_configured', copy.noKey);
+  }
   let store: ReturnType<typeof getStore> = null;
   try {
     store = getStore(config);
@@ -66,8 +91,17 @@ export async function POST(req: Request) {
       request,
       req.signal,
     );
-    return Response.json(reply, { headers: NO_STORE });
+    const headers = new Headers(NO_STORE);
+    if (free?.ok) {
+      // A step that cost nothing (a safety ending, a fixed question) is given back, and the next
+      // step counts instead.
+      if (cost === 0) free.giveBack();
+      else headers.set(TICKET_HEADER, issueTicket(config, free.visitor));
+      if (free.cookie) headers.append('Set-Cookie', free.cookie);
+    }
+    return Response.json(reply, { headers });
   } catch (error) {
+    if (free?.ok && cost === 0) free.giveBack();
     const failure = describeFailure(error, uiLocale, config.keySource);
     console.error('[interview] step failed:', failure.log);
     return jsonError(502, failure.code, failure.message, NO_STORE);

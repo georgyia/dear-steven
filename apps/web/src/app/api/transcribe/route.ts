@@ -1,6 +1,7 @@
 import { transcriptionCostUsd } from '@dear-steven/core/models';
 import { transcribeSpeech } from '@dear-steven/core/openai';
 import { describeFailure } from '@/server/errors';
+import { freeLimitApplies } from '@/server/free-questions';
 import { getOpenAI } from '@/server/knowledge';
 import { clientKey, takeToken } from '@/server/rate-limit';
 import { requestConfig } from '@/server/request-config';
@@ -26,6 +27,14 @@ export async function POST(req: Request) {
       503,
       'not_configured',
       'Server transcription needs an OpenAI key; your browser’s own recognition still works.',
+    );
+  }
+  // On free questions (P8-02) it would transcribe any audio for free: the browser's recognition only.
+  if (freeLimitApplies(config)) {
+    return jsonError(
+      402,
+      'needs_key',
+      'Server transcription needs your own OpenAI key; your browser’s own recognition still works.',
     );
   }
   const limit = takeToken('transcribe', clientKey(req));

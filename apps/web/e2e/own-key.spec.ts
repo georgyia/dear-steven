@@ -26,6 +26,7 @@ const statusFor = (own: boolean): KnowledgeStatus => ({
   lastIndexedAt: null,
   storeError: null,
   spend: { todayUsd: 0, capUsd: null },
+  free: null,
   setup: { openaiKey: own, visitorKey: own, youtubeKey: false, database: own },
 });
 

@@ -1,5 +1,6 @@
 import { dirname } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
+import { E2E_FREE_DB, E2E_FREE_OPERATOR_KEY } from './e2e/free-env';
 import { E2E_ACCESS_CODE } from './e2e/gated';
 import { E2E_LIVE_LOG, E2E_OPERATOR_CANARY } from './e2e/live-env';
 import { E2E_SETUP_DB, E2E_SETUP_ENV_FILE, E2E_SETUP_TOKEN } from './e2e/setup-env';
@@ -15,6 +16,8 @@ const SETUP_PORT = PORT + 2;
 const FIXTURE_PORT = PORT + 3;
 /** The same build on an operator key (P8-01): `operator-key.spec.ts` only. */
 const LIVE_PORT = PORT + 4;
+/** The same build on a (fake) operator key with three free questions (P8-02): `free-questions.spec.ts`. */
+const FREE_PORT = PORT + 5;
 const SERVER_ENV = {
   DEAR_STEVEN_DEMO: '1',
   DEAR_STEVEN_DB_PATH: 'data/e2e-does-not-exist.db',
@@ -40,12 +43,12 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop',
-      testIgnore: /(access|setup|operator-key)\.spec\.ts/,
+      testIgnore: /(access|setup|operator-key|free-questions)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 820 } },
     },
     {
       name: 'mobile',
-      testIgnore: /(access|setup|operator-key)\.spec\.ts/,
+      testIgnore: /(access|setup|operator-key|free-questions)\.spec\.ts/,
       use: { ...devices['Pixel 7'], viewport: { width: 375, height: 760 } },
     },
     {
@@ -62,6 +65,11 @@ export default defineConfig({
       name: 'live',
       testMatch: /operator-key\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], baseURL: `http://localhost:${LIVE_PORT}` },
+    },
+    {
+      name: 'free',
+      testMatch: /free-questions\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], baseURL: `http://localhost:${FREE_PORT}` },
     },
   ],
   // Started in order: the first builds, the second reuses that build.
@@ -121,6 +129,24 @@ export default defineConfig({
         DEAR_STEVEN_DB_PATH: 'data/e2e-does-not-exist.db',
         DEAR_STEVEN_DAILY_BUDGET_USD: '',
         DEAR_STEVEN_ENV_FILE: 'data/e2e-live-does-not-exist.env',
+      },
+    },
+    {
+      // A fresh fixture knowledge base (and so an empty free-question ledger) every run.
+      command: `node e2e/free-fixtures.ts && pnpm exec next start -p ${FREE_PORT}`,
+      url: `http://localhost:${FREE_PORT}/api/status`,
+      reuseExistingServer: false,
+      timeout: 60_000,
+      env: {
+        NEXT_TELEMETRY_DISABLED: '1',
+        OPENAI_API_KEY: E2E_FREE_OPERATOR_KEY,
+        OPENAI_BASE_URL: `http://127.0.0.1:${FIXTURE_PORT}/v1`,
+        YOUTUBE_API_KEY: '',
+        DEAR_STEVEN_DEMO: '',
+        DEAR_STEVEN_DB_PATH: E2E_FREE_DB,
+        DEAR_STEVEN_FREE_QUESTIONS: '3',
+        DEAR_STEVEN_DAILY_BUDGET_USD: '',
+        DEAR_STEVEN_ENV_FILE: 'data/e2e-free-does-not-exist.env',
       },
     },
   ],

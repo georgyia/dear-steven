@@ -10,12 +10,16 @@ import { spendStatus } from './spend';
  * What the status pill and setup panel show, for this request's configuration (`requestConfig`).
  * Never throws: a broken store is a status, not a crash.
  */
-export function getKnowledgeStatus(config: AppConfig): KnowledgeStatus {
+export function getKnowledgeStatus(
+  config: AppConfig,
+  free: KnowledgeStatus['free'] = null,
+): KnowledgeStatus {
   const database = existsSync(config.dbPath);
   const base = {
     mode: config.mode,
     demoReason: config.demoReason,
     spend: spendStatus(config),
+    free: config.mode === 'live' ? free : null,
     setup: {
       openaiKey: config.openaiApiKey !== null,
       visitorKey: config.keySource === 'visitor',

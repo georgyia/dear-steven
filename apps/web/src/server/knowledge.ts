@@ -59,11 +59,22 @@ export function getOpenAI(config: AppConfig): OpenAI | null {
   return client(config);
 }
 
-export function getAnswerModel(config: AppConfig): AnswerModel | null {
+/**
+ * Every paid call is recorded against the daily cap; `onCost` also hears it, so a route can tell
+ * whether a request cost anything at all (P8-02: a free question that didn't is given back).
+ */
+export function getAnswerModel(
+  config: AppConfig,
+  onCost?: (usd: number) => void,
+): AnswerModel | null {
   const c = client(config);
   if (!c) return null;
   return openAIAnswerModel(c, MODELS.answer, {
-    onUsage: (u) => recordSpend(config, answerCostUsd(u)),
+    onUsage: (u) => {
+      const usd = answerCostUsd(u);
+      recordSpend(config, usd);
+      onCost?.(usd);
+    },
   });
 }
 
@@ -75,11 +86,15 @@ export function getModerator(
   return c ? (text, signal) => moderate(c, text, signal) : undefined;
 }
 
-export function getEmbedder(config: AppConfig): Embedder | null {
+export function getEmbedder(config: AppConfig, onCost?: (usd: number) => void): Embedder | null {
   const c = client(config);
   if (!c) return null;
   return openAIEmbedder(c, MODELS.embedding, {
-    onTokens: (tokens) => recordSpend(config, embeddingCostUsd(tokens)),
+    onTokens: (tokens) => {
+      const usd = embeddingCostUsd(tokens);
+      recordSpend(config, usd);
+      onCost?.(usd);
+    },
   });
 }
 

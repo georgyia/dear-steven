@@ -62,6 +62,7 @@ const STAGE_ERROR: Record<AskErrorCode | 'network', StageErrorKind> = {
   bad_request: 'generic',
   internal: 'generic',
   locked: 'generic',
+  needs_key: 'generic',
 };
 
 export function Stage({ initialStatus }: { initialStatus: KnowledgeStatus }) {
@@ -88,6 +89,8 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const [draft, setDraft] = useState('');
   const [drawer, setDrawer] = useState<{ turnId: string; citationId: string } | null>(null);
   const [dialog, setDialog] = useState<'setup' | 'about' | 'episodes' | 'voice' | null>(null);
+  /** The setup panel was opened to add a key (P8-02): its key field takes the focus. */
+  const [focusKey, setFocusKey] = useState(false);
   const [guided, setGuided] = useState<{ token: string; state: SetupState } | null>(null);
   const { prefs, update: updatePrefs, persisted } = useVoicePreferences();
   const [mode, setMode] = useStageMode();
@@ -120,7 +123,8 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const busy = isBusy(stage);
 
   const voice = useVoice({
-    serverVoice: status.mode === 'live',
+    // On free questions (P8-02) server voice isn't offered; the browser's own voice is.
+    serverVoice: status.mode === 'live' && status.free === null,
     send,
     setDraft,
     onTranscript: (text) => {
@@ -136,6 +140,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   voiceRef.current = voice;
 
   const interview = useInterview(locale);
+  const interviewPhase = interview.state.phase;
   /** What the visitor chose to keep about themselves (P7-08): sent with questions, exactly. */
   const aboutYou = useAboutYou();
   const aboutRef = useRef(aboutYou.text);
@@ -171,6 +176,12 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
         .catch(() => undefined),
     [],
   );
+  /** On free questions (P8-02), the count is asked for again after every question. */
+  const onFreeQuestions = useRef(status.free !== null);
+  onFreeQuestions.current = status.free !== null;
+  useEffect(() => {
+    if (onFreeQuestions.current && interviewPhase !== 'waiting') void refreshStatus();
+  }, [interviewPhase, refreshStatus]);
 
   // Status: rendered on the server without the visitor's own key, so asked again at once (with
   // it), and whenever the tab regains focus (e.g. after an ingest run).
@@ -268,91 +279,102 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     return () => ctrl.abort();
   }, []);
 
-  const ask = useCallback<Ask>(async (raw, options = {}) => {
-    const question = raw.trim().slice(0, LIMITS.questionChars);
-    // Only an answer already in flight blocks a new question. (A voice transcript arrives in the same
-    // tick as TRANSCRIBED, before stageRef catches up; the reducer applies both in order.)
-    if (!question || stageRef.current.kind === 'composing') return;
-    if (voiceRef.current.speakingTurnId) voiceRef.current.stopSpeaking();
-    seq.current += 1;
-    const id = `t${Date.now().toString(36)}${seq.current}`;
-    const mode = modeRef.current === 'talk' ? 'talk' : 'ask';
-    const aloud = prefsRef.current.alwaysSpeak || (mode === 'talk' && prefsRef.current.talkAloud);
-    if (options.voice) spokenTurns.current.add(id);
-    else if (aloud && hasBeenActive()) {
-      // A typed question: this key press or click is the gesture that lets the reply play later.
-      unlockAudio();
-      spokenTurns.current.add(id);
-    }
-    const history = historyFor(turnsRef.current);
-    setDraft('');
-    setDrawer(null);
-    dispatch({ type: 'turn.start', id, question, at: performance.now(), mode });
-    send({ type: 'ASK' });
-
-    const ctrl = new AbortController();
-    abortRef.current = ctrl;
-    let settled = false;
-    try {
-      for await (const event of askStream(
-        {
-          question,
-          history,
-          uiLocale: i18nRef.current.locale,
-          mode,
-          ...(aboutRef.current ? { about: aboutRef.current } : {}),
-        },
-        ctrl.signal,
-      )) {
-        dispatch({ type: 'turn.event', id, event, at: performance.now() });
-        if (event.type === 'sources' || (event.type === 'status' && event.step === 'found')) {
-          send({ type: 'FOUND' });
-        } else if (
-          event.type === 'block.start' ||
-          (event.type === 'status' && event.step === 'writing')
-        ) {
-          send({ type: 'WRITING' });
-        } else if (event.type === 'final') {
-          settled = true;
-          send({ type: 'ANSWERED', insufficient: event.answer.mode === 'insufficient' });
-          // Spoken replies follow a spoken question, or any question with "always speak" on — both
-          // start from a gesture that unlocked audio.
-          if (spokenTurns.current.has(id) && event.answer.spoken) {
-            voiceRef.current.speak(id, event.answer.spoken, event.answer.language);
-          }
-        } else if (event.type === 'error') {
-          settled = true;
-          send({ type: 'FAILED', error: STAGE_ERROR[event.code] });
-        }
+  const ask = useCallback<Ask>(
+    async (raw, options = {}) => {
+      const question = raw.trim().slice(0, LIMITS.questionChars);
+      // Only an answer already in flight blocks a new question. (A voice transcript arrives in the same
+      // tick as TRANSCRIBED, before stageRef catches up; the reducer applies both in order.)
+      if (!question || stageRef.current.kind === 'composing') return;
+      if (voiceRef.current.speakingTurnId) voiceRef.current.stopSpeaking();
+      seq.current += 1;
+      const id = `t${Date.now().toString(36)}${seq.current}`;
+      const mode = modeRef.current === 'talk' ? 'talk' : 'ask';
+      const aloud = prefsRef.current.alwaysSpeak || (mode === 'talk' && prefsRef.current.talkAloud);
+      if (options.voice) spokenTurns.current.add(id);
+      else if (aloud && hasBeenActive()) {
+        // A typed question: this key press or click is the gesture that lets the reply play later.
+        unlockAudio();
+        spokenTurns.current.add(id);
       }
-      if (!settled) {
+      const history = historyFor(turnsRef.current);
+      setDraft('');
+      setDrawer(null);
+      dispatch({ type: 'turn.start', id, question, at: performance.now(), mode });
+      send({ type: 'ASK' });
+
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+      let settled = false;
+      try {
+        for await (const event of askStream(
+          {
+            question,
+            history,
+            uiLocale: i18nRef.current.locale,
+            mode,
+            ...(aboutRef.current ? { about: aboutRef.current } : {}),
+          },
+          ctrl.signal,
+        )) {
+          dispatch({ type: 'turn.event', id, event, at: performance.now() });
+          if (event.type === 'sources' || (event.type === 'status' && event.step === 'found')) {
+            send({ type: 'FOUND' });
+          } else if (
+            event.type === 'block.start' ||
+            (event.type === 'status' && event.step === 'writing')
+          ) {
+            send({ type: 'WRITING' });
+          } else if (event.type === 'final') {
+            settled = true;
+            send({ type: 'ANSWERED', insufficient: event.answer.mode === 'insufficient' });
+            // Spoken replies follow a spoken question, or any question with "always speak" on — both
+            // start from a gesture that unlocked audio.
+            if (spokenTurns.current.has(id) && event.answer.spoken) {
+              voiceRef.current.speak(id, event.answer.spoken, event.answer.language);
+            }
+          } else if (event.type === 'error') {
+            settled = true;
+            send({ type: 'FAILED', error: STAGE_ERROR[event.code] });
+          }
+        }
+        if (!settled) {
+          if (ctrl.signal.aborted) {
+            dispatch({ type: 'turn.stopped', id, at: performance.now() });
+            send({ type: 'STOPPED' });
+          } else {
+            dispatch({
+              type: 'turn.failed',
+              id,
+              code: 'upstream',
+              message: i18nRef.current.t.stage.endedEarly,
+              at: performance.now(),
+            });
+            send({ type: 'FAILED', error: 'upstream' });
+          }
+        }
+      } catch (error) {
         if (ctrl.signal.aborted) {
           dispatch({ type: 'turn.stopped', id, at: performance.now() });
           send({ type: 'STOPPED' });
         } else {
+          const code = error instanceof AskError ? error.code : 'network';
           dispatch({
             type: 'turn.failed',
             id,
-            code: 'upstream',
-            message: i18nRef.current.t.stage.endedEarly,
+            code,
+            // The server's sentence, as written: not "Error: …".
+            message: error instanceof Error ? error.message : String(error),
             at: performance.now(),
           });
-          send({ type: 'FAILED', error: 'upstream' });
+          send({ type: 'FAILED', error: STAGE_ERROR[code] });
         }
+      } finally {
+        if (abortRef.current === ctrl) abortRef.current = null;
+        if (onFreeQuestions.current) void refreshStatus();
       }
-    } catch (error) {
-      if (ctrl.signal.aborted) {
-        dispatch({ type: 'turn.stopped', id, at: performance.now() });
-        send({ type: 'STOPPED' });
-      } else {
-        const code = error instanceof AskError ? error.code : 'network';
-        dispatch({ type: 'turn.failed', id, code, message: String(error), at: performance.now() });
-        send({ type: 'FAILED', error: STAGE_ERROR[code] });
-      }
-    } finally {
-      if (abortRef.current === ctrl) abortRef.current = null;
-    }
-  }, []);
+    },
+    [refreshStatus],
+  );
   askRef.current = ask;
 
   const stop = useCallback(() => abortRef.current?.abort(), []);
@@ -439,6 +461,8 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   });
 
   const listening = stage.kind === 'listening' || stage.kind === 'requestingMic';
+  // Free questions (P8-02): said quietly once the first is used, until none are left.
+  const freeLeft = status.free && status.free.used > 0 ? status.free.remaining : 0;
   const talking = mode === 'talk';
   const composer = (
     <div className="flex flex-col gap-2">
@@ -471,6 +495,11 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
           />
         }
       />
+      {freeLeft ? (
+        <p className="px-4 text-[12.5px] text-ivory-2" data-testid="free-left">
+          {t.free.left(freeLeft)}
+        </p>
+      ) : null}
     </div>
   );
 
@@ -512,6 +541,10 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   );
 
   const pill = <StatusPill status={status} onOpen={() => setDialog('setup')} />;
+  const useOwnKey = () => {
+    setFocusKey(true);
+    setDialog('setup');
+  };
   const voiceSettings = (
     <button
       type="button"
@@ -550,6 +583,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
             demo={status.mode === 'demo'}
             onBack={() => setMode('ask')}
             about={aboutYou}
+            onUseOwnKey={useOwnKey}
             header={
               <>
                 <CompactWordmark
@@ -589,6 +623,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
                   activeCitationId={target?.turnId === group.turn.id ? target.citation.id : null}
                   onOpenCitation={(turnId, citationId) => setDrawer({ turnId, citationId })}
                   onRetry={(q) => void ask(q)}
+                  onUseOwnKey={useOwnKey}
                 />
               ) : (
                 <section
@@ -606,6 +641,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
                       activeCitationId={target?.turnId === turn.id ? target.citation.id : null}
                       onOpenCitation={(turnId, citationId) => setDrawer({ turnId, citationId })}
                       onRetry={(q) => void ask(q)}
+                      onUseOwnKey={useOwnKey}
                     />
                   ))}
                 </section>
@@ -660,8 +696,12 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       />
       <SetupDialog
         open={dialog === 'setup'}
-        onClose={() => setDialog(null)}
+        onClose={() => {
+          setDialog(null);
+          setFocusKey(false);
+        }}
         status={status}
+        focusKey={focusKey}
         onBrowse={() => setDialog('episodes')}
         onKeyChange={() => void refreshStatus()}
         guided={

@@ -20,6 +20,8 @@ interface SetupDialogProps {
   onBrowse: () => void;
   /** The visitor saved or forgot their own key: ask the server for the status again. */
   onKeyChange: () => void;
+  /** Opened to add a key (P8-02): the key field takes the focus. */
+  focusKey?: boolean;
   /** Set when `pnpm dev:setup` started this server and the page holds its token (P6-04). */
   guided?: { token: string; state: SetupState; onState: (state: SetupState) => void } | null;
 }
@@ -39,6 +41,7 @@ function items(
   copy: Messages['setup'],
   locale: UiLocale,
   onKeyChange: () => void,
+  focusKey: boolean,
 ): Item[] {
   const demo = s.mode === 'demo';
   const money = (x: number) => usd(x, locale);
@@ -58,7 +61,7 @@ function items(
           }
         />
       ),
-      action: s.demoReason === 'forced' ? null : <OwnKey onChange={onKeyChange} />,
+      action: s.demoReason === 'forced' ? null : <OwnKey onChange={onKeyChange} focus={focusKey} />,
     },
     {
       key: 'kb',
@@ -142,6 +145,7 @@ export function SetupDialog({
   status,
   onBrowse,
   onKeyChange,
+  focusKey = false,
   guided,
 }: SetupDialogProps) {
   const { t, locale } = useI18n();
@@ -149,7 +153,7 @@ export function SetupDialog({
   return (
     <Dialog open={open} onClose={onClose} eyebrow={copy.eyebrow} title={copy.title}>
       <ul className="flex flex-col gap-4">
-        {items(status, copy, locale, onKeyChange).map((item) => (
+        {items(status, copy, locale, onKeyChange, focusKey).map((item) => (
           <li key={item.key} className="flex gap-3">
             <StatusMark
               status={item.status}

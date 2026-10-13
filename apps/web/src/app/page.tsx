@@ -1,8 +1,9 @@
 import { forVisitor, readConfig } from '@dear-steven/core/config';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { AccessGate } from '@/components/stage/AccessGate';
 import { Stage } from '@/components/stage/Stage';
 import { ACCESS_COOKIE, validAccessToken } from '@/server/access';
+import { freeStatus } from '@/server/free-questions';
 import { getKnowledgeStatus } from '@/server/status';
 
 export const dynamic = 'force-dynamic';
@@ -19,5 +20,7 @@ export default async function Page() {
   }
   // A visitor's own key lives in their browser, so the first paint is without it; the stage asks
   // again with it straight away.
-  return <Stage initialStatus={getKnowledgeStatus(forVisitor(config, null))} />;
+  const visitor = forVisitor(config, null);
+  const asked = new Request('http://localhost/', { headers: await headers() });
+  return <Stage initialStatus={getKnowledgeStatus(visitor, freeStatus(visitor, asked))} />;
 }

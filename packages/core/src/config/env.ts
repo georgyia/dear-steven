@@ -24,6 +24,12 @@ export interface AppConfig {
    * spend reaches it (P6-08). `null` = no cap. Set but unreadable (`5$`, `-1`) fails closed: 0.
    */
   dailyBudgetUsd: number | null;
+  /**
+   * `DEAR_STEVEN_FREE_QUESTIONS` (P8-02): how many questions a visitor without a key of their own
+   * may ask on the operator's key before they need one. `null` (unset) = no per-visitor limit, as a
+   * local copy always had. Set but unreadable (`three`, `-1`) fails closed: 0.
+   */
+  freeQuestions: number | null;
   /** `DEAR_STEVEN_ACCESS_CODE`: when set, only browsers that entered it can use the API. */
   accessCode: string | null;
   /**
@@ -77,10 +83,18 @@ export function readConfig(env: Env = process.env, cwd: string = process.cwd()):
     demoReason,
     logAnswers: flag(env.DEAR_STEVEN_LOG_ANSWERS),
     dailyBudgetUsd: budget(env.DEAR_STEVEN_DAILY_BUDGET_USD),
+    freeQuestions: allowance(env.DEAR_STEVEN_FREE_QUESTIONS),
     accessCode: accessCodeFrom(env),
     envFile: inRoot(clean(env.DEAR_STEVEN_ENV_FILE), '.env'),
     feedUrl: clean(env.DEAR_STEVEN_FEED_URL),
   };
+}
+
+function allowance(value: string | undefined): number | null {
+  const v = value?.trim();
+  if (!v) return null;
+  const n = Number(v);
+  return Number.isInteger(n) && n >= 0 && n <= 1000 ? n : 0;
 }
 
 function budget(value: string | undefined): number | null {

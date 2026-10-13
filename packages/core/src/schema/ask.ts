@@ -56,6 +56,8 @@ export const AskErrorCodeSchema = z.enum([
   'internal',
   /** The access gate (P6-08): this browser hasn't entered the passcode, or its cookie expired. */
   'locked',
+  /** The free questions on the operator's key are used up (P8-02): a key of their own is needed. */
+  'needs_key',
 ]);
 export type AskErrorCode = z.infer<typeof AskErrorCodeSchema>;
 
@@ -119,6 +121,17 @@ export const KnowledgeStatusSchema = z.object({
     todayUsd: z.number().nonnegative(),
     capUsd: z.number().nonnegative().nullable(),
   }),
+  /**
+   * This visitor's free questions on the operator's key (P8-02), when there is a limit; `null` with
+   * no limit, on their own key, or in demo mode.
+   */
+  free: z
+    .object({
+      limit: z.number().int().nonnegative(),
+      used: z.number().int().nonnegative(),
+      remaining: z.number().int().nonnegative(),
+    })
+    .nullable(),
   setup: z.object({
     /** A key this visitor's requests can run on: their own, or the operator's if allowed. */
     openaiKey: z.boolean(),

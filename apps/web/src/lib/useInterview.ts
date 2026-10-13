@@ -1,8 +1,8 @@
 'use client';
 
 import type { InterviewRequest } from '@dear-steven/core/schema';
-import { useEffect, useMemo, useReducer } from 'react';
-import { interviewStep } from './api';
+import { useEffect, useMemo, useReducer, useRef } from 'react';
+import { AskError, interviewStep } from './api';
 import { initialInterview, interviewReducer, interviewRequest } from './interview';
 
 /**
@@ -11,6 +11,8 @@ import { initialInterview, interviewReducer, interviewRequest } from './intervie
  */
 export function useInterview(uiLocale: InterviewRequest['uiLocale']) {
   const [state, dispatch] = useReducer(interviewReducer, initialInterview);
+  /** A free interview's ticket (P8-02): one interview, one free question. */
+  const ticket = useRef<string | null>(null);
   const pending = useMemo(
     () => (state.phase === 'waiting' ? interviewRequest(state, uiLocale) : null),
     [state, uiLocale],
@@ -18,13 +20,18 @@ export function useInterview(uiLocale: InterviewRequest['uiLocale']) {
   useEffect(() => {
     if (!pending) return;
     const ctrl = new AbortController();
-    interviewStep(pending, ctrl.signal)
-      .then((reply) => dispatch({ type: 'reply', reply }))
+    if (pending.turns.length === 0) ticket.current = null;
+    interviewStep(pending, ctrl.signal, ticket.current)
+      .then((step) => {
+        ticket.current = step.ticket;
+        dispatch({ type: 'reply', reply: step.reply });
+      })
       .catch((error: unknown) => {
         if (!ctrl.signal.aborted) {
           dispatch({
             type: 'failed',
             message: error instanceof Error ? error.message : String(error),
+            needsKey: error instanceof AskError && error.code === 'needs_key',
           });
         }
       });
