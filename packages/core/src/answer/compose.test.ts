@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { TALK_STYLE } from '../persona/persona.ts';
 import type { AskEvent, FinalAnswer, ModelAnswer, ModelBlock } from '../schema/index.ts';
 import type { KnowledgeStore } from '../store/index.ts';
 import { seedEpisode, tempStore } from '../test/fixtures.ts';
@@ -459,5 +460,112 @@ describe('composeAnswer — interface language (P6-02)', () => {
     const final = events.find((e) => e.type === 'final');
     expect(final?.type === 'final' && final.answer.language).toBe('de');
     expect(JSON.stringify(final)).toMatch(/noch keines meiner Gespräche/);
+  });
+});
+
+describe('composeAnswer — talk mode (P7-05)', () => {
+  const talk: ModelAnswer = {
+    language: 'en',
+    mode: 'grounded',
+    blocks: [
+      {
+        kind: 'paragraph',
+        segments: [
+          { text: 'Honestly? It’s rarely about time.', attribution: 'synthesis', citations: [] },
+          {
+            text: 'In my conversation with Ada Lovelace, emotion came up as the real reason.',
+            attribution: 'episode',
+            citations: ['p1'],
+          },
+          { text: 'What are you avoiding feeling?', attribution: 'synthesis', citations: [] },
+        ],
+      },
+    ],
+    evidence: [{ passageId: 'p1', why: 'Names emotion as the cause.' }],
+    spoken: 'Honestly, it’s rarely about time. What are you avoiding feeling?',
+    caveats: [],
+  };
+
+  /** Records what the model was sent, then answers with `answer`. */
+  const watched = (answer: ModelAnswer) => {
+    const seen: { instructions: string; input: string }[] = [];
+    const { model, calls } = scripted(answer);
+    const watching: AnswerModel = {
+      ...model,
+      streamJson(request) {
+        seen.push({
+          instructions: request.instructions,
+          input: request.input.map((m) => m.content).join('\n'),
+        });
+        return model.streamJson(request);
+      },
+    };
+    return { model: watching, seen, calls };
+  };
+
+  const ask = async (model: AnswerModel, question: string, mode?: 'ask' | 'talk') => {
+    const events: AskEvent[] = [];
+    for await (const e of composeAnswer(
+      { store: store1(), model, embedder: null },
+      { question, history: [], mode },
+      new AbortController().signal,
+    )) {
+      events.push(e);
+    }
+    return events;
+  };
+
+  it('sends the talk style with the question, and the same cached instructions', async () => {
+    const w = watched(talk);
+    await ask(w.model, 'Why do I procrastinate?', 'talk');
+    await ask(w.model, 'Why do I procrastinate?', 'ask');
+    await ask(w.model, 'Why do I procrastinate?');
+    const [talked, asked, plain] = w.seen;
+    expect(talked?.input).toContain(`<style>\n${TALK_STYLE}\n</style>`);
+    expect(asked?.input).not.toContain('<style>');
+    expect(plain?.input).not.toContain('<style>');
+    expect(talked?.instructions).toBe(asked?.instructions);
+  });
+
+  it('validates and streams a talk reply like any answer', async () => {
+    const events = await ask(watched(talk).model, 'Why do I procrastinate?', 'talk');
+    const final = events.find((e) => e.type === 'final');
+    expect(final?.type === 'final' && final.answer.blocks).toHaveLength(1);
+    expect(final?.type === 'final' && final.answer.citations.map((c) => c.id)).toEqual(['c1']);
+    expect(final?.type === 'final' && final.answer.spoken).toMatch(/avoiding feeling\?$/);
+  });
+
+  it('keeps the evidence rules: a guest claim on an unverified passage is never shown as one', async () => {
+    const claim: ModelAnswer = {
+      ...talk,
+      blocks: [
+        {
+          kind: 'paragraph',
+          segments: [
+            {
+              text: 'Ada Lovelace said it is all about emotion.',
+              attribution: 'guest',
+              citations: ['p1'],
+            },
+          ],
+        },
+      ],
+    };
+    const events = await ask(watched(claim).model, 'Why do I procrastinate?', 'talk');
+    const final = events.find((e) => e.type === 'final');
+    const segments =
+      final?.type === 'final'
+        ? final.answer.blocks.flatMap((b) => (b.kind === 'quote' ? [] : b.segments))
+        : [];
+    expect(segments.some((s) => s.attribution === 'guest')).toBe(false);
+  });
+
+  it('keeps the safety rails: a crisis message gets the fixed reply, and the model is not asked', async () => {
+    const w = watched(talk);
+    const events = await ask(w.model, 'I want to kill myself', 'talk');
+    expect(w.calls.stream).toBe(0);
+    expect(JSON.stringify(events.find((e) => e.type === 'final'))).toMatch(
+      /988|116 123|Samaritans|helpline/i,
+    );
   });
 });

@@ -110,3 +110,35 @@ describe('conversation memory', () => {
     expect(conversationReducer(started, { type: 'restore', turns })).toBe(started);
   });
 });
+
+describe('talk turns in memory (P7-05)', () => {
+  it('come back as talk turns; anything else stored as a mode is ignored', () => {
+    const stored = JSON.parse(JSON.stringify(toStored([turn('t1', { mode: 'talk' }), turn('t2')])));
+    expect(stored.turns.map((t: { mode?: string }) => t.mode)).toEqual(['talk', undefined]);
+    stored.turns[1].mode = 'interview<script>';
+    const [talk, ask] = restoredTurns(parseStored(stored) ?? []);
+    expect(talk?.mode).toBe('talk');
+    expect(ask && 'mode' in ask).toBe(false);
+  });
+});
+
+describe('the conversation reducer and modes (P7-05)', () => {
+  it('marks a turn started in talk mode, and only that one', () => {
+    let state = conversationReducer(initialConversation, {
+      type: 'turn.start',
+      id: 'a',
+      question: 'Hi',
+      at: 0,
+      mode: 'talk',
+    });
+    state = conversationReducer(state, { type: 'turn.start', id: 'b', question: 'Hi', at: 0 });
+    state = conversationReducer(state, {
+      type: 'turn.start',
+      id: 'c',
+      question: 'Hi',
+      at: 0,
+      mode: 'ask',
+    });
+    expect(state.turns.map((t) => t.mode)).toEqual(['talk', undefined, undefined]);
+  });
+});

@@ -127,8 +127,13 @@ test.describe('content security policy in the browser', () => {
     await page.goto('/');
     // The page's own nonced scripts still run: it hydrates and answers the keyboard.
     await expect(page.getByRole('heading', { level: 1, name: 'Dear Steven' })).toBeVisible();
-    await page.keyboard.press('/');
-    await expect(page.getByRole('textbox', { name: 'Ask Steven' })).toBeFocused();
+    // The heading is server-rendered; the keyboard answers once hydration is done, so press until it does.
+    await expect(async () => {
+      await page.keyboard.press('/');
+      await expect(page.getByRole('textbox', { name: 'Ask Steven' })).toBeFocused({
+        timeout: 1000,
+      });
+    }).toPass();
 
     await expect.poll(() => cspViolations.length).toBeGreaterThanOrEqual(3);
     expect(cspViolations.every((v) => /script-src/.test(v))).toBe(true);

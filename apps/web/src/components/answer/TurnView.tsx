@@ -109,6 +109,16 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
         <ShareControls question={turn.question} answer={turn.final} />
       ) : null}
 
+      <TurnProblems turn={turn} onRetry={onRetry} />
+    </article>
+  );
+}
+
+/** How a turn ended when it didn't end well, with a retry; and "Answer complete." when it did. */
+export function TurnProblems({ turn, onRetry }: Pick<TurnViewProps, 'turn' | 'onRetry'>) {
+  const { t } = useI18n();
+  return (
+    <>
       {turn.status === 'stopped' ? (
         <p className="mt-6 text-[14px] text-ivory-2">{t.turn.stopped}</p>
       ) : null}
@@ -138,7 +148,7 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
       <p className="sr-only" role="status">
         {turn.status === 'done' ? t.turn.complete : ''}
       </p>
-    </article>
+    </>
   );
 }
 

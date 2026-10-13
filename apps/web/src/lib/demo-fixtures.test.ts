@@ -21,7 +21,7 @@ describe('demo fixtures', () => {
       for (const c of answer.citations) expect(() => CitationSchema.parse(c)).not.toThrow();
 
       const ids = new Set(answer.citations.map((c) => c.id));
-      for (const b of answer.blocks) {
+      for (const b of [...answer.blocks, answer.talk.block]) {
         const refs = b.kind === 'quote' ? [b.citationId] : b.segments.flatMap((s) => s.citationIds);
         for (const r of refs) expect(ids.has(r)).toBe(true);
         if (b.kind !== 'quote') {
@@ -45,6 +45,19 @@ describe('demo fixtures', () => {
       for (const b of a.blocks) {
         if (b.kind !== 'quote') for (const s of b.segments) expect(s.attribution).not.toBe('host');
       }
+    }
+  });
+
+  it('has a talk reply for every topic: one short paragraph, at most one source (P7-05)', () => {
+    const words = (text: string) => text.split(/\s+/).filter(Boolean).length;
+    for (const a of DEMO_ANSWERS) {
+      const { block, spoken } = a.talk;
+      expect(block.kind).toBe('paragraph');
+      if (block.kind === 'quote') continue;
+      expect(words(block.segments.map((s) => s.text).join(' '))).toBeLessThan(60);
+      expect(words(spoken)).toBeLessThan(60);
+      expect(new Set(block.segments.flatMap((s) => s.citationIds)).size).toBeLessThanOrEqual(1);
+      for (const s of block.segments) expect(s.attribution).not.toBe('host');
     }
   });
 
@@ -89,6 +102,8 @@ describe('demo fixtures in German (P6-02)', () => {
       ...a.blocks.flatMap((b) =>
         b.kind === 'quote' ? [b.text, ...(b.lead ? [b.lead] : [])] : b.segments.map((s) => s.text),
       ),
+      a.talk.spoken,
+      ...(a.talk.block.kind === 'quote' ? [] : a.talk.block.segments.map((s) => s.text)),
     ]);
     expect(prose.filter((text) => !GERMAN[text])).toEqual([]);
   });

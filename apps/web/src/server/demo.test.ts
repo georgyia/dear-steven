@@ -57,3 +57,37 @@ describe('streamDemoAnswer', () => {
     });
   });
 });
+
+describe('streamDemoAnswer in talk mode (P7-05)', () => {
+  const talk = async (question: string) => {
+    const events: AskEvent[] = [];
+    for await (const e of streamDemoAnswer(
+      { question, mode: 'talk' },
+      new AbortController().signal,
+      instant,
+    )) {
+      events.push(e);
+    }
+    const final = events.at(-1);
+    if (final?.type !== 'final') throw new Error('no final answer');
+    return { events, answer: final.answer };
+  };
+
+  it('replies with one short paragraph, the one source it cites, and no caveats', async () => {
+    const { events, answer } = await talk('Why do I procrastinate?');
+    expect(events.filter((e) => e.type === 'block.done')).toHaveLength(1);
+    expect(answer.blocks).toHaveLength(1);
+    expect(answer.blocks[0]?.kind).toBe('paragraph');
+    expect(answer.citations.map((c) => c.id)).toEqual(['c1']);
+    expect(answer.episodes).toHaveLength(1);
+    expect(answer.caveats).toEqual([]);
+    expect(answer.spoken.split(/\s+/).length).toBeLessThan(60);
+    expect(answer.demo).toBe(true);
+  });
+
+  it('talks in German when spoken to in German', async () => {
+    const { answer } = await talk('Ich schiebe mein Projekt seit Wochen vor mir her.');
+    expect(answer.language).toBe('de');
+    expect(answer.spoken).toMatch(/^Ehrlich, es liegt fast nie daran/);
+  });
+});

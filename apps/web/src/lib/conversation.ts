@@ -2,6 +2,7 @@ import { LIMITS } from '@dear-steven/core/limits';
 import type {
   AskErrorCode,
   AskEvent,
+  AskMode,
   AskStep,
   Citation,
   FinalAnswer,
@@ -27,6 +28,8 @@ export interface Turn {
   elapsedMs: number | null;
   /** Opened from a share link (P6-17) rather than asked here. */
   shared?: true;
+  /** Said in talk mode (P7-05), and shown as a chat; absent for a considered answer. */
+  mode?: 'talk';
 }
 
 export interface ConversationState {
@@ -34,7 +37,7 @@ export interface ConversationState {
 }
 
 export type ConversationAction =
-  | { type: 'turn.start'; id: string; question: string; at: number }
+  | { type: 'turn.start'; id: string; question: string; at: number; mode?: AskMode }
   | { type: 'turn.event'; id: string; event: AskEvent; at: number }
   | { type: 'turn.stopped'; id: string; at: number }
   | { type: 'turn.failed'; id: string; code: AskErrorCode | 'network'; message: string; at: number }
@@ -128,6 +131,7 @@ export function conversationReducer(
             error: null,
             startedAt: action.at,
             elapsedMs: null,
+            ...(action.mode === 'talk' ? { mode: 'talk' as const } : {}),
           },
         ],
       };
@@ -190,4 +194,18 @@ export function historyFor(turns: Turn[]): HistoryTurn[] {
       question: t.question.slice(0, LIMITS.questionChars),
       answer: answerText(t.blocks).slice(0, LIMITS.answerContextChars),
     }));
+}
+
+export type TurnGroup = { kind: 'ask'; turn: Turn } | { kind: 'talk'; turns: Turn[] };
+
+/** Consecutive talk turns read as one exchange (P7-05); every considered answer stands alone. */
+export function groupTurns(turns: Turn[]): TurnGroup[] {
+  const groups: TurnGroup[] = [];
+  for (const turn of turns) {
+    const last = groups[groups.length - 1];
+    if (turn.mode !== 'talk') groups.push({ kind: 'ask', turn });
+    else if (last?.kind === 'talk') last.turns.push(turn);
+    else groups.push({ kind: 'talk', turns: [turn] });
+  }
+  return groups;
 }

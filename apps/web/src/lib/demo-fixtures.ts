@@ -25,6 +25,8 @@ export interface DemoAnswer {
   spoken: string;
   caveats: string[];
   searched: { passages: number; episodes: number };
+  /** The same topic as a talk reply (P7-05): one short paragraph, at most one source. */
+  talk: { block: ResolvedBlock; spoken: string };
 }
 
 const episodes = {
@@ -179,6 +181,26 @@ const procrastination: DemoAnswer = {
     /procrastinat|putting (it|things) off|avoid|delay|stuck|aufschieb|aufgeschoben|vor (mir|sich) her|prokrastin|vermeide/i,
   mode: 'grounded',
   searched: { passages: 9, episodes: 3 },
+  talk: {
+    block: {
+      kind: 'paragraph',
+      segments: [
+        {
+          text: 'Honestly? It’s almost never about not knowing what to do.',
+          attribution: 'synthesis',
+          citationIds: [],
+        },
+        {
+          text: 'In one of my conversations, the point came up that we delay what makes us feel something unpleasant far more than what’s simply hard.',
+          attribution: 'episode',
+          citationIds: ['c1'],
+        },
+        { text: 'So what does this one make you feel?', attribution: 'synthesis', citationIds: [] },
+      ],
+    },
+    spoken:
+      'Honestly, it’s almost never about not knowing what to do. One of my conversations made the point that we delay what makes us feel something unpleasant far more than what’s simply hard. So what does this one make you feel?',
+  },
   citations: [
     toCitation(
       'c1',
@@ -269,6 +291,22 @@ const discipline: DemoAnswer = {
   matches: /disciplin|motivat|habit|consisten|willpower|routine|diszipl|gewohnheit|willenskraft/i,
   mode: 'partial',
   searched: { passages: 6, episodes: 2 },
+  talk: {
+    block: {
+      kind: 'paragraph',
+      segments: [
+        { text: 'Stop waiting to feel like it.', attribution: 'synthesis', citationIds: [] },
+        {
+          text: 'The performance coach in this demo called motivation the weather, and said to decide in advance what the minimum looks like on a bad day.',
+          attribution: 'guest',
+          citationIds: ['c1'],
+        },
+        { text: 'What’s your minimum?', attribution: 'synthesis', citationIds: [] },
+      ],
+    },
+    spoken:
+      'Stop waiting to feel like it. The coach in this demo called motivation the weather, and said to decide your bad-day minimum in advance. So, what’s your minimum?',
+  },
   citations: [
     toCitation('c1', 'systems', 'Plans for the days motivation doesn’t show up.'),
     toCitation('c2', 'identity', 'Frames consistency as identity rather than effort.'),
@@ -328,6 +366,26 @@ const business: DemoAnswer = {
     /business|start-?up|founder|company|entrepreneur|side project|unternehm|gründer|gründung|firma|selbstständig/i,
   mode: 'grounded',
   searched: { passages: 11, episodes: 3 },
+  talk: {
+    block: {
+      kind: 'paragraph',
+      segments: [
+        {
+          text: 'Start, but start smaller than you think.',
+          attribution: 'synthesis',
+          citationIds: [],
+        },
+        {
+          text: 'The founder in this demo had a simple test: if you can’t find ten people who’ll pay for the ugly first version, it isn’t a business yet.',
+          attribution: 'guest',
+          citationIds: ['c1'],
+        },
+        { text: 'Who are your first ten?', attribution: 'synthesis', citationIds: [] },
+      ],
+    },
+    spoken:
+      'Start, but start smaller than you think. The founder in this demo had a simple test: if you can’t find ten people who’ll pay for the ugly first version, it isn’t a business yet. Who are your first ten?',
+  },
   citations: [
     toCitation('c1', 'problem', 'A test for whether an idea is a business yet.'),
     toCitation('c2', 'firstStep', 'How to start before you feel ready.'),
@@ -379,6 +437,25 @@ const insufficient: DemoAnswer = {
   matches: null,
   mode: 'insufficient',
   searched: { passages: 4, episodes: 2 },
+  talk: {
+    block: {
+      kind: 'paragraph',
+      segments: [
+        {
+          text: 'That’s outside the conversations in this demo, and I’d rather say so than make something up.',
+          attribution: 'synthesis',
+          citationIds: [],
+        },
+        {
+          text: 'Try me on procrastination, discipline or starting a business?',
+          attribution: 'synthesis',
+          citationIds: [],
+        },
+      ],
+    },
+    spoken:
+      'That’s outside the conversations in this demo, and I’d rather say so than make something up. Try me on procrastination, discipline or starting a business?',
+  },
   citations: [],
   blocks: [
     {

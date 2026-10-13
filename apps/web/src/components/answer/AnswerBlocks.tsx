@@ -14,6 +14,8 @@ interface BlocksProps {
   language?: string;
   activeCitationId: string | null;
   onOpenCitation: (citationId: string) => void;
+  /** `talk` (P7-05): spoken-style lines with their chips, no pull quote or takeaway panel. */
+  variant?: 'answer' | 'talk';
 }
 
 /**
@@ -26,9 +28,10 @@ export function AnswerBlocks({
   language,
   activeCitationId,
   onOpenCitation,
+  variant = 'answer',
 }: BlocksProps) {
   return (
-    <div className="flex flex-col gap-6">
+    <div className={`flex flex-col ${variant === 'talk' ? 'gap-3' : 'gap-6'}`}>
       {blocks.map((block, i) =>
         block ? (
           // biome-ignore lint/suspicious/noArrayIndexKey: blocks are append-only and positional
@@ -39,6 +42,7 @@ export function AnswerBlocks({
               language={language}
               activeCitationId={activeCitationId}
               onOpenCitation={onOpenCitation}
+              variant={variant}
             />
           </Reveal>
         ) : null,
@@ -53,11 +57,30 @@ function Block({
   language,
   activeCitationId,
   onOpenCitation,
+  variant,
 }: Omit<BlocksProps, 'blocks'> & { block: ResolvedBlock }) {
   const { t } = useI18n();
+  const talk = variant === 'talk';
   if (block.kind === 'quote') {
     const citation = citations[block.citationId];
     if (!citation) return null;
+    if (talk) {
+      return (
+        <p className="font-display text-[18px] leading-[1.5] text-ivory-0 italic sm:text-[19px]">
+          <span lang="en">“{block.text}”</span>
+          <CitationChip
+            citation={citation}
+            active={activeCitationId === citation.id}
+            onOpen={onOpenCitation}
+          />
+          {block.translation ? (
+            <span lang={language} className="mt-1 block text-[14px] text-ivory-2 not-italic">
+              {block.translation}
+            </span>
+          ) : null}
+        </p>
+      );
+    }
     return (
       <PullQuote
         citation={citation}
@@ -71,7 +94,14 @@ function Block({
   }
 
   const prose = (
-    <p lang={language} className="text-[17px] leading-[1.7] text-pretty sm:text-[18px]">
+    <p
+      lang={language}
+      className={
+        talk
+          ? 'font-display text-[19px] leading-[1.5] text-pretty sm:text-[21px]'
+          : 'text-[17px] leading-[1.7] text-pretty sm:text-[18px]'
+      }
+    >
       {block.segments.map((segment, j) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: segments are fixed once a block is validated
         <Fragment key={j}>
@@ -87,7 +117,7 @@ function Block({
     </p>
   );
 
-  if (block.kind === 'takeaway') {
+  if (block.kind === 'takeaway' && !talk) {
     return (
       <aside className="relative rounded-[var(--radius-card)] border border-ink-3 bg-[linear-gradient(180deg,rgb(26_23_20/0.9),rgb(18_16_14/0.6))] px-5 pt-4 pb-5 sm:px-6">
         <p className="mb-2 flex items-center gap-2 font-mono text-[11px] tracking-[0.16em] text-ember-0 uppercase">

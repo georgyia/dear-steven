@@ -29,6 +29,8 @@ const SAME_IN_GERMAN = new Set([
   'video.audioHeading',
   'voice.voice',
   'setup.optional',
+  // A name.
+  'talk.steven',
   // Keys on a keyboard are the same keys in German.
   'home.shortcuts[0].keys',
   'home.shortcuts[1].keys',

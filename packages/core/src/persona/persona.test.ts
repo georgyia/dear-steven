@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PERSONA_INSTRUCTIONS, PERSONA_VERSION } from './persona.ts';
+import { PERSONA_INSTRUCTIONS, PERSONA_VERSION, personaLint, TALK_STYLE } from './persona.ts';
 
 describe('persona instructions', () => {
   it('change only on purpose: update the snapshot and bump PERSONA_VERSION together', () => {
@@ -22,5 +22,17 @@ describe('persona instructions', () => {
     ]) {
       expect(PERSONA_INSTRUCTIONS, rule).toContain(rule);
     }
+  });
+});
+
+describe('talk style (P7-05)', () => {
+  it('changes only on purpose: update the snapshot with docs/PERSONA.md § Talk mode', () => {
+    expect(TALK_STYLE).toMatchSnapshot();
+  });
+
+  it('changes delivery, never the evidence rules', () => {
+    expect(TALK_STYLE).toContain('20 to 45 words in all');
+    expect(TALK_STYLE).toContain('cite it under exactly the same rules as always');
+    expect(personaLint(TALK_STYLE)).toEqual([]);
   });
 });

@@ -2,7 +2,7 @@
 
 | Status | Owner | Updated | Feeds |
 |--------|-------|---------|-------|
-| adopted | human | 2026-10-11 | anything that writes answers, prompts, fixtures or copy |
+| adopted | human | 2026-10-13 | anything that writes answers, prompts, fixtures or copy |
 
 The code twin of this document is `packages/core/src/persona/persona.ts` (`PERSONA_INSTRUCTIONS`,
 version `persona-v2.1`). Change both together, bump the version (it is the prompt-cache key), and run
@@ -130,6 +130,18 @@ The fixed replies and the helpline list are reviewed by a human before release
 `spoken` is the same answer as said aloud: 40–80 words, first person, natural speech, no
 citations, honest attribution ("in my conversation with Dana"). Played in a stock OpenAI voice or
 the browser's — never an imitation of Steven Bartlett's voice.
+
+## 7a. Talk mode (P7-05)
+
+In Talk, the visitor wants a back-and-forth, not a considered answer. The question travels with a
+`<style>` note (`TALK_STYLE` in `persona.ts`; the instructions, and so the prompt-cache key, are
+the same in both modes): one paragraph of two or three short sentences, 20 to 45 words (the
+spoken version too), leading with a view, no pull quote or takeaway, and often one short question
+back. The eval holds the average under 60 words. Everything else is
+unchanged: the same retrieval, the same four kinds of statement with the same evidence rules, the
+same validator, repair and downgrade, and the same safety rails. A talk reply cites a conversation
+only when it genuinely helps. `pnpm eval --answers --mode talk` measures the average length and
+runs the integrity checks and the red team in talk mode.
 
 ## 8. Copy outside answers
 

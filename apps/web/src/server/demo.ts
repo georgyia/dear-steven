@@ -1,8 +1,8 @@
 import 'server-only';
 import { DEFAULT_UI_LOCALE, THINKING_COPY, type UiLocale } from '@dear-steven/core/copy';
 import { detectLanguage } from '@dear-steven/core/language';
-import type { AskEvent, FinalAnswer } from '@dear-steven/core/schema';
-import { DEMO_EPISODE_COUNT, pickDemoAnswer } from '@/lib/demo-fixtures';
+import type { AskEvent, AskMode, FinalAnswer } from '@dear-steven/core/schema';
+import { DEMO_EPISODE_COUNT, type DemoAnswer, pickDemoAnswer } from '@/lib/demo-fixtures';
 import { inGerman } from '@/lib/demo-fixtures-de';
 
 export type Sleep = (ms: number, signal: AbortSignal) => Promise<void>;
@@ -21,21 +21,42 @@ export const realSleep: Sleep = (ms, signal) =>
     );
   });
 
+/** A fixture as its talk reply: the one short paragraph, the source it cites, no caveats. */
+function asTalk(answer: DemoAnswer): DemoAnswer {
+  const { block, spoken } = answer.talk;
+  const cited = new Set(
+    block.kind === 'quote' ? [block.citationId] : block.segments.flatMap((s) => s.citationIds),
+  );
+  return {
+    ...answer,
+    blocks: [block],
+    citations: answer.citations.filter((c) => cited.has(c.id)),
+    spoken,
+    caveats: [],
+  };
+}
+
 /**
  * Streams a fixture answer through exactly the same event protocol as a live answer, paced like
  * one, so the whole interface can be built and tested with no API key. Never presented as real:
  * every episode is `demo: true` and the UI shows a persistent demo notice. The thinking steps
  * follow the interface language; the answer, like a live one, the question's (English or German).
+ * In talk mode (P7-05) the reply is the fixture's short talk version, with only the source it cites.
  */
 export async function* streamDemoAnswer(
-  { question, uiLocale = DEFAULT_UI_LOCALE }: { question: string; uiLocale?: UiLocale },
+  {
+    question,
+    uiLocale = DEFAULT_UI_LOCALE,
+    mode = 'ask',
+  }: { question: string; uiLocale?: UiLocale; mode?: AskMode },
   signal: AbortSignal,
   sleep: Sleep = realSleep,
 ): AsyncGenerator<AskEvent> {
   const started = Date.now();
   const language = detectLanguage(question) === 'de' ? 'de' : 'en';
   const fixture = pickDemoAnswer(question);
-  const answer = language === 'de' ? inGerman(fixture) : fixture;
+  const localised = language === 'de' ? inGerman(fixture) : fixture;
+  const answer = mode === 'talk' ? asTalk(localised) : localised;
   const thinking = THINKING_COPY[uiLocale];
 
   yield { type: 'status', step: 'searching', message: thinking.searching(DEMO_EPISODE_COUNT) };

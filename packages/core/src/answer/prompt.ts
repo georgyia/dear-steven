@@ -1,7 +1,12 @@
 import { zodTextFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
-import { PERSONA_INSTRUCTIONS, PERSONA_VERSION } from '../persona/persona.ts';
-import { type HistoryTurn, ModelAnswerSchema, ModelBlockSchema } from '../schema/index.ts';
+import { PERSONA_INSTRUCTIONS, PERSONA_VERSION, TALK_STYLE } from '../persona/persona.ts';
+import {
+  type AskMode,
+  type HistoryTurn,
+  ModelAnswerSchema,
+  ModelBlockSchema,
+} from '../schema/index.ts';
 import type { AnswerContext } from './context.ts';
 import { renderSources } from './context.ts';
 import type { JsonFormat, ModelMessage } from './model.ts';
@@ -31,20 +36,23 @@ export function historyMessages(history: HistoryTurn[], turns = 6): ModelMessage
 
 /**
  * The question with its sources. `guidance` is per-question care (P6-11: high stakes, sensitive
- * topics); it travels here rather than in the instructions, so the cached prefix never changes.
+ * topics) and the talk-mode style (P7-05); both travel here rather than in the instructions, so
+ * the cached prefix never changes.
  */
 export function answerInput(
   question: string,
   history: HistoryTurn[],
   ctx: AnswerContext,
   guidance: string | null = null,
+  mode: AskMode = 'ask',
 ): ModelMessage[] {
   const care = guidance ? `\n\n<care>\n${guidance}\n</care>` : '';
+  const style = mode === 'talk' ? `\n\n<style>\n${TALK_STYLE}\n</style>` : '';
   return [
     ...historyMessages(history),
     {
       role: 'user',
-      content: `${renderSources(ctx)}\n\n<question>\n${question}\n</question>${care}\n\nAnswer the question as Dear Steven, following every rule in your instructions. Return only the JSON answer object.`,
+      content: `${renderSources(ctx)}\n\n<question>\n${question}\n</question>${care}${style}\n\nAnswer the question as Dear Steven, following every rule in your instructions. Return only the JSON answer object.`,
     },
   ];
 }
