@@ -95,9 +95,7 @@ test.describe('asking (demo fixtures)', () => {
     await page.goto('/');
     await page.getByRole('button', { name: /procrastinating on an important project/ }).click();
     await expect(page.getByRole('heading', { level: 2, name: /procrastinating/ })).toBeVisible();
-    await expect(
-      page.getByText('Demo fixture · not AI-generated or source-verified'),
-    ).toBeVisible();
+    await expect(page.getByText('Demo fixture: not AI-generated or source-verified')).toBeVisible();
     await expect(page.getByText(/Searching 3 conversations/).first()).toBeAttached();
     await answered(page);
     await expect(page.locator('[data-attribution]')).not.toHaveCount(0);

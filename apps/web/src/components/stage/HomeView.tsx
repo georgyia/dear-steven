@@ -72,7 +72,19 @@ export function HomeView({ composer, footerStart, footerEnd, notice, onExample }
           className="mt-8 flex max-w-[30rem] flex-col items-center gap-1.5 text-[12px] leading-relaxed text-ivory-2 [text-shadow:0_0_14px_var(--ink-0),0_0_4px_var(--ink-0)]"
         >
           <FirstVisitDisclosure notice={notice} />
-          <p className="hidden font-mono text-[11px] text-steel lg:block">{t.home.shortcuts}</p>
+          <ul
+            aria-label={t.home.shortcutsLabel}
+            className="hidden flex-wrap items-center justify-center gap-x-4 gap-y-1 font-mono text-[11px] text-steel lg:flex"
+          >
+            {t.home.shortcuts.map((s) => (
+              <li key={s.keys} className="flex items-center gap-1.5">
+                <kbd className="rounded border border-ink-3 bg-ink-1/70 px-1.5 py-px text-[10.5px] text-ivory-1">
+                  {s.keys}
+                </kbd>
+                {s.action}
+              </li>
+            ))}
+          </ul>
         </motion.div>
       </main>
 

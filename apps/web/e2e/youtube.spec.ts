@@ -11,7 +11,7 @@ test.describe('sending people to the originals', () => {
     page,
   }) => {
     const thirdParty = await answerWithMedia(page);
-    const links = cards(page).getByRole('link', { name: /^Watch on YouTube · ≈\s\d+:\d\d/ });
+    const links = cards(page).getByRole('link', { name: /^Watch on YouTube at ≈\s\d+:\d\d/ });
     await expect(links.first()).toBeVisible();
     const count = await cards(page).getByRole('listitem').count();
     await expect(links).toHaveCount(count);
@@ -42,7 +42,7 @@ test.describe('sending people to the originals', () => {
     await box.press('Enter');
     await expect(page.getByText('Answer complete.')).toBeAttached({ timeout: 15_000 });
     // Demo fixtures have no recordings, and are labelled as fixtures.
-    const notes = cards(page).getByText('Fixture · no video');
+    const notes = cards(page).getByText('No video in demo mode');
     await expect(notes.first()).toBeVisible();
     await expect(notes).toHaveCount(await cards(page).getByRole('listitem').count());
     await expect(cards(page).getByRole('link', { name: /^Watch on YouTube/ })).toHaveCount(0);
@@ -66,7 +66,7 @@ test.describe('sending people to the originals', () => {
       'href',
       `https://www.youtube.com/watch?v=${VIDEO}`,
     );
-    await expect(explorer.getByText('Fixture · no video').first()).toBeVisible();
+    await expect(explorer.getByText('No video in demo mode').first()).toBeVisible();
   });
 
   test('"How this works" says why, and links to the channel', async ({ page }) => {

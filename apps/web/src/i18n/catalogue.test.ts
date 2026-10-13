@@ -29,6 +29,11 @@ const SAME_IN_GERMAN = new Set([
   'video.audioHeading',
   'voice.voice',
   'setup.optional',
+  // Keys on a keyboard are the same keys in German.
+  'home.shortcuts[0].keys',
+  'home.shortcuts[1].keys',
+  'home.shortcuts[2].keys',
+  'home.shortcuts[3].keys',
 ]);
 
 /** A function entry's output for sample arguments: numbers, or strings where it expects text. */
@@ -68,7 +73,7 @@ describe('interface catalogues (P6-02)', () => {
   });
 
   it('formats numbers the German way', () => {
-    expect(de.status.ready(8394)).toBe('8.394 Gespräche · bereit');
+    expect(de.status.ready(8394)).toBe('8.394 Gespräche bereit');
     expect(de.thinking.elapsed(3.1)).toBe('3,1 s');
     expect(de.thinking.elapsed(75.4)).toBe('1 min 15,4 s');
     expect(en.thinking.elapsed(75.4)).toBe('1m 15.4s');
@@ -78,5 +83,38 @@ describe('interface catalogues (P6-02)', () => {
   it('only the terms page says its text is English only', () => {
     expect(en.termsPage.englishOnly).toBe(null);
     expect(de.termsPage.englishOnly).toMatch(/Englisch/);
+  });
+});
+
+describe('no "·" separators (P7-02)', () => {
+  /** Every string a catalogue can produce: plain values, and functions called with sample values. */
+  function* strings(value: unknown, path: string): Generator<[string, string]> {
+    if (typeof value === 'string') yield [path, value];
+    else if (typeof value === 'function') {
+      for (const args of [
+        [3, 7, '2026-10-13', 4],
+        ['Ada', '12:34', 'Speaker not verified', 'twelve minutes', 'x'],
+        [true, false],
+        [1],
+      ]) {
+        try {
+          const out = (value as (...a: unknown[]) => unknown)(...args);
+          yield* strings(out, `${path}()`);
+        } catch {
+          // Not this signature; the next sample set may fit.
+        }
+      }
+    } else if (Array.isArray(value)) {
+      for (const [i, v] of value.entries()) yield* strings(v, `${path}[${i}]`);
+    } else if (value && typeof value === 'object') {
+      for (const [k, v] of Object.entries(value)) yield* strings(v, `${path}.${k}`);
+    }
+  }
+
+  it('no visible string in either language uses a middle dot to separate things', () => {
+    for (const [locale, messages] of Object.entries({ en, de })) {
+      const dotted = [...strings(messages, locale)].filter(([, s]) => s.includes('·'));
+      expect(dotted.map(([p, s]) => `${p}: ${s}`)).toEqual([]);
+    }
   });
 });

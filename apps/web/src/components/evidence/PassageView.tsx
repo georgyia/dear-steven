@@ -12,6 +12,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useState } from 'react';
 import { brand } from '@/brand';
 import { initials, speakerLabel } from '@/components/answer/speaker';
+import { MetaLine } from '@/components/ui/MetaLine';
 import { useToast } from '@/components/ui/Toasts';
 import RubberSegment from '@/components/vendor/react-bits/RubberSegment';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -128,8 +129,12 @@ export function PassageView({
             : t.inspector.saidBy(who.short)}
         </p>
         <p className="mt-0.5 font-mono text-[12px] text-steel">
-          {formatDate(citation.episode.publishedAt, locale)} ·{' '}
-          {t.inspector.inPodcast(formatTimestamp(citation.startMs))}
+          <MetaLine
+            items={[
+              formatDate(citation.episode.publishedAt, locale),
+              t.inspector.inPodcast(formatTimestamp(citation.startMs)),
+            ]}
+          />
         </p>
         <div className="mt-4">
           <RubberSegment
@@ -208,9 +213,13 @@ function QuoteTab({ citation, onCopy }: { citation: Citation; onCopy: () => void
         </span>
       </blockquote>
       <p className="font-mono text-[11.5px] leading-relaxed text-steel">
-        {inspector.verbatim}
-        {citation.quality === 'asr' ? inspector.asr : ''}
-        {citation.speaker === 'unverified' ? inspector.unverifiedNote : ''}
+        {[
+          `${inspector.verbatim}.`,
+          citation.quality === 'asr' ? inspector.asr : '',
+          citation.speaker === 'unverified' ? inspector.unverifiedNote : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
       </p>
       {citation.relevance ? (
         <section className="rounded-[var(--radius-card)] border border-ink-3 bg-ink-2/60 px-4 py-3">
