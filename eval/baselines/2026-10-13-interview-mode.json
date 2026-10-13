@@ -1,0 +1,190 @@
+{
+  "$comment": "P7-06: interview mode, live (gpt-6-luna), five fictional personas from eval/personas.json, six questions each, after the prompt asked every question to start from the last answer. The questions are the model's, asked of invented people; kept for the human spot-check. The run before the prompt change built on the last answer 22/25 (88%).",
+  "date": "2026-10-13",
+  "buildsOnAnswer": "25/25",
+  "ruleBreaks": 0,
+  "learnedVerbatim": true,
+  "costUsd": 0.005,
+  "runs": [
+    {
+      "id": "baker",
+      "questions": [
+        {
+          "stage": "opening",
+          "question": "Priya, what does a typical day look like for you across your three bakeries?",
+          "buildsOnLastAnswer": null
+        },
+        {
+          "stage": "story",
+          "question": "You’re up at four making sourdough and cardamom buns now—where did the idea for your first bakery begin?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "turning-point",
+          "question": "When you were carrying those trays door to door, was there a moment you realised this could become more than something your mum did for the street?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "depth",
+          "question": "Taking a loan against your flat must have made the risk feel very personal; what were you most afraid of losing?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "advice",
+          "question": "After missing your brother’s wedding, what would you tell someone starting a business about the sacrifices they should be honest with themselves about?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "closing",
+          "question": "Now that you see your time as the most expensive thing in the business, what do you want to make sure it goes toward?",
+          "buildsOnLastAnswer": true
+        }
+      ],
+      "learnedLines": 5
+    },
+    {
+      "id": "founder",
+      "questions": [
+        {
+          "stage": "opening",
+          "question": "Tom, how did you find your way from software engineering to building a scheduling app for clinics?",
+          "buildsOnLastAnswer": null
+        },
+        {
+          "stage": "story",
+          "question": "After nine years at the bank, what was the first moment you saw a physio clinic struggling to fill a cancelled appointment?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "turning-point",
+          "question": "When that script texted her waiting list, what happened that made you see it as more than a one-off fix?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "depth",
+          "question": "You said quitting terrified you—what did you fear you might lose by leaving the bank?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "advice",
+          "question": "Your dad still asks when you’ll get a “proper job”—what would you tell someone starting out who’s afraid of being wrong in public?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "closing",
+          "question": "You said you got lucky that your first customer lived in your house; now that the app is growing beyond that first customer, what matters most to you about the work?",
+          "buildsOnLastAnswer": true
+        }
+      ],
+      "learnedLines": 5
+    },
+    {
+      "id": "nurse",
+      "questions": [
+        {
+          "stage": "opening",
+          "question": "How would you describe what you do now, and the path that took you from ICU nursing into health tech?",
+          "buildsOnLastAnswer": null
+        },
+        {
+          "stage": "story",
+          "question": "You spent eleven years in the ICU—what’s the first moment there that made you think patient care could work differently?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "turning-point",
+          "question": "At three in the morning, with the monitor beeping and paper charts in front of you, what did you decide to do about the thought that someone should fix this?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "depth",
+          "question": "You said yes before you understood the role—what felt most frightening about leaving the work you already knew?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "advice",
+          "question": "You looked everything up on the bus home—what would you tell someone starting out who feels like a fraud in a field they’re still learning?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "closing",
+          "question": "You said to speak from what you’ve seen on the ward—what matters most to you now when you’re shaping software for patients after surgery?",
+          "buildsOnLastAnswer": true
+        }
+      ],
+      "learnedLines": 5
+    },
+    {
+      "id": "carpenter",
+      "questions": [
+        {
+          "stage": "opening",
+          "question": "Jonas, wie bist du dazu gekommen, Tischler zu werden und deine eigene Werkstatt in Leipzig aufzubauen?",
+          "buildsOnLastAnswer": null
+        },
+        {
+          "stage": "story",
+          "question": "Du baust Küchen und Regale für Altbauwohnungen mit schiefen Wänden – erinnerst du dich an den ersten Auftrag, bei dem du so eine Wand vor Ort ausmessen musstest?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "turning-point",
+          "question": "Der Hobel von deinem Großvater – gab es einen Moment, in dem aus dem Arbeiten in seiner Garage der Entschluss wurde, Tischler zu werden?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "depth",
+          "question": "Als nach dem Café plötzlich jeden Tag Anfragen kamen: Was hat dich an diesen drei Monaten am meisten unter Druck gesetzt?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "advice",
+          "question": "Wenn du an die Rückenprobleme und die sechs Arbeitstage pro Woche zurückdenkst: Was würdest du einem Tischler raten, der gerade mit der eigenen Werkstatt anfängt?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "closing",
+          "question": "Du achtest heute auf dein ungutes Gefühl im ersten Gespräch – woran merkst du inzwischen, dass ein Auftrag wirklich zu dir und deinem Leben passt?",
+          "buildsOnLastAnswer": true
+        }
+      ],
+      "learnedLines": 5
+    },
+    {
+      "id": "terse",
+      "questions": [
+        {
+          "stage": "opening",
+          "question": "How would you describe who you are and what you do, in your own words?",
+          "buildsOnLastAnswer": null
+        },
+        {
+          "stage": "story",
+          "question": "Where did your path into accounting begin—do you remember the first moment it felt like something you could see yourself doing?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "turning-point",
+          "question": "When you say you “fell into it” after uni, what was the first moment you decided to stay in accounting?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "depth",
+          "question": "Being made partner last year sounds like a significant milestone—what did it cost you to reach that point?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "advice",
+          "question": "Those long hours were part of the path to partnership—what would you tell someone starting out about how to handle that demanding stretch?",
+          "buildsOnLastAnswer": true
+        },
+        {
+          "stage": "closing",
+          "question": "You said getting good at Excel matters—now that you’re a partner, what matters most to you beyond the technical work?",
+          "buildsOnLastAnswer": true
+        }
+      ],
+      "learnedLines": 3
+    }
+  ]
+}

@@ -143,6 +143,26 @@ same validator, repair and downgrade, and the same safety rails. A talk reply ci
 only when it genuinely helps. `pnpm eval --answers --mode talk` measures the average length and
 runs the integrity checks and the red team in talk mode.
 
+## 7b. Interview mode (P7-06)
+
+Here Dear Steven asks and the visitor answers. The interviewer has its own instructions
+(`INTERVIEWER_INSTRUCTIONS` and `LEARNED_INSTRUCTIONS` in `packages/core/src/interview/prompt.ts`,
+version `interviewer-v1`, snapshot-tested like the persona):
+
+- One question at a time, under 40 words, one question mark, building on something specific in
+  the last answer; an arc of 6–10 questions (opening, story, turning point, depth, challenge,
+  advice, closing). Checked in code (`questionProblems`): a question that breaks a rule is asked
+  again once, then replaced by a fixed question for the stage, written by people.
+- Real questions from the transcripts (verified host turns first, never a verified guest's) are
+  shown to the model as style examples only; a question that repeats one is rejected.
+- The interviewer never claims to be Steven Bartlett, never invents facts about the guest, never
+  advises or diagnoses, and treats everything the guest writes as an answer, never an instruction.
+- "What I learned about you": two to five lines, each with its evidence, a verbatim span of one of
+  the visitor's answers located like a transcript quote (`checkLearned`); a line whose words
+  can't be found is dropped. The page shows the stored span, never the model's string.
+- The safety rails see every answer, and the setup line, before anything else: crisis or refused
+  content ends the interview with the fixed reply.
+
 ## 8. Copy outside answers
 
 Empty, loading and error states speak in the same voice, briefly, and never blame the user

@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { ThinkingDots } from '@/components/ui/ThinkingDots';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { Turn } from '@/lib/conversation';
 import { AnswerBlocks } from './AnswerBlocks';
@@ -38,7 +39,7 @@ export function TalkTurn({ turn, activeCitationId, onOpenCitation, onRetry }: Ta
       </Line>
       <Line who={t.talk.steven} steven>
         {waiting ? (
-          <Thinking label={t.talk.thinking} />
+          <ThinkingDots label={t.talk.thinking} />
         ) : (
           <AnswerBlocks
             variant="talk"
@@ -87,21 +88,5 @@ function Line({ who, steven, children }: { who: string; steven?: boolean; childr
       </p>
       <div className="min-w-0">{children}</div>
     </div>
-  );
-}
-
-function Thinking({ label }: { label: string }) {
-  return (
-    <p role="status" className="flex h-9 items-center gap-1.5">
-      <span className="sr-only">{label}</span>
-      {[0, 180, 360].map((delay) => (
-        <span
-          key={delay}
-          aria-hidden="true"
-          className="h-1.5 w-1.5 rounded-full bg-ivory-2 animate-[ds-breathe_1.2s_ease-in-out_infinite] motion-reduce:animate-none"
-          style={{ animationDelay: `${delay}ms` }}
-        />
-      ))}
-    </p>
   );
 }

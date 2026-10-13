@@ -4,5 +4,6 @@ import './zod-config.ts';
 export * from './answer.ts';
 export * from './ask.ts';
 export * from './episode.ts';
+export * from './interview.ts';
 export * from './passage.ts';
 export * from './setup.ts';

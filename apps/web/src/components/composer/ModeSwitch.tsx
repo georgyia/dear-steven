@@ -1,17 +1,17 @@
 'use client';
 
-import type { AskMode } from '@dear-steven/core/schema';
 import RubberSegment from '@/components/vendor/react-bits/RubberSegment';
 import { useI18n } from '@/i18n/I18nProvider';
+import type { StageMode } from '@/lib/mode';
 
 interface ModeSwitchProps {
-  mode: AskMode;
-  onChange: (mode: AskMode) => void;
+  mode: StageMode;
+  onChange: (mode: StageMode) => void;
 }
 
 /**
- * How Steven replies (P7-05), by the composer: a considered answer, or talk. It applies to the next
- * message; the conversation so far stays as it is.
+ * How Dear Steven replies (P7-05), by the composer: a considered answer, talk, or an interview of
+ * the visitor (P7-06). Switching keeps everything: the conversation and an interview in progress.
  */
 export function ModeSwitch({ mode, onChange }: ModeSwitchProps) {
   const { t } = useI18n();
@@ -22,9 +22,10 @@ export function ModeSwitch({ mode, onChange }: ModeSwitchProps) {
         items={[
           { value: 'ask', label: t.modes.ask },
           { value: 'talk', label: t.modes.talk },
+          { value: 'interview', label: t.modes.interview },
         ]}
         value={mode}
-        onChange={(v) => onChange(v as AskMode)}
+        onChange={(v) => onChange(v as StageMode)}
         size="sm"
         trackColor="var(--ink-1)"
         thumbColor="var(--ink-3)"

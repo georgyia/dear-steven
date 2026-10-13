@@ -3,6 +3,9 @@ import {
   type AskEvent,
   type AskRequest,
   type EpisodePage,
+  type InterviewReply,
+  InterviewReplySchema,
+  type InterviewRequest,
   type KnowledgeStatus,
   type PassageContext,
   type RelatedMoments,
@@ -129,4 +132,31 @@ export async function openShared(token: string, signal?: AbortSignal): Promise<S
   const shared = SharedAnswerSchema.safeParse(body);
   if (!shared.success) throw new AskError('upstream', res.statusText);
   return shared.data;
+}
+
+/**
+ * One interview step (P7-06): the interview so far in, the next question (or what I learned, or
+ * an ending) out. Runs on the visitor's own key when they set one. Throws `AskError` otherwise.
+ */
+export async function interviewStep(
+  request: InterviewRequest,
+  signal?: AbortSignal,
+): Promise<InterviewReply> {
+  let res: Response;
+  try {
+    res = await fetch('/api/interview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...keyHeaders() },
+      body: JSON.stringify(request),
+      signal,
+    });
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    throw new AskError('network', error instanceof Error ? error.message : 'Network error');
+  }
+  const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+  if (!res.ok) throw new AskError(errorCode(res.status), body?.error?.message ?? res.statusText);
+  const reply = InterviewReplySchema.safeParse(body);
+  if (!reply.success) throw new AskError('upstream', res.statusText);
+  return reply.data;
 }

@@ -22,6 +22,7 @@
     "arch": "depcruise --config .dependency-cruiser.cjs packages apps/web/src eval",
     "ingest": "node packages/ingest/src/cli.ts",
     "eval": "node eval/run.ts",
+    "eval:interviews": "node eval/interviews.ts",
     "policies": "node scripts/write-policies.ts"
   },
   "devDependencies": {

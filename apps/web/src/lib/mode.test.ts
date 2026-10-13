@@ -33,6 +33,8 @@ describe('the reply mode, kept for the visit (P7-05)', () => {
   it('reads anything unexpected as ask, and survives blocked storage', () => {
     const s = store();
     s.setItem(MODE_KEY, 'interview');
+    expect(readMode(s)).toBe('interview');
+    s.setItem(MODE_KEY, 'practice<script>');
     expect(readMode(s)).toBe('ask');
     expect(readMode(blocked)).toBe('ask');
     expect(() => writeMode('talk', blocked)).not.toThrow();
