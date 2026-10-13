@@ -15,7 +15,8 @@ Issues are grouped by category; each category is a label on GitHub.
 |----------|-------|--------|
 | Conversations | `track:conversation` | P7-05, P7-06, P7-07, P7-08 |
 | Design | `track:design` | P7-02, P7-03 |
-| Bugs | `bug` | P7-01, P7-04 |
+| Bugs | `bug` | P7-01, P7-04, P7-10 |
+| Tests | `type:test` | P7-12 |
 | Knowledge base | `track:ingest` | #16 (re-scoped: the latest episodes) |
 | Maintenance | `track:infra` | P7-09 |
 
@@ -104,6 +105,36 @@ With reduce motion on, the home screen settles sharp and in place: a short fade,
 
 #### Tests required
 E2E: the reduced-motion test checks the computed filter and transform of everything in `main`.
+
+#### Dependencies
+None. **Size:** S.
+
+---
+
+### P7-12 — test(web): the phone first-visit check waits for the home screen to settle
+
+<!-- issue {"id":"P7-12","title":"test(web): the phone first-visit check waits for the home screen to settle","labels":["type:test","track:web","owner:ai","risk:low","P2","size:S","stage:m5"],"milestone":"M5 Conversations","depends":[],"github":68} -->
+
+#### Context
+`stage.spec.ts` › "on a phone, nothing covers the first-visit notice" failed on CI for #67 (an
+unrelated change): the trial click on "Terms & disclaimer" timed out after 2 s "waiting for
+element to be visible, enabled and stable". The home screen's entrance runs for up to about 1.9 s
+(delays plus an 0.8 s rise), and on a slow runner the notice was still moving when the test
+measured it and tried its 2-second trial clicks.
+
+#### Goal
+The test checks what it means to check (nothing covers the notice, and its controls take a plain
+click) once the screen has settled, whatever the runner's speed.
+
+#### Acceptance criteria
+- [ ] The test waits until nothing on the home screen is blurred or offset (the same settled
+  check as the reduced-motion test) before measuring and clicking.
+- [ ] The trial clicks use the normal timeout; a real overlap still fails them.
+- [ ] 20 repeats pass locally under parallel load.
+
+#### Tests required
+The change is the test: one shared `unsettled` helper used by both the phone check and the
+reduced-motion check.
 
 #### Dependencies
 None. **Size:** S.

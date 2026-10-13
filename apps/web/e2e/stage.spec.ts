@@ -6,6 +6,17 @@ const ask = async (page: Page, question: string) => {
   await box.press('Enter');
 };
 
+/** Anything on the home screen still blurred or offset by its entrance (P7-10, P7-12). */
+const unsettled = (page: Page) =>
+  page.locator('main *').evaluateAll((els) =>
+    els.flatMap((el) => {
+      const c = getComputedStyle(el);
+      const blurred = c.filter !== 'none' && c.filter !== 'blur(0px)';
+      const moved = c.transform !== 'none' && c.transform !== 'matrix(1, 0, 0, 1, 0, 0)';
+      return blurred || moved ? [`${el.tagName} ${c.filter} ${c.transform}`] : [];
+    }),
+  );
+
 const answered = (page: Page) =>
   expect(page.getByText('Answer complete.')).toBeAttached({ timeout: 15_000 });
 
@@ -32,6 +43,8 @@ test.describe('home, with no API keys', () => {
     await page.goto('/');
     const notice = page.getByRole('region', { name: 'Before you start' });
     await expect(notice).toBeVisible();
+    // Measure once the entrance has finished: until then the notice is still moving into place.
+    await expect.poll(() => unsettled(page), { timeout: 10_000 }).toEqual([]);
     await page.waitForTimeout(800); // let any toast that would appear, appear
     const box = await notice.boundingBox();
     const toasts = await page
@@ -49,10 +62,8 @@ test.describe('home, with no API keys', () => {
       expect(overlap).toBe(false);
     }
     // Its link and button respond to a plain click, with nothing in the way.
-    await notice.getByRole('button', { name: 'Got it' }).click({ trial: true, timeout: 2000 });
-    await notice
-      .getByRole('link', { name: 'Terms & disclaimer' })
-      .click({ trial: true, timeout: 2000 });
+    await notice.getByRole('button', { name: 'Got it' }).click({ trial: true });
+    await notice.getByRole('link', { name: 'Terms & disclaimer' }).click({ trial: true });
   });
 
   test('setup panel explains what is missing instead of crashing', async ({ page }) => {
@@ -263,16 +274,7 @@ test.describe('reduced motion', () => {
     expect(new Set(looks)).toEqual(new Set(['1 none none']));
     expect(errors).toEqual([]); // no hydration mismatch (P5-12)
     // The rest of the home screen settles sharp and in place: no blur, no offset (P7-10).
-    const unsettled = () =>
-      page.locator('main *').evaluateAll((els) =>
-        els.flatMap((el) => {
-          const c = getComputedStyle(el);
-          const blurred = c.filter !== 'none' && c.filter !== 'blur(0px)';
-          const moved = c.transform !== 'none' && c.transform !== 'matrix(1, 0, 0, 1, 0, 0)';
-          return blurred || moved ? [`${el.tagName} ${c.filter} ${c.transform}`] : [];
-        }),
-      );
-    await expect.poll(unsettled, { timeout: 4000 }).toEqual([]);
+    await expect.poll(() => unsettled(page), { timeout: 4000 }).toEqual([]);
     await ask(page, 'Should I start a business?');
     await answered(page);
     await expect(page.locator('[data-citation]').first()).toBeVisible();
