@@ -20,14 +20,16 @@ const ease = [0.23, 1, 0.32, 1] as const;
 export function HomeView({ composer, footerStart, footerEnd, notice, onExample }: HomeViewProps) {
   const reduce = useReducedMotion();
   const { t } = useI18n();
-  const rise = (delay: number) =>
-    reduce
-      ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.3, delay } }
-      : {
-          initial: { opacity: 0, y: 14, filter: 'blur(6px)' },
-          animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
-          transition: { duration: 0.8, delay, ease },
-        };
+  // The server can't know the visitor's motion setting, so it renders the full entrance's first
+  // frame. Both variants therefore bring every property back to rest; with reduced motion the blur
+  // and the offset go at once and only a short fade remains (P7-10).
+  const rise = (delay: number) => ({
+    initial: { opacity: 0, y: 14, filter: 'blur(6px)' },
+    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
+    transition: reduce
+      ? { duration: 0.3, delay, y: { duration: 0 }, filter: { duration: 0 } }
+      : { duration: 0.8, delay, ease },
+  });
 
   return (
     <>

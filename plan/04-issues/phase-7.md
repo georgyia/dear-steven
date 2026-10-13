@@ -84,6 +84,32 @@ None. **Size:** S.
 
 ---
 
+### P7-10 — fix(web): with reduced motion, the home screen no longer stays blurred
+
+<!-- issue {"id":"P7-10","title":"fix(web): with reduced motion, the home screen no longer stays blurred","labels":["bug","accessibility","type:ui","track:web","track:design","owner:ai","risk:low","P1","size:S","stage:m5"],"milestone":"M5 Conversations","depends":[],"github":60} -->
+
+#### Context
+Found while capturing screenshots for #59 (2026-10-13). With the system's reduce-motion setting
+on, the home screen's intro, composer, examples and first-visit notice stayed blurred and offset.
+The server renders the full entrance's first frame (it can't know the setting); after hydration
+the reduced variant animated only opacity, so the blur and the offset never went away.
+
+#### Goal
+With reduce motion on, the home screen settles sharp and in place: a short fade, no movement.
+
+#### Acceptance criteria
+- [ ] With `prefers-reduced-motion: reduce`, nothing on the home screen keeps a blur or an
+  offset once settled, at 375 and 1280 px.
+- [ ] Without it, the entrance is unchanged; no hydration warning either way.
+
+#### Tests required
+E2E: the reduced-motion test checks the computed filter and transform of everything in `main`.
+
+#### Dependencies
+None. **Size:** S.
+
+---
+
 ## Design
 
 ### P7-02 — fix(design): no more "·" separators — structure through layout and wording
