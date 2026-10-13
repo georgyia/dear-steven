@@ -6,6 +6,7 @@ import { chunk } from './commands/chunk.ts';
 import { discover } from './commands/discover.ts';
 import { doctor } from './commands/doctor.ts';
 import { index } from './commands/index.ts';
+import { latest } from './commands/latest.ts';
 import { purge } from './commands/purge.ts';
 import { status } from './commands/status.ts';
 import { transcribe } from './commands/transcribe.ts';
@@ -17,6 +18,8 @@ const HELP = `${c.bold('pnpm ingest <command>')} — build Dear Steven's knowled
 
 ${c.ember('Start here')}
   all [--limit 20]                 discover → RSS transcripts → chunk → embed → YouTube, in one go
+  latest [--days 14] [--dry-run | --budget <usd>] [--feed <url>]
+                                   bring in only the newest episodes; safe to schedule
 
 ${c.ember('Stages')} ${c.dim('(each idempotent and resumable)')}
   discover [--include-bonus] [--guests llm] [--feed <url>]
@@ -53,6 +56,7 @@ async function main(argv: string[]) {
     strict: true,
     options: {
       limit: { type: 'string' },
+      days: { type: 'string' },
       episode: { type: 'string' },
       force: { type: 'boolean', default: false },
       from: { type: 'string' },
@@ -86,6 +90,17 @@ async function main(argv: string[]) {
     switch (command) {
       case 'all':
         return await all(ctx, { limit: num(values.limit, 'limit') ?? 20, feed: values.feed });
+      case 'latest': {
+        const days = num(values.days, 'days') ?? 14;
+        if (!Number.isInteger(days) || days < 1 || days > 365)
+          throw new Error('--days must be a whole number of days from 1 to 365');
+        return await latest(ctx, {
+          days,
+          dryRun: values['dry-run'],
+          budget: num(values.budget, 'budget'),
+          feed: values.feed,
+        });
+      }
       case 'discover':
         return await discover(ctx, {
           feed: values.feed,

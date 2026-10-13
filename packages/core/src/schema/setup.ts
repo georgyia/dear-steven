@@ -20,8 +20,18 @@ export const SetupKeysSchema = z.strictObject({
 });
 export type SetupKeys = z.infer<typeof SetupKeysSchema>;
 
-/** The ingest stages the panel runs, in order. Paid diarization stays in the CLI. */
-export const SETUP_STAGES = ['discover', 'transcribe', 'chunk', 'index', 'match-youtube'] as const;
+/**
+ * The ingest stages the panel runs, in order, and `latest`, which runs them for new episodes only
+ * (P6-16). Paid diarization stays in the CLI.
+ */
+export const SETUP_STAGES = [
+  'discover',
+  'transcribe',
+  'chunk',
+  'index',
+  'match-youtube',
+  'latest',
+] as const;
 export const SetupStageSchema = z.enum(SETUP_STAGES);
 export type SetupStage = z.infer<typeof SetupStageSchema>;
 
@@ -32,7 +42,10 @@ export const SetupRunSchema = z.strictObject({
   stage: SetupStageSchema,
   /** `transcribe`: how many more of the newest episodes to fetch. */
   limit: z.number().int().min(1).max(500).optional(),
-  /** `index`: the most it may spend. Required, and the estimate must fit under it. */
+  /**
+   * `index`: the most it may spend. Required, and the estimate must fit under it. `latest`:
+   * optional; without it, new episodes are found by keyword and nothing is paid for.
+   */
   budgetUsd: z.number().positive().max(SETUP_MAX_BUDGET_USD).optional(),
 });
 export type SetupRun = z.infer<typeof SetupRunSchema>;

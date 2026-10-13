@@ -24,6 +24,12 @@ interface GuidedSetupProps {
 const MAX_LOG_LINES = 200;
 const STATUS_POLL_MS = 2000;
 
+/**
+ * What "Bring in new episodes" may spend on embeddings when an OpenAI key is saved. An episode
+ * costs well under a cent to embed, so this covers months of them and never surprises anyone.
+ */
+const LATEST_CAP_USD = 0.05;
+
 /** A cap with room above the estimate, so a slightly longer passage doesn't refuse the run. */
 const suggestedCap = (estimate: number) =>
   estimate > 0 ? Math.min(SETUP_MAX_BUDGET_USD, Math.ceil(estimate * 150) / 100) : 0;
@@ -241,6 +247,31 @@ export function GuidedSetup({ token, state, onState, onProgress }: GuidedSetupPr
           </button>
         </div>
         <p className="text-[12.5px] text-ivory-2">{copy.buildNote}</p>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h4 className="text-[15px] font-medium text-ivory-0">{copy.latestHeading}</h4>
+        <div>
+          <button
+            type="button"
+            disabled={running !== null}
+            onClick={() =>
+              void run([
+                state.keys.openai
+                  ? { stage: 'latest', budgetUsd: LATEST_CAP_USD }
+                  : { stage: 'latest' },
+              ])
+            }
+            className={secondary}
+          >
+            {copy.latest}
+          </button>
+        </div>
+        <p className="text-[12.5px] text-ivory-2">
+          <Rich
+            text={state.keys.openai ? copy.latestNote(money(LATEST_CAP_USD)) : copy.latestNoteFree}
+          />
+        </p>
       </div>
 
       <div className="flex flex-col gap-3">

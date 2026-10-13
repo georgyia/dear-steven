@@ -1,5 +1,7 @@
 import { spawn } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readConfig } from '@dear-steven/core/config';
@@ -209,6 +211,42 @@ describe('running stages', () => {
     expect(events.at(-1)).toEqual({ type: 'done', ok: true });
     expect(events.some((e) => e.type === 'line' && /Nothing to chunk/.test(e.text))).toBe(true);
     expect(runningStage()).toBeNull();
+  });
+
+  it('will not let the panel set a bigger budget for new episodes than for embedding', async () => {
+    seed();
+    const res = await run(request('/api/setup/run', { body: { stage: 'latest', budgetUsd: 25 } }));
+    expect(res.status).toBe(400);
+    expect(await res.text()).toContain(copy.setupBadStage);
+    expect(runningStage()).toBeNull();
+  });
+
+  it('brings in new episodes through the same CLI command as the terminal (P6-16)', async () => {
+    seed();
+    const published = new Date(Date.now() - 86_400_000).toUTCString();
+    const vtt = 'WEBVTT\n\n00:00:00.000 --> 00:00:04.000\nA fixture line, published yesterday.\n';
+    const server = createServer((req, res) => {
+      if (req.url === '/new.vtt') return res.end(vtt);
+      const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+      res.end(`<?xml version="1.0"?><rss xmlns:podcast="https://podcastindex.org/namespace/1.0"><channel>
+        <item><title>Fixture Guest: New This Week</title><guid>fixture-new</guid>
+        <pubDate>${published}</pubDate>
+        <podcast:transcript url="${base}/new.vtt" type="text/vtt"/></item></channel></rss>`);
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    vi.stubEnv(
+      'DEAR_STEVEN_FEED_URL',
+      `http://127.0.0.1:${(server.address() as AddressInfo).port}/feed.xml`,
+    );
+    try {
+      const res = await run(request('/api/setup/run', { body: { stage: 'latest' } }));
+      const events = await collect(res);
+      const lines = events.flatMap((e) => (e.type === 'line' ? [e.text] : []));
+      expect(events.at(-1)).toEqual({ type: 'done', ok: true });
+      expect(lines).toContain('1 new episode answerable now.');
+    } finally {
+      server.close();
+    }
   });
 
   it('shows what a terminal would, and says when a stage failed', async () => {

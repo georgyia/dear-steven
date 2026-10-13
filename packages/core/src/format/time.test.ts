@@ -4,6 +4,7 @@ import {
   formatDate,
   formatMoment,
   formatTimestamp,
+  isNewEpisode,
   spokenTimestamp,
 } from './time.ts';
 
@@ -38,6 +39,21 @@ describe('spokenTimestamp', () => {
   it('reads naturally in German (P6-02)', () => {
     expect(spokenTimestamp(1_934_000, 'de')).toBe('32 Minuten 14 Sekunden');
     expect(spokenTimestamp(3_661_000, 'de')).toBe('1 Stunde 1 Minute 1 Sekunde');
+  });
+});
+
+describe('isNewEpisode (P6-16)', () => {
+  const now = new Date('2026-10-13T12:00:00Z');
+
+  it('is new for a week after publishing', () => {
+    expect(isNewEpisode('2026-10-13T05:00:00Z', now)).toBe(true);
+    expect(isNewEpisode('2026-10-06T12:00:01Z', now)).toBe(true);
+    expect(isNewEpisode('2026-10-06T12:00:00Z', now)).toBe(false);
+  });
+
+  it('is never new when the date is in the future or unreadable', () => {
+    expect(isNewEpisode('2026-10-14T05:00:00Z', now)).toBe(false);
+    expect(isNewEpisode('nope', now)).toBe(false);
   });
 });
 
