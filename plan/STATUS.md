@@ -162,8 +162,8 @@ answers `track:answers` (P6-06–07), security `track:security` (P6-08–11), po
 ### M5 Conversations
 
 Categories are labels: conversations `track:conversation` (P7-05–08), design `track:design`
-(P7-02–03), bugs `bug` (P7-01, P7-04), knowledge base `track:ingest` (P6-16), maintenance
-`track:infra` (P7-09).
+(P7-02–03), bugs `bug` (P7-01, P7-04, P7-10), tests `type:test` (P7-12), knowledge base
+`track:ingest` (P6-16), maintenance `track:infra` (P7-09).
 
 | Id | # | Issue | Pri | Risk | State | Depends on | Needs |
 |----|---|-------|-----|------|-------|------------|-------|
@@ -172,6 +172,7 @@ Categories are labels: conversations `track:conversation` (P7-05–08), design `
 | P7-03 | #49 | feat(design): a proper quote preview when you hover a source | P1 | low | done | P7-02 | — |
 | P7-04 | #47 | fix(web): on phones the demo notice no longer hides the first-visit notice | P2 | low | done | — | — |
 | P7-10 | #60 | fix(web): with reduced motion, the home screen no longer stays blurred | P1 | low | done | — | — |
+| P7-12 | #68 | test(web): the phone first-visit check waits for the home screen to settle | P2 | low | done | — | — |
 | P6-16 | #16 | feat(ingest): bring in the latest episodes — one command, one button, and a schedule | P1 | medium | done | — | — |
 | P7-05 | #50 | feat(core): talk mode — just talk to Steven | P1 | medium | done | — | — |
 | P7-06 | #51 | feat(core): interview mode — Steven interviews you, the way he interviews his guests | P1 | medium | done | P7-05 | — |
