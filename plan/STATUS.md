@@ -195,3 +195,4 @@ instruction (2026-10-13).
 | P8-03 | #74 | feat(ingest): episode summaries, with every line quoted from the transcript | P1 | medium | done | — | — |
 | P8-04 | #75 | feat(web): read an episode's summary in the explorer | P1 | low | open | P8-03 | — |
 | P8-05 | #73 | chore(infra): accounts and server-side key storage with Supabase — decide first | P2 | high | open, blocked | P8-02 | decision |
+| P8-06 | #81 | chore(ci): give the e2e job room for the servers it now runs | P1 | low | done | — | — |

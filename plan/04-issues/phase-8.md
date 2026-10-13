@@ -332,3 +332,27 @@ Frontend design skills, `docs/DESIGN.md`, `dear-steven-architecture`.
 
 #### Dependencies
 P8-03. **Size:** M.
+
+---
+
+## Maintenance
+
+### P8-06 — chore(ci): give the e2e job room for the servers it now runs
+
+<!-- issue {"id":"P8-06","title":"chore(ci): give the e2e job room for the servers it now runs","labels":["type:infra","track:infra","owner:ai","risk:low","P1","size:S","stage:m6"],"milestone":"M6 Summaries and open access","depends":[],"github":81} -->
+
+#### Context
+#79 (P8-02) adds a production server on a fake operator key, with its tests, to the e2e run.
+#77 added another. On CI the Playwright tests then took 19.1 minutes. With install, the browser
+download and the build on top, the job hit its 20-minute `timeout-minutes` and was cancelled after
+every one of the 168 tests had passed (run 38483667362).
+
+#### Goal
+The e2e job finishes with room to spare, so a green suite is never reported as cancelled.
+
+#### Acceptance criteria
+- [ ] The e2e job's limit is 30 minutes, and the other jobs keep theirs.
+- [ ] CI on this PR passes.
+
+#### Dependencies
+None. **Size:** S.
