@@ -23,6 +23,7 @@
     "ingest": "node packages/ingest/src/cli.ts",
     "eval": "node eval/run.ts",
     "eval:interviews": "node eval/interviews.ts",
+    "eval:practice": "node eval/practice.ts",
     "policies": "node scripts/write-policies.ts"
   },
   "devDependencies": {

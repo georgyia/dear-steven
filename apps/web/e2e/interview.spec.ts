@@ -20,8 +20,12 @@ async function start(page: Page, name = 'Sam') {
 }
 
 async function answer(page: Page, text: string) {
+  // Wait until the question is open: while the next one is coming, the composer shows Stop.
+  await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
   await expect(answerBox(page)).toBeEditable();
   await answerBox(page).fill(text);
+  // Send lights up once the text has reached the composer: only then does Enter send it.
+  await expect(page.getByRole('button', { name: 'Send' })).toBeEnabled();
   await answerBox(page).press('Enter');
 }
 
@@ -96,6 +100,60 @@ test.describe('interview mode (P7-06)', () => {
     await expect(page.getByRole('article', { name: 'How do I build discipline?' })).toBeVisible();
     await modes(page).getByRole('radio', { name: 'Interview me' }).click();
     await expect(progress(page)).toHaveAccessibleName('Question 2 of 7');
+  });
+
+  test('practice: a debrief on my own words, then another go at the weakest answer (P7-07)', async ({
+    page,
+  }) => {
+    test.slow(); // six answers, two debriefs
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Got it' }).click();
+    await modes(page).getByRole('radio', { name: 'Interview me' }).click();
+    await page.getByText('Practise presenting my expertise').click();
+    await expect(
+      page.getByRole('heading', { name: 'Practise presenting your expertise.' }),
+    ).toBeVisible();
+    await page.getByLabel('What are you expert in?').fill('Pricing for small agencies');
+    await page.getByRole('button', { name: 'Start the practice' }).click();
+
+    const said = [
+      'I help small agencies stop undercharging, usually by about 30 percent in a quarter.',
+      'My own agency went broke in 2019 because we billed by the hour and never said no.',
+      'It depends.',
+      'One client doubled revenue in a year after we moved them to fixed fees per project.',
+      'I once priced a rebrand at a tenth of its value and resented every hour of it.',
+      'Charge for the outcome, not the hours.',
+    ];
+    for (const [i, text] of said.entries()) {
+      await expect(progress(page)).toHaveAccessibleName(`Question ${i + 1} of 6`);
+      await answer(page, text);
+    }
+
+    await expect(page.getByText('Debrief', { exact: true })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'How it came across' })).toBeVisible();
+    for (const q of await page.locator('blockquote').allInnerTexts()) {
+      expect(said.some((a) => a.includes(q.replace(/^“|”$/g, '')))).toBe(true);
+    }
+    await expect(
+      page.getByText('only a live model could write one', { exact: false }),
+    ).toBeVisible();
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(results.violations).toEqual([]);
+
+    // The vaguest answer is the thing to work on, quoted whole.
+    await expect(page.getByText('“It depends.”')).toBeVisible();
+    await page.getByRole('button', { name: 'Practise the weakest answer again' }).click();
+    await expect(progress(page)).toHaveAccessibleName('Question 3 of 6');
+    await answer(
+      page,
+      'Fixed fees beat hourly rates once a project is scoped: margins rose 20 percent.',
+    );
+    await expect(page.getByText('Debrief', { exact: true })).toBeVisible();
+    // The weakest answer is now the new one-liner, not "It depends.".
+    await expect(page.getByText('“Charge for the outcome, not the hours.”')).toBeVisible();
+    await expect(page.getByText('“It depends.”')).toHaveCount(0);
   });
 
   test.describe('in German', () => {

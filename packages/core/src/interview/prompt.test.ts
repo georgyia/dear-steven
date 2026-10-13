@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { personaLint } from '../persona/persona.ts';
-import { INTERVIEW_VERSION, INTERVIEWER_INSTRUCTIONS, LEARNED_INSTRUCTIONS } from './prompt.ts';
+import {
+  DEBRIEF_INSTRUCTIONS,
+  INTERVIEW_VERSION,
+  INTERVIEWER_INSTRUCTIONS,
+  LEARNED_INSTRUCTIONS,
+} from './prompt.ts';
 
 describe('interviewer prompts (P7-06)', () => {
   it('change only on purpose: update the snapshot and bump INTERVIEW_VERSION together', () => {
@@ -8,6 +13,7 @@ describe('interviewer prompts (P7-06)', () => {
       version: INTERVIEW_VERSION,
       interviewer: INTERVIEWER_INSTRUCTIONS,
       learned: LEARNED_INSTRUCTIONS,
+      debrief: DEBRIEF_INSTRUCTIONS,
     }).toMatchSnapshot();
   });
 
@@ -23,6 +29,9 @@ describe('interviewer prompts (P7-06)', () => {
       expect(INTERVIEWER_INSTRUCTIONS, rule).toContain(rule);
     }
     expect(LEARNED_INSTRUCTIONS).toContain('copied word for word from one of their answers');
+    expect(DEBRIEF_INSTRUCTIONS).toContain('copied word for word from one of their answers');
+    expect(DEBRIEF_INSTRUCTIONS).toContain('Add nothing: no new numbers, names, results or claims');
+    expect(DEBRIEF_INSTRUCTIONS).toContain('no lesson, cause or interpretation they did not state');
     expect(personaLint(INTERVIEWER_INSTRUCTIONS)).toEqual([]);
   });
 });

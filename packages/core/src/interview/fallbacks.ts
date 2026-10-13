@@ -14,6 +14,11 @@ export const FALLBACK_QUESTIONS: Record<'en' | 'de', Record<InterviewStage, stri
     challenge: 'What’s something you believed early on that turned out to be wrong?',
     advice: 'If someone were starting out on the same road tomorrow, what would you tell them?',
     closing: 'When you look at where you are now, what matters to you most?',
+    origin: 'How did you come to know this so well? What was the moment it started?',
+    belief: 'What do you believe about your field that most people in it would disagree with?',
+    evidence: 'What’s the strongest proof you’re right: a result, a number, a case?',
+    mistake: 'Tell me about a time it didn’t work. What did you get wrong?',
+    takeaway: 'If your audience remembers one sentence from you, what should it be?',
   },
   de: {
     opening:
@@ -25,5 +30,10 @@ export const FALLBACK_QUESTIONS: Record<'en' | 'de', Record<InterviewStage, stri
     challenge: 'Woran hast du anfangs geglaubt, das sich später als falsch herausgestellt hat?',
     advice: 'Wenn morgen jemand denselben Weg beginnen würde, was würdest du ihm sagen?',
     closing: 'Wenn du darauf schaust, wo du heute stehst: Was ist dir am wichtigsten?',
+    origin: 'Wie bist du darin so gut geworden? Was war der Moment, in dem es anfing?',
+    belief: 'Was glaubst du über dein Fach, dem die meisten darin widersprechen würden?',
+    evidence: 'Was ist der stärkste Beleg, dass du recht hast: ein Ergebnis, eine Zahl, ein Fall?',
+    mistake: 'Erzähl mir von einem Mal, als es nicht funktioniert hat. Was lag daneben?',
+    takeaway: 'Wenn dein Publikum sich einen Satz von dir merkt, welcher sollte es sein?',
   },
 };

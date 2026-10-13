@@ -5,6 +5,8 @@ import { RESTING_REPLY } from '../persona/copy.ts';
 import { personaLint } from '../persona/persona.ts';
 import { type ModerationResult, routeQuestion, safetyReply } from '../safety/index.ts';
 import {
+  type Debrief,
+  type DebriefScores,
   INTERVIEW_LIMITS,
   type InterviewReply,
   type InterviewRequest,
@@ -14,9 +16,13 @@ import {
   type ResolvedBlock,
 } from '../schema/index.ts';
 import type { KnowledgeStore } from '../store/index.ts';
-import { interviewArc } from './arc.ts';
+import { arcFor } from './arc.ts';
 import { FALLBACK_QUESTIONS } from './fallbacks.ts';
 import {
+  DEBRIEF_FORMAT,
+  DEBRIEF_INSTRUCTIONS,
+  DebriefModelSchema,
+  debriefInput,
   INTERVIEW_CACHE_KEY,
   INTERVIEWER_INSTRUCTIONS,
   LEARNED_FORMAT,
@@ -93,17 +99,113 @@ export function checkLearned(
     const answer = turns[line.turn]?.answer ?? '';
     const text = line.text.trim();
     if (!answer || !text || text.length > 240 || personaLint(text).length) continue;
-    const span = locateQuote(answer, line.evidence);
-    if (!span || words(span.text) < 3) continue;
-    out.push({ text, evidence: span.text, turn: line.turn });
+    // A whole answer, quoted exactly, is verbatim however short ("It depends."); anything else is
+    // located like a transcript quote, and must be a few words at least.
+    const whole = normalise(line.evidence).text === normalise(answer).text;
+    const span = whole ? null : locateQuote(answer, line.evidence);
+    if (!whole && (!span || words(span.text) < 3)) continue;
+    out.push({ text, evidence: whole ? answer.trim() : (span?.text ?? ''), turn: line.turn });
     if (out.length === INTERVIEW_LIMITS.learnedLines) break;
   }
   return out;
 }
 
+const SCORE_KEYS = ['clarity', 'specificity', 'story', 'brevity'] as const;
+const score = (n: unknown) => Math.min(5, Math.max(1, Math.round(Number(n) || 1)));
+/** Short, common words that carry no facts, in English and German: not counted as content. */
+const FUNCTION_WORDS = new Set(
+  (
+    'that this these those with from your have just what when then than they them their there were ' +
+    'will would could should been being into onto over under about after before because which while ' +
+    'also very really more most much many some every each only even still back down here where why how ' +
+    'dass diese dieser dieses eine einer einem einen nicht auch noch schon wenn weil aber oder sind ' +
+    'habe hast haben wird werden wurde kann muss mehr sehr ganz dann denn doch nach über unter'
+  ).split(' '),
+);
+const stem = (w: string) => w.replace(/(?:ing|ed|es|s|en|er|e)$/u, '');
+const contentWords = (text: string) =>
+  (
+    text
+      .toLowerCase()
+      .normalize('NFC')
+      .match(/[\p{L}]{4,}/gu) ?? []
+  )
+    .filter((w) => !FUNCTION_WORDS.has(w))
+    .map(stem);
+
+/**
+ * How much of a rewrite is the visitor's own vocabulary: the share of its content words found in
+ * their answers. A rewrite built from what they said scores near 1; one that brings new substance
+ * scores lower.
+ */
+export function ownWordsShare(rewrite: string, answers: string[]): number {
+  const theirs = new Set(answers.flatMap(contentWords));
+  const mine = contentWords(rewrite);
+  return mine.length ? mine.filter((w) => theirs.has(w)).length / mine.length : 1;
+}
+
+/** A rewrite must be at least this much the visitor's own words (P7-07). */
+export const REWRITE_OWN_WORDS = 0.8;
+
+/** Every run of digits in a text: a rewrite may not bring numbers the visitor never gave. */
+const numbers = (text: string) => text.match(/\d+(?:[.,]\d+)?/g) ?? [];
+
+/**
+ * The debrief, checked (P7-07): strengths and improvements only where their evidence is a verbatim
+ * span of the visitor's answers (the span is what is shown); scores clamped to 1–5; the rewrite
+ * dropped if it is too long, out of voice, or brings a number the original answer doesn't have;
+ * the weakest answer one that was given. A rewrite may use what was said in any answer, nothing
+ * else: no number they didn't give, and at least 80% of its content words theirs.
+ */
+export function checkDebrief(
+  raw: {
+    headline: string;
+    strengths: { text: string; evidence: string; turn: number }[];
+    improvements: { text: string; evidence: string; turn: number }[];
+    rewrite: { turn: number; answer: string; why: string } | null;
+    scores: Record<(typeof SCORE_KEYS)[number], number>;
+    weakest: number | null;
+  },
+  turns: InterviewTurn[],
+): Debrief {
+  const points = (list: typeof raw.strengths) =>
+    checkLearned(list, turns).slice(0, INTERVIEW_LIMITS.debriefItems);
+  const scores = Object.fromEntries(
+    SCORE_KEYS.map((k) => [k, score(raw.scores[k])]),
+  ) as DebriefScores;
+  const original = raw.rewrite ? (turns[raw.rewrite.turn]?.answer ?? '') : '';
+  const everything = turns.map((t) => t.answer).join('\n');
+  const rewrite =
+    raw.rewrite &&
+    original &&
+    words(raw.rewrite.answer) <= INTERVIEW_LIMITS.rewriteWords &&
+    personaLint(raw.rewrite.answer).length === 0 &&
+    numbers(raw.rewrite.answer).every((n) => everything.includes(n)) &&
+    ownWordsShare(
+      raw.rewrite.answer,
+      turns.map((t) => t.answer),
+    ) >= REWRITE_OWN_WORDS
+      ? { turn: raw.rewrite.turn, answer: raw.rewrite.answer.trim(), why: raw.rewrite.why.trim() }
+      : null;
+  const weakest = raw.weakest !== null && turns[raw.weakest]?.answer.trim() ? raw.weakest : null;
+  const headline = raw.headline.trim().slice(0, 240);
+  return {
+    headline: personaLint(headline).length ? '' : headline,
+    strengths: points(raw.strengths),
+    improvements: points(raw.improvements),
+    rewrite,
+    scores,
+    weakest,
+  };
+}
+
 /** The interview's language: what the visitor writes in, once there is enough to tell. */
 export function interviewLanguage(request: InterviewRequest): string {
-  const said = [request.setup.about ?? '', ...request.turns.map((t) => t.answer)]
+  const said = [
+    request.setup.about ?? '',
+    request.setup.expertise ?? '',
+    ...request.turns.map((t) => t.answer),
+  ]
     .filter(Boolean)
     .slice(-2)
     .join(' ');
@@ -162,8 +264,16 @@ export async function interviewStep(
   if (stop) return stop;
 
   const language = interviewLanguage(request);
-  const arc = interviewArc(request.setup.length);
+  const arc = arcFor(request.setup);
   if (request.action === 'finish' || request.turns.length >= arc.length) {
+    if (request.setup.flavour === 'practice') {
+      return {
+        type: 'debrief',
+        debrief: await debrief(deps, request, language, signal),
+        language,
+        demo: false,
+      };
+    }
     return {
       type: 'learned',
       lines: await learned(deps, request, language, signal),
@@ -223,6 +333,47 @@ export async function interviewStep(
     language: language === 'de' ? 'de' : 'en',
     demo: false,
   };
+}
+
+const NO_DEBRIEF: Debrief = {
+  headline: '',
+  strengths: [],
+  improvements: [],
+  rewrite: null,
+  scores: { clarity: 1, specificity: 1, story: 1, brevity: 1 },
+  weakest: null,
+};
+
+async function debrief(
+  deps: InterviewDeps,
+  request: InterviewRequest,
+  language: string,
+  signal: AbortSignal,
+): Promise<Debrief> {
+  if (!request.turns.some((t) => t.answer.trim())) return NO_DEBRIEF;
+  const raw = await deps.model.completeJson({
+    instructions: DEBRIEF_INSTRUCTIONS,
+    input: debriefInput(request.setup, request.turns, language),
+    format: DEBRIEF_FORMAT,
+    cacheKey: INTERVIEW_CACHE_KEY,
+    signal,
+  });
+  const parsed = DebriefModelSchema.safeParse(safeJson(raw));
+  if (!parsed.success) return NO_DEBRIEF;
+  // The model numbers answers from 1 (A1); turns are 0-based.
+  const zero = <T extends { turn: number }>(x: T) => ({ ...x, turn: x.turn - 1 });
+  const d = parsed.data;
+  return checkDebrief(
+    {
+      headline: d.headline,
+      strengths: d.strengths.map(zero),
+      improvements: d.improvements.map(zero),
+      rewrite: zero(d.rewrite),
+      scores: d.scores,
+      weakest: d.weakest - 1,
+    },
+    request.turns,
+  );
 }
 
 async function learned(

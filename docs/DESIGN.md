@@ -71,6 +71,11 @@ Shape: chips 999px, composer 22px, cards 18px, panels 24px. Layout: column `44re
   a hairline progress bar in ember, the last answer quoted in a quiet left-ruled line for context,
   Listen / Skip / End. "What I learned about you": each line in the display serif with the
   visitor's own words beneath it behind the ember hairline, as quotes are.
+- **Practice debrief** (P7-07): the headline in the display serif; four scores as five ember pips
+  each (labelled, with the number for screen readers; they grade the visitor's delivery, not
+  confidence in a source); what worked and what to work on, each over the visitor's own words; the
+  rewrite in the display serif behind the ember hairline under the original; "Practise the weakest
+  answer again" as the primary action.
 - **Evidence inspector** (tabs Quote · Context · Video; Video holds the click-to-load player and
   the podcast audio): ≥ 1024px a 420px right panel; the column and composer shift left, never
   covered. < 1024px a bottom sheet (85dvh, drag handle, native modal dialog).
