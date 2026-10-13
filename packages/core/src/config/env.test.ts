@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { findRepoRoot, forVisitor, readConfig, requireKey } from './env.ts';
+import { clientAddressFrom, findRepoRoot, forVisitor, readConfig, requireKey } from './env.ts';
 
 const fakeRepo = () => {
   const root = mkdtempSync(join(tmpdir(), 'dear-steven-'));
@@ -97,6 +97,32 @@ describe('forVisitor (P6-03)', () => {
     const c = forVisitor(operator({ DEAR_STEVEN_DEMO: '1' }), OWN);
     expect(c).toMatchObject({ mode: 'demo', demoReason: 'forced', keySource: 'operator' });
     expect(c.openaiApiKey).not.toBe(OWN);
+  });
+});
+
+describe('clientAddressFrom (P8-01)', () => {
+  it('trusts the last X-Forwarded-For entry by default', () => {
+    expect(clientAddressFrom({})).toEqual({ header: null, trustedProxies: 1 });
+  });
+
+  it('reads a platform header and a proxy count', () => {
+    expect(
+      clientAddressFrom({
+        DEAR_STEVEN_CLIENT_IP_HEADER: ' Fly-Client-IP ',
+        DEAR_STEVEN_TRUSTED_PROXIES: '2',
+      }),
+    ).toEqual({ header: 'fly-client-ip', trustedProxies: 2 });
+  });
+
+  it('ignores values it cannot use rather than trusting more than it should', () => {
+    expect(
+      clientAddressFrom({
+        DEAR_STEVEN_CLIENT_IP_HEADER: 'x-real-ip: 1.2.3.4',
+        DEAR_STEVEN_TRUSTED_PROXIES: '0',
+      }),
+    ).toEqual({ header: null, trustedProxies: 1 });
+    expect(clientAddressFrom({ DEAR_STEVEN_TRUSTED_PROXIES: '99' }).trustedProxies).toBe(1);
+    expect(clientAddressFrom({ DEAR_STEVEN_TRUSTED_PROXIES: '1.5' }).trustedProxies).toBe(1);
   });
 });
 

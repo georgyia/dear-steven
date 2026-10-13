@@ -75,7 +75,7 @@ export async function transcribe(blob: Blob, signal?: AbortSignal): Promise<stri
     method: 'POST',
     body: form,
     signal,
-    headers: keyHeaders(),
+    headers: await keyHeaders(),
   });
   if (!res.ok) throw new Error(`transcribe ${res.status}`);
   const body = (await res.json()) as { text?: string };

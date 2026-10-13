@@ -46,7 +46,7 @@ export async function* askStream(
       headers: {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
-        ...keyHeaders(),
+        ...(await keyHeaders()),
       },
       body: JSON.stringify(request),
       signal,
@@ -68,7 +68,7 @@ export async function fetchPassage(
 ): Promise<PassageContext> {
   const res = await fetch(`/api/passages/${encodeURIComponent(passageId)}`, {
     signal,
-    headers: keyHeaders(),
+    headers: await keyHeaders(),
   });
   if (!res.ok) throw new Error(`passage ${res.status}`);
   return (await res.json()) as PassageContext;
@@ -80,14 +80,18 @@ export async function fetchRelated(
 ): Promise<RelatedMoments> {
   const res = await fetch(`/api/passages/${encodeURIComponent(passageId)}/related`, {
     signal,
-    headers: keyHeaders(),
+    headers: await keyHeaders(),
   });
   if (!res.ok) throw new Error(`related ${res.status}`);
   return (await res.json()) as RelatedMoments;
 }
 
 export async function fetchStatus(signal?: AbortSignal): Promise<KnowledgeStatus> {
-  const res = await fetch('/api/status', { signal, cache: 'no-store', headers: keyHeaders() });
+  const res = await fetch('/api/status', {
+    signal,
+    cache: 'no-store',
+    headers: await keyHeaders(),
+  });
   if (!res.ok) throw new Error(`status ${res.status}`);
   return (await res.json()) as KnowledgeStatus;
 }
@@ -98,7 +102,7 @@ export async function fetchEpisodes(
   signal?: AbortSignal,
 ): Promise<EpisodePage> {
   const qs = new URLSearchParams({ q: query, offset: String(offset) });
-  const res = await fetch(`/api/episodes?${qs}`, { signal, headers: keyHeaders() });
+  const res = await fetch(`/api/episodes?${qs}`, { signal, headers: await keyHeaders() });
   if (!res.ok) throw new Error(`episodes ${res.status}`);
   return (await res.json()) as EpisodePage;
 }
@@ -108,7 +112,7 @@ export async function fetchEpisodes(
  * Resolves to `null` when it does, or the message to show when it doesn't.
  */
 export async function testKey(key: string, signal?: AbortSignal): Promise<string | null> {
-  const res = await fetch('/api/key', { method: 'POST', headers: keyHeaders(key), signal });
+  const res = await fetch('/api/key', { method: 'POST', headers: await keyHeaders(key), signal });
   if (res.ok) return null;
   const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
   return body?.error?.message ?? res.statusText;
@@ -146,7 +150,7 @@ export async function interviewStep(
   try {
     res = await fetch('/api/interview', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...keyHeaders() },
+      headers: { 'Content-Type': 'application/json', ...(await keyHeaders()) },
       body: JSON.stringify(request),
       signal,
     });

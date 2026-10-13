@@ -1,5 +1,7 @@
+import { dirname } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 import { E2E_ACCESS_CODE } from './e2e/gated';
+import { E2E_LIVE_LOG, E2E_OPERATOR_CANARY } from './e2e/live-env';
 import { E2E_SETUP_DB, E2E_SETUP_ENV_FILE, E2E_SETUP_TOKEN } from './e2e/setup-env';
 
 const PORT = Number(process.env.E2E_PORT ?? 3210);
@@ -11,6 +13,8 @@ const GATED_PORT = PORT + 1;
  */
 const SETUP_PORT = PORT + 2;
 const FIXTURE_PORT = PORT + 3;
+/** The same build on an operator key (P8-01): `operator-key.spec.ts` only. */
+const LIVE_PORT = PORT + 4;
 const SERVER_ENV = {
   DEAR_STEVEN_DEMO: '1',
   DEAR_STEVEN_DB_PATH: 'data/e2e-does-not-exist.db',
@@ -36,12 +40,12 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop',
-      testIgnore: /(access|setup)\.spec\.ts/,
+      testIgnore: /(access|setup|operator-key)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 820 } },
     },
     {
       name: 'mobile',
-      testIgnore: /(access|setup)\.spec\.ts/,
+      testIgnore: /(access|setup|operator-key)\.spec\.ts/,
       use: { ...devices['Pixel 7'], viewport: { width: 375, height: 760 } },
     },
     {
@@ -53,6 +57,11 @@ export default defineConfig({
       name: 'setup',
       testMatch: /setup\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], baseURL: `http://127.0.0.1:${SETUP_PORT}` },
+    },
+    {
+      name: 'live',
+      testMatch: /operator-key\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], baseURL: `http://localhost:${LIVE_PORT}` },
     },
   ],
   // Started in order: the first builds, the second reuses that build.
@@ -95,6 +104,23 @@ export default defineConfig({
         OPENAI_API_KEY: '',
         YOUTUBE_API_KEY: '',
         DEAR_STEVEN_DAILY_BUDGET_USD: '',
+      },
+    },
+    {
+      // Its output goes to a file, so the test can search every line it printed.
+      command: `mkdir -p '${dirname(E2E_LIVE_LOG)}' && pnpm exec next start -p ${LIVE_PORT} > '${E2E_LIVE_LOG}' 2>&1`,
+      url: `http://localhost:${LIVE_PORT}/api/status`,
+      reuseExistingServer: false,
+      timeout: 60_000,
+      env: {
+        NEXT_TELEMETRY_DISABLED: '1',
+        OPENAI_API_KEY: E2E_OPERATOR_CANARY,
+        OPENAI_BASE_URL: `http://127.0.0.1:${FIXTURE_PORT}/v1`,
+        YOUTUBE_API_KEY: '',
+        DEAR_STEVEN_DEMO: '',
+        DEAR_STEVEN_DB_PATH: 'data/e2e-does-not-exist.db',
+        DEAR_STEVEN_DAILY_BUDGET_USD: '',
+        DEAR_STEVEN_ENV_FILE: 'data/e2e-live-does-not-exist.env',
       },
     },
   ],

@@ -389,14 +389,14 @@ export const en = {
       label: 'Your OpenAI key',
       using: (remembered: boolean): string =>
         remembered
-          ? 'Using your key, remembered on this device until you forget it.'
-          : 'Using your key, kept in this tab until you close it.',
-      remember: 'Remember on this device',
+          ? 'Using your key, kept encrypted on this device for 30 days, or until you forget it.'
+          : 'Using your key, kept encrypted in this tab until you close it.',
+      remember: 'Remember on this device for 30 days',
       use: 'Test and use',
       testing: 'Testing…',
       forget: 'Forget my key',
       privacy:
-        'It stays in this browser and goes only to this site, with your requests. The server uses it for that request and never stores or logs it.',
+        'It stays in this browser, encrypted, and goes only to this site, with your requests. The server uses it for that request and never stores or logs it. Safest: a project key with a monthly budget.',
       insecure: 'Your own key can only be used over HTTPS.',
       failed: 'I couldn’t check that key just now. Try again?',
       noStorage: 'Your key works, but this browser isn’t letting me keep it, so I can’t use it.',
