@@ -6,10 +6,16 @@ const ask = async (page: Page, question: string) => {
   await box.press('Enter');
 };
 
-/** Anything on the home screen still blurred or offset by its entrance (P7-10, P7-12). */
+/**
+ * Anything on the home screen still blurred or offset by its entrance (P7-10, P7-12). The entrance
+ * is motion's inline style; hidden parts that are blurred by their classes (the voice pill's idle
+ * waveform and clock, where the browser offers voice) are not part of it.
+ */
 const unsettled = (page: Page) =>
   page.locator('main *').evaluateAll((els) =>
     els.flatMap((el) => {
+      const inline = (el as HTMLElement).style;
+      if (!inline?.filter && !inline?.transform) return [];
       const c = getComputedStyle(el);
       const blurred = c.filter !== 'none' && c.filter !== 'blur(0px)';
       const moved = c.transform !== 'none' && c.transform !== 'matrix(1, 0, 0, 1, 0, 0)';
