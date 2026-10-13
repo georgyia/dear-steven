@@ -1,5 +1,6 @@
 'use client';
 
+import type { InterviewFlavour } from '@dear-steven/core/schema';
 import { motion } from 'motion/react';
 import { type FormEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { AnswerBlocks } from '@/components/answer/AnswerBlocks';
@@ -8,6 +9,8 @@ import { ThinkingDots } from '@/components/ui/ThinkingDots';
 import GradualBlur from '@/components/vendor/react-bits/GradualBlur';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { InterviewAction, InterviewState } from '@/lib/interview';
+import { DebriefView } from './DebriefView';
+import { button, display, eyebrow, field, primary } from './styles';
 
 interface InterviewViewProps {
   state: InterviewState;
@@ -18,15 +21,6 @@ interface InterviewViewProps {
   demo: boolean;
   onBack: () => void;
 }
-
-const button =
-  'rounded-full border border-ink-3 px-3.5 py-1.5 text-[13px] text-ivory-1 transition-colors hover:border-ink-4 hover:text-ivory-0 disabled:opacity-50';
-const primary =
-  'rounded-full bg-ember-0 px-4 py-2 text-[14px] font-medium text-ink-0 transition-colors hover:bg-ember-1';
-const field =
-  'w-full rounded-full border border-ink-3 bg-ink-1 px-4 py-2.5 text-[15px] text-ivory-0 placeholder:text-steel focus:border-ember-0/60 focus:outline-none';
-const eyebrow = 'font-mono text-[11px] tracking-[0.16em] text-steel uppercase';
-const display = { fontVariationSettings: '"opsz" 96' };
 
 /**
  * Interview mode (P7-06): Dear Steven asks, one question at a time, in the display serif; the
@@ -55,6 +49,9 @@ export function InterviewView({ state, dispatch, header, dock, demo, onBack }: I
           ) : null}
           {state.phase === 'learned' ? (
             <Learned state={state} dispatch={dispatch} onBack={onBack} />
+          ) : null}
+          {state.phase === 'debrief' ? (
+            <DebriefView state={state} dispatch={dispatch} onBack={onBack} />
           ) : null}
           {state.phase === 'ended' && state.ended ? (
             <div className="flex flex-col gap-6">
@@ -104,11 +101,18 @@ function Setup({ dispatch, demo }: Pick<InterviewViewProps, 'dispatch' | 'demo'>
   const { t } = useI18n();
   const copy = t.interview;
   const id = useId();
+  const [flavour, setFlavour] = useState<InterviewFlavour>('interview');
   const [name, setName] = useState('');
   const [about, setAbout] = useState('');
+  const [expertise, setExpertise] = useState('');
+  const [audience, setAudience] = useState('');
+  const practice = flavour === 'practice';
   const start = (event: FormEvent) => {
     event.preventDefault();
-    dispatch({ type: 'start', setup: { name, about } });
+    dispatch({
+      type: 'start',
+      setup: practice ? { flavour, name, expertise, audience } : { name, about },
+    });
   };
   return (
     <form onSubmit={start} className="flex flex-col gap-6">
@@ -118,11 +122,65 @@ function Setup({ dispatch, demo }: Pick<InterviewViewProps, 'dispatch' | 'demo'>
           className="font-display text-[30px] leading-[1.15] text-balance text-ivory-0 sm:text-[38px]"
           style={display}
         >
-          {copy.title}
+          {practice ? copy.practiceTitle : copy.title}
         </h2>
-        <p className="max-w-[34rem] text-[16px] leading-relaxed text-ivory-1">{copy.intro}</p>
+        <p className="max-w-[34rem] text-[16px] leading-relaxed text-ivory-1">
+          {practice ? copy.practiceIntro : copy.intro}
+        </p>
       </div>
+      <fieldset className="flex flex-wrap gap-2">
+        <legend className="sr-only">{copy.flavourLabel}</legend>
+        {(['interview', 'practice'] as const).map((value) => (
+          <label
+            key={value}
+            className="flex cursor-pointer items-center gap-2 rounded-full border border-ink-3 px-3.5 py-2 text-[13.5px] text-ivory-1 transition-colors has-[:checked]:border-ember-0/70 has-[:checked]:bg-ember-tint has-[:checked]:text-ivory-0 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember-0"
+          >
+            <input
+              type="radio"
+              name={`${id}-flavour`}
+              value={value}
+              checked={flavour === value}
+              onChange={() => setFlavour(value)}
+              className="sr-only"
+            />
+            {value === 'practice' ? copy.flavourPractice : copy.flavourInterview}
+          </label>
+        ))}
+      </fieldset>
       <div className="flex max-w-[30rem] flex-col gap-4">
+        {practice ? (
+          <>
+            <label
+              htmlFor={`${id}-expertise`}
+              className="flex flex-col gap-1.5 text-[13.5px] text-ivory-1"
+            >
+              {copy.expertise}
+              <input
+                id={`${id}-expertise`}
+                value={expertise}
+                onChange={(e) => setExpertise(e.target.value)}
+                maxLength={160}
+                required
+                className={field}
+              />
+            </label>
+            <label
+              htmlFor={`${id}-audience`}
+              className="flex flex-col gap-1.5 text-[13.5px] text-ivory-1"
+            >
+              <span>
+                {copy.audience} <span className="text-steel">({copy.optional})</span>
+              </span>
+              <input
+                id={`${id}-audience`}
+                value={audience}
+                onChange={(e) => setAudience(e.target.value)}
+                maxLength={160}
+                className={field}
+              />
+            </label>
+          </>
+        ) : null}
         <label htmlFor={`${id}-name`} className="flex flex-col gap-1.5 text-[13.5px] text-ivory-1">
           <span>
             {copy.name} <span className="text-steel">({copy.optional})</span>
@@ -136,23 +194,28 @@ function Setup({ dispatch, demo }: Pick<InterviewViewProps, 'dispatch' | 'demo'>
             className={field}
           />
         </label>
-        <label htmlFor={`${id}-about`} className="flex flex-col gap-1.5 text-[13.5px] text-ivory-1">
-          <span>
-            {copy.about} <span className="text-steel">({copy.optional})</span>
-          </span>
-          <input
-            id={`${id}-about`}
-            value={about}
-            onChange={(e) => setAbout(e.target.value)}
-            maxLength={240}
-            className={field}
-          />
-        </label>
+        {practice ? null : (
+          <label
+            htmlFor={`${id}-about`}
+            className="flex flex-col gap-1.5 text-[13.5px] text-ivory-1"
+          >
+            <span>
+              {copy.about} <span className="text-steel">({copy.optional})</span>
+            </span>
+            <input
+              id={`${id}-about`}
+              value={about}
+              onChange={(e) => setAbout(e.target.value)}
+              maxLength={240}
+              className={field}
+            />
+          </label>
+        )}
       </div>
       <div className="flex flex-col gap-3">
         <div>
           <button type="submit" className={primary}>
-            {copy.start}
+            {practice ? copy.practiceStart : copy.start}
           </button>
         </div>
         <p className="text-[12.5px] leading-relaxed text-ivory-2">

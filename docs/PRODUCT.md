@@ -31,6 +31,9 @@
   cited). The mode is kept for the visit; switching never loses the conversation.
 - **Interview me**: Dear Steven interviews you, one question at a time, the way the show's
   conversations move, and ends with "What I learned about you", each line quoting your own words.
+  Or **practise presenting your expertise**: a tougher interview about what you know, then a
+  debrief (what came across, where you were vague, scores, one answer said the way it could land)
+  and another go at the weakest answer.
 - Voice in (Web Speech, or recorder + server transcription) and voice out (stock voice, or the
   browser's), only on a user gesture.
 - Demo mode with clearly labelled fixtures when no OpenAI key is configured.

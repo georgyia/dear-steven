@@ -162,6 +162,14 @@ version `interviewer-v1`, snapshot-tested like the persona):
   can't be found is dropped. The page shows the stored span, never the model's string.
 - The safety rails see every answer, and the setup line, before anything else: crisis or refused
   content ends the interview with the fixed reply.
+- **Practice** (P7-07): "Practise presenting my expertise" runs a tougher, six-question arc about
+  an expertise (opening, origin, belief, evidence, mistake, takeaway), with a `<practice>` note in
+  the input. It ends with a debrief (`DEBRIEF_INSTRUCTIONS`): a headline, strengths and
+  improvements each resting on a verbatim span of the visitor's answers, scores from 1 to 5 for
+  clarity, specificity, story and brevity, the weakest answer, and one answer rewritten the way it
+  could land. The rewrite is built from the visitor's own sentences and adds nothing; in code
+  (`checkDebrief`) it is dropped if it brings a number they never gave or if less than 80% of its
+  content words are theirs (`ownWordsShare`). `pnpm eval:practice` checks it live.
 
 ## 8. Copy outside answers
 

@@ -1,12 +1,19 @@
-export { interviewArc, STAGE_GUIDE } from './arc.ts';
+export { arcFor, interviewArc, PRACTICE_ARC, STAGE_GUIDE } from './arc.ts';
 export { FALLBACK_QUESTIONS } from './fallbacks.ts';
 export {
+  checkDebrief,
   checkLearned,
   type InterviewDeps,
   interviewLanguage,
   interviewStep,
+  ownWordsShare,
   questionProblems,
   restingInterview,
   styleExamples,
 } from './interview.ts';
-export { INTERVIEW_VERSION, INTERVIEWER_INSTRUCTIONS, LEARNED_INSTRUCTIONS } from './prompt.ts';
+export {
+  DEBRIEF_INSTRUCTIONS,
+  INTERVIEW_VERSION,
+  INTERVIEWER_INSTRUCTIONS,
+  LEARNED_INSTRUCTIONS,
+} from './prompt.ts';

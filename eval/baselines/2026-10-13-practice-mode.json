@@ -1,0 +1,98 @@
+{
+  "$comment": "P7-07: practice mode, live (gpt-6-luna), five fictional personas from eval/practice-personas.json (one vague), six questions and a debrief each. Scores and fact checks only; no answer text beyond the fictional rewrites. Three runs on 2026-10-13 after the own-words guard: vague lowest on specificity 3/3, quotes verbatim 3/3, rewrites judged to keep the facts 5/5, 4/5 and 5/5 (the one flag: a rewrite implied the order of two things the visitor said). This file is the last of the three.",
+  "date": "2026-10-13",
+  "vagueLowest": true,
+  "costUsd": 0.0063,
+  "runs": [
+    {
+      "id": "pricing",
+      "scores": {
+        "clarity": 4,
+        "specificity": 4,
+        "story": 4,
+        "brevity": 5
+      },
+      "points": 6,
+      "quotesVerbatim": true,
+      "weakest": "A1",
+      "rewrite": {
+        "turn": "A1",
+        "answer": "My own agency went under in 2019. We billed hourly, said yes to every revision, and I worked out too late that our best clients were paying us least per hour. Hourly billing punishes you for getting faster. Now I help agencies of five to twenty people stop billing by the hour.",
+        "keepsFacts": true,
+        "note": ""
+      }
+    },
+    {
+      "id": "sleep",
+      "scores": {
+        "clarity": 4,
+        "specificity": 4,
+        "story": 4,
+        "brevity": 5
+      },
+      "points": 5,
+      "quotesVerbatim": true,
+      "weakest": "A5",
+      "rewrite": {
+        "turn": "A5",
+        "answer": "Early on I pushed for longer breaks during night shifts. Nobody took them because the wards were short-staffed. I learned to change the rota, not to ask for more of people.",
+        "keepsFacts": true,
+        "note": ""
+      }
+    },
+    {
+      "id": "vague",
+      "scores": {
+        "clarity": 3,
+        "specificity": 1,
+        "story": 1,
+        "brevity": 4
+      },
+      "points": 5,
+      "quotesVerbatim": true,
+      "weakest": "A4",
+      "rewrite": {
+        "turn": "A4",
+        "answer": "I've seen lots of people grow a lot. When leaders get it, everything changes for the team.",
+        "keepsFacts": true,
+        "note": ""
+      }
+    },
+    {
+      "id": "climbing",
+      "scores": {
+        "clarity": 4,
+        "specificity": 4,
+        "story": 4,
+        "brevity": 5
+      },
+      "points": 5,
+      "quotesVerbatim": true,
+      "weakest": "A6",
+      "rewrite": {
+        "turn": "A6",
+        "answer": "Adults don't need more strength to start, they need permission to be bad at something in public. We changed the first session to start on the easiest wall with no ropes, just traversing. Course completion went from 55 percent to 81 percent in a year. Let beginners be beginners.",
+        "keepsFacts": true,
+        "note": ""
+      }
+    },
+    {
+      "id": "bookkeeping",
+      "scores": {
+        "clarity": 5,
+        "specificity": 4,
+        "story": 4,
+        "brevity": 5
+      },
+      "points": 5,
+      "quotesVerbatim": true,
+      "weakest": "A4",
+      "rewrite": {
+        "turn": "A4",
+        "answer": "Move 25 percent of every invoice into a separate account the day it's paid. Clients who've done that have had no late tax payments in four years. Not one.",
+        "keepsFacts": true,
+        "note": ""
+      }
+    }
+  ]
+}

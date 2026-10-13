@@ -8,7 +8,10 @@ import { ResolvedBlockSchema } from './answer.ts';
  * with every step.
  */
 
-/** Where each question takes the conversation, in order. */
+/**
+ * Where each question takes the conversation: the get-to-know-you arc, then the practice arc's own
+ * stages (P7-07), which probe an expertise rather than a life.
+ */
 export const INTERVIEW_STAGES = [
   'opening',
   'story',
@@ -17,6 +20,11 @@ export const INTERVIEW_STAGES = [
   'challenge',
   'advice',
   'closing',
+  'origin',
+  'belief',
+  'evidence',
+  'mistake',
+  'takeaway',
 ] as const;
 export const InterviewStageSchema = z.enum(INTERVIEW_STAGES);
 export type InterviewStage = z.infer<typeof InterviewStageSchema>;
@@ -33,9 +41,23 @@ export const INTERVIEW_LIMITS = {
   aboutChars: 240,
   /** "What I learned about you": at most this many lines. */
   learnedLines: 5,
+  expertiseChars: 160,
+  audienceChars: 160,
+  /** Debrief (P7-07): at most this many strengths, and as many improvements. */
+  debriefItems: 3,
+  rewriteWords: 120,
 } as const;
 
+/** A get-to-know-you interview, or practice at presenting an expertise (P7-07). */
+export const InterviewFlavourSchema = z.enum(['interview', 'practice']);
+export type InterviewFlavour = z.infer<typeof InterviewFlavourSchema>;
+
 export const InterviewSetupSchema = z.strictObject({
+  /** `interview` when absent. */
+  flavour: InterviewFlavourSchema.optional(),
+  /** Practice: what the visitor is expert in, and who they present it to. */
+  expertise: z.string().trim().max(INTERVIEW_LIMITS.expertiseChars).optional(),
+  audience: z.string().trim().max(INTERVIEW_LIMITS.audienceChars).optional(),
   /** What to call the visitor. Optional. */
   name: z.string().trim().max(INTERVIEW_LIMITS.nameChars).optional(),
   /** What they do, in a line. Optional. */
@@ -80,6 +102,33 @@ export const LearnedLineSchema = z.object({
 });
 export type LearnedLine = z.infer<typeof LearnedLineSchema>;
 
+/** A point in the debrief, resting on the visitor's own words (`evidence`, from answer `turn`). */
+export const DebriefPointSchema = LearnedLineSchema;
+export type DebriefPoint = LearnedLine;
+
+/** 1 (poor) to 5 (excellent), on the whole practice run. */
+export const DebriefScoresSchema = z.object({
+  clarity: z.number().int().min(1).max(5),
+  specificity: z.number().int().min(1).max(5),
+  story: z.number().int().min(1).max(5),
+  brevity: z.number().int().min(1).max(5),
+});
+export type DebriefScores = z.infer<typeof DebriefScoresSchema>;
+
+export const DebriefSchema = z.object({
+  headline: z.string(),
+  strengths: z.array(DebriefPointSchema),
+  improvements: z.array(DebriefPointSchema),
+  /** One answer, said the way it could land: the same facts, none added. Null if none passed. */
+  rewrite: z
+    .object({ turn: z.number().int().nonnegative(), answer: z.string(), why: z.string() })
+    .nullable(),
+  scores: DebriefScoresSchema,
+  /** The answer that most needs another go. */
+  weakest: z.number().int().nonnegative().nullable(),
+});
+export type Debrief = z.infer<typeof DebriefSchema>;
+
 export const InterviewReplySchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('question'),
@@ -94,6 +143,12 @@ export const InterviewReplySchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('learned'),
     lines: z.array(LearnedLineSchema),
+    language: z.string(),
+    demo: z.boolean(),
+  }),
+  z.object({
+    type: z.literal('debrief'),
+    debrief: DebriefSchema,
     language: z.string(),
     demo: z.boolean(),
   }),

@@ -56,6 +56,43 @@ describe('POST /api/interview in demo mode (P7-06)', () => {
     for (const line of reply.lines) expect(ANSWERS[line.turn]).toContain(line.evidence);
   });
 
+  it('runs a practice and debriefs it on the visitor’s own words, with no invented rewrite (P7-07)', async () => {
+    const setup = { flavour: 'practice', expertise: 'Pricing for small agencies' };
+    const answers = [
+      'I help small agencies stop undercharging, usually by about 30 percent in a quarter.',
+      'My own agency went broke in 2019 because we billed by the hour and never said no.',
+      'It depends.',
+      'One client doubled revenue in a year after we moved them to fixed fees per project.',
+      'I once priced a rebrand at a tenth of its value and resented every hour of it.',
+      'Charge for the outcome, not the hours.',
+    ];
+    const turns: InterviewTurn[] = [];
+    for (const answer of answers) {
+      const { reply } = await step({ setup, turns, action: 'next' });
+      if (reply.type !== 'question') throw new Error(`expected a question, got ${reply.type}`);
+      expect(reply.total).toBe(6);
+      turns.push({ question: reply.question, stage: reply.stage, answer });
+    }
+    expect(turns.map((t) => t.stage)).toEqual([
+      'opening',
+      'origin',
+      'belief',
+      'evidence',
+      'mistake',
+      'takeaway',
+    ]);
+    const { reply } = await step({ setup, turns, action: 'next' });
+    if (reply.type !== 'debrief') throw new Error('expected a debrief');
+    expect(reply.demo).toBe(true);
+    const { debrief } = reply;
+    for (const p of [...debrief.strengths, ...debrief.improvements]) {
+      expect(answers[p.turn]).toContain(p.evidence);
+    }
+    expect(debrief.weakest).toBe(2);
+    expect(debrief.rewrite).toBeNull();
+    for (const v of Object.values(debrief.scores)) expect(v).toBeGreaterThanOrEqual(1);
+  });
+
   it('ends the interview with help when an answer says someone is in crisis', async () => {
     const { reply } = await step({
       setup: {},

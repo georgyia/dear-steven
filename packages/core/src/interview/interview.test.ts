@@ -5,13 +5,15 @@ import { InterviewRequestSchema } from '../schema/index.ts';
 import { seedEpisode, tempStore } from '../test/fixtures.ts';
 import { FALLBACK_QUESTIONS } from './fallbacks.ts';
 import {
+  checkDebrief,
   checkLearned,
   interviewLanguage,
   interviewStep,
+  ownWordsShare,
   questionProblems,
   styleExamples,
 } from './interview.ts';
-import { INTERVIEWER_INSTRUCTIONS, LEARNED_INSTRUCTIONS } from './prompt.ts';
+import { DEBRIEF_INSTRUCTIONS, INTERVIEWER_INSTRUCTIONS, LEARNED_INSTRUCTIONS } from './prompt.ts';
 
 /** A model that answers each completeJson call with the next scripted reply, and records it. */
 function scripted(...replies: unknown[]) {
@@ -209,6 +211,19 @@ describe('what I learned about you (P7-06)', () => {
     ]);
   });
 
+  it('accepts a whole short answer quoted exactly, and nothing short that is only part of one', () => {
+    const short = [turn('It depends.'), turn('Yes, I think so, mostly.', { stage: 'story' })];
+    expect(
+      checkLearned(
+        [
+          { text: 'You hedged.', evidence: 'it depends', turn: 0 },
+          { text: 'Too short a part.', evidence: 'I think', turn: 1 },
+        ],
+        short,
+      ),
+    ).toEqual([{ text: 'You hedged.', evidence: 'It depends.', turn: 0 }]);
+  });
+
   it('ends with the checked lines once the arc is done, numbering answers from A1', async () => {
     const { model, seen } = scripted({
       lines: [
@@ -316,5 +331,154 @@ describe('InterviewRequestSchema', () => {
       InterviewRequestSchema.safeParse({ ...request(), setup: { about: 'x'.repeat(241) } }).success,
     ).toBe(false);
     expect(InterviewRequestSchema.safeParse({ ...request(), extra: true }).success).toBe(false);
+  });
+});
+
+describe('practice: a mock interview about an expertise (P7-07)', () => {
+  const practice = (over: Partial<InterviewRequest> = {}): InterviewRequest =>
+    request({
+      setup: { flavour: 'practice', expertise: 'pricing for small agencies', audience: 'founders' },
+      ...over,
+    });
+
+  it('follows the practice arc, and tells the interviewer what is being practised', async () => {
+    const { model, seen } = scripted({
+      question: 'How did pricing become your thing?',
+      stage: 'origin',
+    });
+    const reply = await interviewStep(
+      { model, store: null },
+      practice({ turns: [turn('I help small agencies stop undercharging.')] }),
+      signal,
+    );
+    expect(reply).toMatchObject({ type: 'question', stage: 'origin', index: 1, total: 6 });
+    const input = seen[0]?.input[0]?.content ?? '';
+    expect(input).toContain(
+      '<practice>\nTheir expertise: pricing for small agencies\nTheir audience: founders',
+    );
+  });
+
+  const answers = [
+    turn('I help small agencies stop undercharging, usually by 30 percent.'),
+    turn('I ran an agency that went broke in 2019 because we billed by the hour.', {
+      stage: 'origin',
+    }),
+    turn('Things are complicated and it depends on a lot of factors really.', { stage: 'belief' }),
+  ];
+
+  it('debriefs with checked evidence, bounded scores and a rewrite that adds no numbers', async () => {
+    const { model, seen } = scripted({
+      headline: 'Clear when you tell the story; vague when you state the belief.',
+      strengths: [
+        {
+          text: 'A number makes the promise concrete.',
+          evidence: 'usually by 30 percent',
+          turn: 1,
+        },
+        { text: 'Invented praise.', evidence: 'you were brilliant throughout', turn: 1 },
+      ],
+      improvements: [
+        { text: 'Say what it depends on.', evidence: 'it depends on a lot of factors', turn: 3 },
+      ],
+      rewrite: {
+        turn: 3,
+        answer:
+          'Hourly billing is the trap: it broke my agency in 2019, and it costs most agencies 40 percent.',
+        why: 'Leads with the belief.',
+      },
+      scores: { clarity: 4, specificity: 9, story: 0, brevity: 3 },
+      weakest: 3,
+    });
+    const reply = await interviewStep(
+      { model, store: null },
+      practice({ turns: answers, action: 'finish' }),
+      signal,
+    );
+    if (reply.type !== 'debrief') throw new Error(`expected a debrief, got ${reply.type}`);
+    expect(seen[0]?.instructions).toBe(DEBRIEF_INSTRUCTIONS);
+    const d = reply.debrief;
+    expect(d.strengths).toEqual([
+      {
+        text: 'A number makes the promise concrete.',
+        evidence: 'usually by 30 percent.',
+        turn: 0,
+      },
+    ]);
+    expect(d.improvements[0]).toMatchObject({
+      evidence: 'it depends on a lot of factors',
+      turn: 2,
+    });
+    expect(d.scores).toEqual({ clarity: 4, specificity: 5, story: 1, brevity: 3 });
+    // "2019" was said (in answer 2), but "40 percent" never was: the rewrite would add a fact.
+    expect(d.rewrite).toBeNull();
+    expect(d.weakest).toBe(2);
+  });
+
+  it('keeps a rewrite that only reorders what was said', () => {
+    const d = checkDebrief(
+      {
+        headline: 'Good.',
+        strengths: [],
+        improvements: [],
+        rewrite: {
+          turn: 1,
+          answer: 'Billing by the hour broke my agency in 2019. That is why I do this.',
+          why: 'The lesson first.',
+        },
+        scores: { clarity: 3, specificity: 3, story: 3, brevity: 3 },
+        weakest: 7,
+      },
+      answers,
+    );
+    expect(d.rewrite?.turn).toBe(1);
+    expect(d.weakest).toBeNull();
+  });
+
+  it('debriefs nothing, without a model call, when every question was skipped', async () => {
+    const { model, seen } = scripted();
+    const reply = await interviewStep(
+      { model, store: null },
+      practice({ turns: [turn(''), turn('', { stage: 'origin' })], action: 'finish' }),
+      signal,
+    );
+    expect(reply).toMatchObject({
+      type: 'debrief',
+      debrief: { strengths: [], rewrite: null, weakest: null },
+    });
+    expect(seen).toHaveLength(0);
+  });
+});
+
+describe('ownWordsShare (P7-07)', () => {
+  const answers = [
+    'Rotate shifts forward, never backward.',
+    'In a trial across three wards, switching to forward rotation cut sick days by 22 percent.',
+  ];
+
+  it('is high for a rewrite built from what they said', () => {
+    expect(
+      ownWordsShare(
+        'Switching to forward rotation cut sick days by 22 percent across three wards. Rotate shifts forward, never backward.',
+        answers,
+      ),
+    ).toBeGreaterThanOrEqual(0.9);
+  });
+
+  it('is low for one that brings new substance, and such a rewrite is dropped', () => {
+    const invented =
+      'Circadian science proves melatonin timing matters; managers must invest in blackout rooms and nutrition coaching.';
+    expect(ownWordsShare(invented, answers)).toBeLessThan(0.3);
+    const d = checkDebrief(
+      {
+        headline: 'Good.',
+        strengths: [],
+        improvements: [],
+        rewrite: { turn: 0, answer: invented, why: 'More science.' },
+        scores: { clarity: 3, specificity: 3, story: 3, brevity: 3 },
+        weakest: null,
+      },
+      answers.map((answer) => turn(answer)),
+    );
+    expect(d.rewrite).toBeNull();
   });
 });

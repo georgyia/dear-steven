@@ -1,0 +1,81 @@
+{
+  "$comment": "P7-07: fictional visitors for the live practice check (pnpm eval:practice). Six scripted answers each, one per stage of the practice arc (opening, origin, belief, evidence, mistake, takeaway). 'vague' answers in generalities on purpose. Invented people; nothing here is anyone's real words.",
+  "personas": [
+    {
+      "id": "pricing",
+      "setup": {
+        "flavour": "practice",
+        "expertise": "Pricing for small creative agencies",
+        "audience": "agency founders"
+      },
+      "answers": [
+        "I help agencies of five to twenty people stop billing by the hour. Most of my clients raise their average project price by about 30 percent within two quarters.",
+        "My own agency went under in 2019. We billed hourly, said yes to every revision, and I worked out too late that our best clients were paying us least per hour.",
+        "Hourly billing punishes you for getting faster. The better your team gets, the less you earn, which is backwards.",
+        "One studio in Leeds moved twelve retainers to fixed project fees. Revenue went from 640 thousand to 910 thousand in a year with the same team of eight.",
+        "I once told a client to drop prices for a pitch they badly wanted. They won it and lost money on every month of the contract. Price to the value, not to the fear.",
+        "Charge for the outcome, not the hours."
+      ]
+    },
+    {
+      "id": "sleep",
+      "setup": {
+        "flavour": "practice",
+        "expertise": "Sleep for shift workers",
+        "audience": "hospital managers"
+      },
+      "answers": [
+        "I'm a sleep researcher. I help hospitals design rotas so night nurses get at least six hours of real sleep between shifts.",
+        "I worked nights as a porter at St Thomas' while doing my PhD, and I watched a colleague fall asleep at the wheel driving home after his fourth night in a row.",
+        "Forward-rotating shifts matter more than total hours. Going from days to evenings to nights is far easier on the body than the reverse.",
+        "In a trial across three wards, switching to forward rotation cut sick days by 22 percent over six months and reported errors fell by a third.",
+        "Early on I pushed for longer breaks during night shifts. Nobody took them because the wards were short-staffed. I learned to change the rota, not to ask for more of people.",
+        "Rotate shifts forward, never backward."
+      ]
+    },
+    {
+      "id": "vague",
+      "setup": { "flavour": "practice", "expertise": "Leadership", "audience": "new managers" },
+      "answers": [
+        "I help people become better leaders. It's about mindset and really understanding what leadership means.",
+        "I've always been interested in people and how teams work, and over the years I just developed a passion for it.",
+        "I think leadership is more about who you are than what you do. It's a journey, really.",
+        "I've seen lots of people grow a lot. When leaders get it, everything changes for the team.",
+        "There were times things didn't go as planned, but you learn from everything, and that's part of growth.",
+        "Be authentic and lead with purpose."
+      ]
+    },
+    {
+      "id": "climbing",
+      "setup": {
+        "flavour": "practice",
+        "expertise": "Teaching adults to climb",
+        "audience": "climbing gym owners"
+      },
+      "answers": [
+        "I run beginner courses at a climbing wall in Sheffield. Most of my students are over thirty-five and have never climbed before.",
+        "I started climbing at forty after a divorce. The instructors were all twenty-two and taught like I was too, and I nearly quit after week two.",
+        "Adults don't need more strength to start, they need permission to be bad at something in public.",
+        "We changed the first session to start on the easiest wall with no ropes, just traversing. Course completion went from 55 percent to 81 percent in a year.",
+        "I used to correct technique from the first climb. Students froze. Now I don't give a single tip until the third session.",
+        "Let beginners be beginners."
+      ]
+    },
+    {
+      "id": "bookkeeping",
+      "setup": {
+        "flavour": "practice",
+        "expertise": "Bookkeeping for sole traders",
+        "audience": "plumbers and electricians"
+      },
+      "answers": [
+        "I do the books for about sixty tradespeople around Cardiff, mostly plumbers and electricians who hate paperwork.",
+        "My dad was an electrician who kept receipts in a biscuit tin. In 2015 he got a tax bill he couldn't pay because nobody had told him to put money aside.",
+        "Tradespeople don't have a tax problem, they have a cash flow problem that turns into a tax problem in January.",
+        "Clients who move 25 percent of every invoice into a separate account the day it's paid have had no late tax payments in four years. Not one.",
+        "I once filed a return for a client using his bank statements without checking his van finance. It cost him 1,800 pounds in missed allowances, and I paid it back.",
+        "Put a quarter of every payment away the day it lands."
+      ]
+    }
+  ]
+}

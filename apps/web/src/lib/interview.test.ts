@@ -78,3 +78,68 @@ describe('the interview on the page (P7-06)', () => {
     expect(interviewReducer(state, { type: 'reset' })).toBe(initialInterview);
   });
 });
+
+describe('practice on the page (P7-07)', () => {
+  const debrief = (weakest: number | null): InterviewReply => ({
+    type: 'debrief',
+    debrief: {
+      headline: 'Clear, but vague on proof.',
+      strengths: [],
+      improvements: [],
+      rewrite: null,
+      scores: { clarity: 4, specificity: 2, story: 3, brevity: 4 },
+      weakest,
+    },
+    language: 'en',
+    demo: false,
+  });
+
+  it('needs an expertise to start, and keeps the audience', () => {
+    expect(run({ type: 'start', setup: { flavour: 'practice', expertise: '  ' } }).phase).toBe(
+      'setup',
+    );
+    expect(
+      run({
+        type: 'start',
+        setup: { flavour: 'practice', expertise: ' Pricing ', audience: 'Founders' },
+      }).setup,
+    ).toEqual({ flavour: 'practice', expertise: 'Pricing', audience: 'Founders' });
+  });
+
+  it('practises the weakest answer again, then asks for a fresh debrief with it replaced', () => {
+    let state = run(
+      { type: 'start', setup: { flavour: 'practice', expertise: 'Pricing' } },
+      { type: 'reply', reply: question(0) },
+      { type: 'answer', text: 'First answer.' },
+      { type: 'reply', reply: question(1) },
+      { type: 'answer', text: 'It depends.' },
+      { type: 'reply', reply: debrief(1) },
+    );
+    expect(state.phase).toBe('debrief');
+    state = interviewReducer(state, { type: 'retake' });
+    expect(state).toMatchObject({
+      phase: 'asking',
+      retake: 1,
+      current: { question: 'Question 2?' },
+    });
+    state = interviewReducer(state, {
+      type: 'answer',
+      text: 'It depends on margin: aim for 60 percent.',
+    });
+    expect(state.turns.map((t) => t.answer)).toEqual([
+      'First answer.',
+      'It depends on margin: aim for 60 percent.',
+    ]);
+    expect(state).toMatchObject({ phase: 'waiting', action: 'finish', retake: null });
+  });
+
+  it('has nothing to retake when no answer was weakest', () => {
+    const state = run(
+      { type: 'start', setup: { flavour: 'practice', expertise: 'Pricing' } },
+      { type: 'reply', reply: question(0) },
+      { type: 'finish' },
+      { type: 'reply', reply: debrief(null) },
+    );
+    expect(interviewReducer(state, { type: 'retake' })).toBe(state);
+  });
+});
