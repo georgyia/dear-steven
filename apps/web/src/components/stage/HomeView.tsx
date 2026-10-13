@@ -3,20 +3,21 @@
 import { motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { useI18n } from '@/i18n/I18nProvider';
-import { FirstVisitDisclosure } from './Disclosure';
+import { FirstVisitDisclosure, type FirstVisitNotice } from './Disclosure';
 import { HeroWordmark } from './Wordmark';
 
 interface HomeViewProps {
   composer: ReactNode;
   footerStart: ReactNode;
   footerEnd: ReactNode;
+  notice: FirstVisitNotice;
   onExample: (question: string) => void;
 }
 
 const ease = [0.23, 1, 0.32, 1] as const;
 
 /** The first screen: wordmark, one line of voice, one input, three ways in. Nothing else. */
-export function HomeView({ composer, footerStart, footerEnd, onExample }: HomeViewProps) {
+export function HomeView({ composer, footerStart, footerEnd, notice, onExample }: HomeViewProps) {
   const reduce = useReducedMotion();
   const { t } = useI18n();
   const rise = (delay: number) =>
@@ -70,7 +71,7 @@ export function HomeView({ composer, footerStart, footerEnd, onExample }: HomeVi
           {...rise(1.1)}
           className="mt-8 flex max-w-[30rem] flex-col items-center gap-1.5 text-[12px] leading-relaxed text-ivory-2 [text-shadow:0_0_14px_var(--ink-0),0_0_4px_var(--ink-0)]"
         >
-          <FirstVisitDisclosure />
+          <FirstVisitDisclosure notice={notice} />
           <p className="hidden font-mono text-[11px] text-steel lg:block">{t.home.shortcuts}</p>
         </motion.div>
       </main>
