@@ -383,6 +383,46 @@ YouTube links for new episodes only, with a dry-run estimate and a budget), a bu
 setup panel, and an optional schedule (a recipe for cron or a scheduled machine). See
 `phase-6.md` › P6-16.
 
+### P7-11 — chore(infra): keep a deployment up to date with new episodes on a schedule
+
+<!-- issue {"id":"P7-11","title":"chore(infra): keep a deployment up to date with new episodes on a schedule","labels":["type:infra","stage:m5","track:infra","track:ingest","owner:ai","risk:medium","needs:decision","P2","size:M"],"milestone":"M5 Conversations","depends":["P6-16"],"github":63} -->
+
+#### Context
+#16 (P6-16) brought in `pnpm ingest latest`: a command, a setup-panel button, and a cron recipe
+for the machine that holds `data/`. Its scope also named "a scheduled machine on Fly". That needs
+something the deployment doesn't have: the production image is a Next.js standalone build and
+ships the web app only, not the ingest CLI. So for now, `docs/INGESTION.md` says to schedule
+`latest` locally and upload the updated database to the volume.
+
+#### Goal
+A deployed copy keeps up with new episodes by itself, inside a spend cap, with nobody's laptop
+involved.
+
+#### Options (needs a decision)
+1. **An ingest image.** A second Dockerfile target with the CLI (and no ffmpeg; diarization stays
+   out). A Fly scheduled machine runs `pnpm ingest latest --budget 0.05` daily against the same
+   volume. Writing in place is enough: the web app keeps its SQLite handle open, and SQLite shows
+   another process's committed writes to it. (A replaced file is different: the open handle keeps
+   reading the old one until a restart.)
+2. **The web image runs it.** A protected internal route, or a cron in the same machine, runs
+   `latest` in-process. Simpler to deploy, but it puts ingest code and network fetches into the
+   request-serving process.
+3. **Stay local.** Keep the recipe as it is and document the upload more fully.
+
+Option 1 keeps the boundaries in `docs/ARCHITECTURE.md` (the web app never imports
+`packages/ingest`). Creating the Fly machine and its secrets is a human step
+(`plan/human/deploy.md`).
+
+#### Acceptance criteria (for option 1)
+- [ ] `docker build --target ingest` produces an image that runs `pnpm ingest latest` as a
+  non-root user, with no data and no secrets baked in.
+- [ ] A run against a fixture feed adds the new episode to the mounted database, and the running
+  web app answers from it without a restart.
+- [ ] Over budget, it stops before any paid call (SR-13).
+
+#### Dependencies
+P6-16. **Size:** M.
+
 ---
 
 ## Maintenance

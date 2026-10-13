@@ -87,6 +87,11 @@
       "description": "Milestone M5: conversations and polish"
     },
     {
+      "name": "stage:m6",
+      "color": "c5def5",
+      "description": "Milestone M6: summaries and open access"
+    },
+    {
       "name": "stage:research",
       "color": "d4c5f9",
       "description": "Research brief"
@@ -240,6 +245,11 @@
       "name": "track:conversation",
       "color": "bfdadc",
       "description": "Talking with Steven: talk mode, interviews, practice"
+    },
+    {
+      "name": "track:summaries",
+      "color": "c2e0c6",
+      "description": "Episode summaries: topics, moments, questions and answers"
     }
   ]
 }
