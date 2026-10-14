@@ -211,7 +211,7 @@ instruction (2026-10-13).
 | P8-05 | #73 | chore(infra): accounts and server-side key storage with Supabase — decide first | P2 | high | open, blocked | P8-02 | decision |
 | P8-06 | #81 | chore(ci): give the e2e job room for the servers it now runs | P1 | low | done | — | — |
 | P8-08 | #94 | fix(security): the API refuses requests sent from other sites' pages | P0 | high | done, PR open; waits for the owner's review | — | human |
-| P8-09 | #95 | fix(security): free questions need a daily cap | P1 | high | open | — | human |
+| P8-09 | #95 | fix(security): free questions need a daily cap | P1 | high | done, PR open; waits for the owner's review | — | human |
 
 ### M7 Spoken conversations
 

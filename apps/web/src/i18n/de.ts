@@ -234,7 +234,7 @@ export const de: Messages = {
     micUnsupported:
       'Dieser Browser kann hier keine Spracheingabe. Tippen funktioniert genauso gut.',
     clipboard: 'Die Zwischenablage war nicht erreichbar',
-    needsKey: 'Das war deine letzte freie Frage hier.',
+    needsKey: 'Hier sind keine freien Fragen mehr übrig.',
   },
   serverErrors: {
     keyRejected:
@@ -269,7 +269,9 @@ export const de: Messages = {
       `Das Einbetten würde etwa ${estimate} kosten, mehr als dein Limit von ${cap}. Es wurde nichts ausgegeben.`,
     interviewBroken: 'Dieses Interview konnte ich nicht lesen. Fangen wir noch einmal an?',
     needsKey: (limit) =>
-      `Du hattest ${limit === 1 ? 'eine freie Frage' : `${limit} freie Fragen`} auf dem Schlüssel dieser Seite. Um weiterzumachen, füge deinen eigenen OpenAI-Schlüssel hinzu: Er bleibt verschlüsselt in deinem Browser und geht nur an diese Seite.`,
+      limit === 0
+        ? 'Der Schlüssel dieser Seite beantwortet keine freien Fragen. Um zu fragen, füge deinen eigenen OpenAI-Schlüssel hinzu: Er bleibt verschlüsselt in deinem Browser und geht nur an diese Seite.'
+        : `Du hattest ${limit === 1 ? 'eine freie Frage' : `${limit} freie Fragen`} auf dem Schlüssel dieser Seite. Um weiterzumachen, füge deinen eigenen OpenAI-Schlüssel hinzu: Er bleibt verschlüsselt in deinem Browser und geht nur an diese Seite.`,
     interviewSlow:
       'Das sind viele Antworten auf einmal. Atme kurz durch und schick das dann noch einmal.',
     shareSlow:

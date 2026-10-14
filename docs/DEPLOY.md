@@ -64,7 +64,8 @@ secrets is a human step (`plan/human/api-keys.md`).
   Counted per browser (an anonymous cookie) and per network (three times as many), kept 30 days as
   hashes in `/data/free-questions.json`, under a secret in `/data/free-secret`. Server voice is
   not offered on free questions; the browser's own voice is. Someone with many addresses can get
-  more than three: keep `DEAR_STEVEN_DAILY_BUDGET_USD` set, which bounds the bill whatever happens.
+  more than three, and only `DEAR_STEVEN_DAILY_BUDGET_USD` bounds what that costs, so free
+  questions need it (P8-09): without a cap none are given, and the server log says why.
   Set the client address up correctly (below), or every visitor shares one network's allowance.
 - **Guided setup** (P6-04) is for a local clone only: never set `DEAR_STEVEN_SETUP_TOKEN` or
   `DEAR_STEVEN_SETUP_HOST` on a deployment. Without them every `/api/setup` route answers 404, as

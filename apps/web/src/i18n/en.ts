@@ -225,7 +225,7 @@ export const en = {
       'I can’t hear you — microphone access is blocked. You can type instead, or allow the mic in your browser settings.',
     micUnsupported: 'This browser can’t do voice here. Typing works just as well.',
     clipboard: 'Couldn’t reach the clipboard',
-    needsKey: 'That was the last of your free questions here.',
+    needsKey: 'No free questions left here.',
   },
   /** Details under the error sentence; written on the server, in the visitor's language. */
   serverErrors: {
@@ -256,7 +256,9 @@ export const en = {
     interviewBroken: 'That interview couldn’t be read. Start it again?',
     interviewSlow: 'That’s a lot of answers at once. Take a breath, then send that again.',
     needsKey: (limit: number) =>
-      `You had ${limit === 1 ? 'one free question' : `${limit} free questions`} on this copy’s key. To keep going, add your own OpenAI key: it stays in your browser, encrypted, and goes only to this site.`,
+      limit === 0
+        ? 'This copy’s key doesn’t answer free questions. To ask, add your own OpenAI key: it stays in your browser, encrypted, and goes only to this site.'
+        : `You had ${limit === 1 ? 'one free question' : `${limit} free questions`} on this copy’s key. To keep going, add your own OpenAI key: it stays in your browser, encrypted, and goes only to this site.`,
     shareSlow: 'That’s a lot of shared links at once. Wait a moment, then open it again.',
     shareGone:
       'The conversation that answer quoted is no longer in my knowledge base, so I won’t show it.',

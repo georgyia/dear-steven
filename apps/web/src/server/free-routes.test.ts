@@ -10,6 +10,7 @@ import { POST as interview } from '@/app/api/interview/route';
 import { POST as speech } from '@/app/api/speech/route';
 import { GET as status } from '@/app/api/status/route';
 import { POST as transcribe } from '@/app/api/transcribe/route';
+import { en } from '@/i18n/en';
 import { answerStream, FAKE_QUESTION, jsonReply, MODERATION_OK } from '../../e2e/fake-openai';
 import { resetFreeQuestions, TICKET_HEADER, VISITOR_COOKIE } from './free-questions';
 import { resetRateLimits } from './rate-limit';
@@ -159,7 +160,8 @@ beforeEach(() => {
   vi.stubEnv('DEAR_STEVEN_FREE_QUESTIONS', '3');
   vi.stubEnv('DEAR_STEVEN_DEMO', '');
   vi.stubEnv('DEAR_STEVEN_ALLOW_OPERATOR_KEY', '');
-  vi.stubEnv('DEAR_STEVEN_DAILY_BUDGET_USD', '');
+  // Free questions need a daily cap (P8-09); this one is never reached here.
+  vi.stubEnv('DEAR_STEVEN_DAILY_BUDGET_USD', '5');
   vi.stubEnv('DEAR_STEVEN_ACCESS_CODE', '');
   vi.stubEnv('DEAR_STEVEN_DB_PATH', join(dir, 'kb.db'));
   vi.stubEnv('DEAR_STEVEN_ENV_FILE', join(dir, '.env'));
@@ -289,5 +291,44 @@ describe('free questions through the routes (P8-02)', () => {
     );
     expect(heard.status).toBe(402);
     expect(network).not.toHaveBeenCalled();
+  });
+});
+
+describe('free questions need a daily cap (P8-09)', () => {
+  beforeEach(() => vi.stubEnv('DEAR_STEVEN_DAILY_BUDGET_USD', ''));
+
+  it('gives none without a cap, and never asks OpenAI', async () => {
+    const sam = browser();
+    const asked = await sam.ask('How do I start?');
+    expect(asked.res.status).toBe(402);
+    expect(JSON.parse(asked.body)).toMatchObject({
+      error: { code: 'needs_key', message: en.serverErrors.needsKey(0) },
+    });
+    const interviewed = await sam.interview([]);
+    expect(interviewed.res.status).toBe(402);
+    expect(interviewed.ticket).toBeNull();
+    expect(await sam.status()).toMatchObject({ free: { limit: 0, used: 0, remaining: 0 } });
+    expect(network).not.toHaveBeenCalled();
+  });
+
+  it('says why in the log, once, naming both settings', async () => {
+    const sam = browser();
+    await sam.ask('How do I start?');
+    await sam.ask('And then?');
+    await sam.status();
+    const said = vi
+      .mocked(console.error)
+      .mock.calls.map((call) => call.join(' '))
+      .filter((line) => line.startsWith('[free]'));
+    expect(said).toHaveLength(1);
+    expect(said[0]).toMatch(/DEAR_STEVEN_FREE_QUESTIONS.*DEAR_STEVEN_DAILY_BUDGET_USD/);
+  });
+
+  it('leaves a visitor’s own key alone, and changes nothing once a cap is set', async () => {
+    const sam = browser();
+    expect((await sam.ask('On my key?', { 'x-openai-key': OWN_KEY })).res.status).toBe(200);
+    vi.stubEnv('DEAR_STEVEN_DAILY_BUDGET_USD', '2');
+    expect((await sam.ask('And on yours, now there is a cap?')).res.status).toBe(200);
+    expect(await sam.status()).toMatchObject({ free: { limit: 3, used: 1, remaining: 2 } });
   });
 });

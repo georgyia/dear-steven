@@ -148,7 +148,8 @@ export default defineConfig({
         DEAR_STEVEN_DEMO: '',
         DEAR_STEVEN_DB_PATH: E2E_FREE_DB,
         DEAR_STEVEN_FREE_QUESTIONS: '3',
-        DEAR_STEVEN_DAILY_BUDGET_USD: '',
+        // Free questions need a daily cap (P8-09); the fake OpenAI never reaches this one.
+        DEAR_STEVEN_DAILY_BUDGET_USD: '5',
         DEAR_STEVEN_ENV_FILE: 'data/e2e-free-does-not-exist.env',
       },
     },
