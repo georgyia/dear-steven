@@ -92,6 +92,11 @@
       "description": "Milestone M6: summaries and open access"
     },
     {
+      "name": "stage:m7",
+      "color": "f9d0c4",
+      "description": "Milestone M7: spoken conversations"
+    },
+    {
       "name": "stage:research",
       "color": "d4c5f9",
       "description": "Research brief"
