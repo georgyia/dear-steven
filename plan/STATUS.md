@@ -212,4 +212,4 @@ Categories are labels: voice `track:voice` (P9-01–03).
 |----|---|-------|-----|------|-------|------------|-------|
 | P9-01 | #86 | feat(voice): Steven starts answering out loud as soon as his reply is checked | P1 | medium | done, PR open | — | — |
 | P9-02 | #87 | feat(voice): talk hands-free — Steven listens, answers out loud, and listens again | P1 | medium | done, PR open; no real device or browser tried yet (scripted recognition and a fake mic in e2e) | P9-01 | — |
-| P9-03 | #88 | feat(voice): the interview, spoken — Steven asks aloud, you answer aloud, and he moves on when you've finished | P1 | medium | open | P9-02 | — |
+| P9-03 | #88 | feat(voice): the interview, spoken — Steven asks aloud, you answer aloud, and he moves on when you've finished | P1 | medium | done, PR open; no real device or browser tried yet | P9-02 | — |

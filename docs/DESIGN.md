@@ -79,7 +79,10 @@ Shape: chips 999px, composer 22px, cards 18px, panels 24px. Layout: column `44re
   a display-serif title, two optional fields. Then one question at a time in the display serif,
   a hairline progress bar in ember, the last answer quoted in a quiet left-ruled line for context,
   Listen / Skip / End. "What I learned about you": each line in the display serif with the
-  visitor's own words beneath it behind the ember hairline, as quotes are.
+  visitor's own words beneath it behind the ember hairline, as quotes are. The mic in the dock
+  starts a spoken interview (P9-03): the same conversation bar as Talk, the question read aloud,
+  your answer heard until you pause for about two seconds, then the next question. Skip and End
+  stay where they are; they close the mic first.
 - **Practice debrief** (P7-07): the headline in the display serif; four scores as five ember pips
   each (labelled, with the number for screen readers; they grade the visitor's delivery, not
   confidence in a source); what worked and what to work on, each over the visitor's own words; the

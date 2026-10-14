@@ -3,7 +3,7 @@
  * sense in the current state is ignored, as in the stage machine.
  *
  *   off ─start▶ yours ─sent▶ his ─replied▶ yours …            (the interview starts with his)
- *   yours | his ─pause▶ paused ─resume▶ yours                    any ─end▶ off
+ *   yours | his ─pause▶ paused ─resume▶ yours (or his)           any ─end▶ off
  *
  * `yours`: the mic is open and listening. `his`: Dear Steven is thinking or speaking; the mic is
  * closed. `paused`: the mic is closed until you carry on.
@@ -23,7 +23,7 @@ export type ConversationEvent =
   | { type: 'sent' }
   | { type: 'replied' }
   | { type: 'pause'; reason: PauseReason }
-  | { type: 'resume' }
+  | { type: 'resume'; first?: 'yours' | 'his' }
   | { type: 'end' };
 
 export const conversationOff: ConversationState = { phase: 'off' };
@@ -47,7 +47,8 @@ export function conversationReducer(
         ? { phase: 'paused', reason: event.reason }
         : state;
     case 'resume':
-      return state.phase === 'paused' ? { phase: 'yours', words: '' } : state;
+      if (state.phase !== 'paused') return state;
+      return event.first === 'his' ? { phase: 'his' } : { phase: 'yours', words: '' };
     case 'end':
       return conversationOff;
   }

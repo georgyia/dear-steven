@@ -28,6 +28,7 @@ import {
   initialConversation,
 } from '@/lib/conversation';
 import { isTypingTarget, useKeydown } from '@/lib/hooks';
+import type { InterviewAction, InterviewQuestion, InterviewState } from '@/lib/interview';
 import { restoredTurns } from '@/lib/memory';
 import { useStageMode } from '@/lib/mode';
 import { fetchSetup, forgetSetupToken, takeSetupToken } from '@/lib/setup';
@@ -46,7 +47,7 @@ import { useVoicePreferences } from '@/lib/voice/preferences';
 import { unlockAudio } from '@/lib/voice/speaker';
 import type { SpeechQueue } from '@/lib/voice/speech-queue';
 import { TURN_TIMING } from '@/lib/voice/turn-taking';
-import { useSpokenConversation } from '@/lib/voice/useSpokenConversation';
+import { type TurnOutcome, useSpokenConversation } from '@/lib/voice/useSpokenConversation';
 import { useVoice, VoiceContext } from '@/lib/voice/useVoice';
 import { AboutDialog } from './AboutDialog';
 import { AboutYouControl } from './AboutYouControl';
@@ -147,12 +148,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     serverVoice: status.mode === 'live' && status.free === null,
     send,
     setDraft,
-    onTranscript: (text) => {
-      if (modeRef.current !== 'interview') return void askRef.current(text, { voice: true });
-      setDraft('');
-      interviewSpoke.current = true;
-      interviewRef.current({ type: 'answer', text });
-    },
+    onTranscript: (text) => void askRef.current(text, { voice: true }),
     notify: (title, description) => toast({ title, description, tone: 'error', duration: 5200 }),
     preferences: prefs,
   });
@@ -197,15 +193,89 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   aboutRef.current = aboutYou.text;
   const interviewRef = useRef(interview.dispatch);
   interviewRef.current = interview.dispatch;
-  /** The last interview answer was spoken: read the next question aloud (P7-06). */
-  const interviewSpoke = useRef(false);
+  const interviewState = useRef(interview.state);
+  interviewState.current = interview.state;
+
+  /** Resolves the next time the interview has moved on from waiting for a step (P9-03). */
+  const interviewMoved = useRef<((state: InterviewState) => void) | null>(null);
+  useEffect(() => {
+    if (interview.state.phase === 'waiting' || !interviewMoved.current) return;
+    const resolve = interviewMoved.current;
+    interviewMoved.current = null;
+    resolve(interview.state);
+  }, [interview.state]);
+
+  const askAloud = useCallback(
+    (q: InterviewQuestion) =>
+      voiceRef.current.speak(`interview-${q.index}`, q.question, q.language),
+    [],
+  );
+  /** One step of the interview taken out loud: the next question is read, or the interview is over. */
+  const interviewStepAloud = useCallback(
+    async (action: InterviewAction): Promise<TurnOutcome> => {
+      const from = interviewState.current.phase;
+      if (from !== (action.type === 'retry' ? 'error' : 'asking')) return 'end';
+      const moved = new Promise<InterviewState>((resolve) => {
+        interviewMoved.current = resolve;
+      });
+      interviewRef.current(action);
+      const next = await moved;
+      if (next.phase === 'asking' && next.current) {
+        askAloud(next.current);
+        return 'next';
+      }
+      if (next.phase === 'error') return next.needsKey ? 'end' : 'pause';
+      return 'end';
+    },
+    [askAloud],
+  );
+
+  /**
+   * The interview, spoken (P9-03): the question is read, your answer is heard, and when you've
+   * finished (a longer pause than in Talk) the next question is read, until the interview ends.
+   */
+  const startInterviewTalking = useRef<HTMLButtonElement>(null);
+  const spokenInterview = useSpokenConversation({
+    voice,
+    timing: TURN_TIMING.interview,
+    onBegin: () => {
+      const { phase, current } = interviewState.current;
+      if (phase === 'asking' && current) askAloud(current);
+    },
+    onTurn: (text) => interviewStepAloud({ type: 'answer', text }),
+    send,
+    notify: (title, description) => toast({ title, description, tone: 'error', duration: 5200 }),
+  });
+  const interviewAloud = spokenInterview.state.phase !== 'off';
+  const interviewAloudRef = useRef(interviewAloud);
+  interviewAloudRef.current = interviewAloud;
+  const endInterviewAloud = useCallback(() => {
+    spokenInterview.end();
+    requestAnimationFrame(() => startInterviewTalking.current?.focus());
+  }, [spokenInterview.end]);
+  // Leaving the interview, or reaching its end, ends the conversation and with it the microphone.
+  useEffect(() => {
+    const over =
+      interviewPhase !== 'asking' && interviewPhase !== 'waiting' && interviewPhase !== 'error';
+    if (interviewAloud && (mode !== 'interview' || over)) spokenInterview.end();
+  }, [mode, interviewPhase, interviewAloud, spokenInterview.end]);
+  /** Skip, End and Retry in a spoken interview are his turn: the mic closes first. */
+  const interviewDispatch = useCallback(
+    (action: InterviewAction) => {
+      const spokenStep =
+        action.type === 'skip' || action.type === 'finish' || action.type === 'retry';
+      if (spokenStep && spokenInterview.act(() => interviewStepAloud(action))) return;
+      interview.dispatch(action);
+    },
+    [spokenInterview.act, interviewStepAloud, interview.dispatch],
+  );
+
   const question = interview.state.current;
   // biome-ignore lint/correctness/useExhaustiveDependencies: speak each new question once
   useEffect(() => {
     if (!question || interview.state.phase !== 'asking') return;
-    if (interviewSpoke.current || prefsRef.current.alwaysSpeak) {
-      voiceRef.current.speak(`interview-${question.index}`, question.question, question.language);
-    }
+    // A spoken interview reads its questions itself, in turn.
+    if (!interviewAloudRef.current && prefsRef.current.alwaysSpeak) askAloud(question);
   }, [question]);
 
   const memory = useConversationMemory(conversation.turns, {
@@ -529,6 +599,9 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       } else if (talkingAloud) {
         e.preventDefault();
         endTalking();
+      } else if (interviewAloud) {
+        e.preventDefault();
+        endInterviewAloud();
       } else if (voice.speakingTurnId) {
         voice.stopSpeaking();
       }
@@ -536,11 +609,12 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
     }
     if (isTypingTarget(e.target)) return;
     // In a spoken conversation, Space is "your turn" (P9-02), unless it is pressing a control.
-    if (e.key === ' ' && talkingAloud && !onControl(e.target) && !e.repeat) {
+    const live = talkingAloud ? spoken : interviewAloud ? spokenInterview : null;
+    if (e.key === ' ' && live && !onControl(e.target) && !e.repeat) {
       e.preventDefault();
-      if (spoken.state.phase === 'his') spoken.interrupt();
-      else if (spoken.state.phase === 'paused') spoken.resume();
-      else spoken.finishTurn();
+      if (live.state.phase === 'his') live.interrupt();
+      else if (live.state.phase === 'paused') live.resume();
+      else live.finishTurn();
       return;
     }
     if (e.key === '/') {
@@ -551,6 +625,9 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       if (mode === 'talk') {
         if (talkingAloud) endTalking();
         else if (!busy) spoken.start();
+      } else if (mode === 'interview') {
+        if (interviewAloud) endInterviewAloud();
+        else if (interviewPhase === 'asking') spokenInterview.start();
       } else if (mic?.isListening()) mic.stop();
       else if (!busy) mic?.start();
     } else if (e.key === ']') {
@@ -631,29 +708,44 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const interviewDock = interviewing ? (
     <div className="flex flex-col gap-2">
       {modeSwitch}
-      <Composer
-        value={draft}
-        onValueChange={setDraft}
-        onSend={(text) => {
-          interviewSpoke.current = false;
-          setDraft('');
-          interview.dispatch({ type: 'answer', text });
-        }}
-        onStop={() => undefined}
-        busy={interview.state.phase !== 'asking'}
-        placeholder={listening ? t.composer.listening : t.interview.placeholder}
-        label={t.interview.answerLabel}
-        inputRef={inputRef}
-        voice={
-          <VoiceControl
-            voice={voice}
-            disabled={interview.state.phase !== 'asking'}
-            onUnavailable={() =>
-              toast({ id: 'no-voice', title: t.errors.micUnsupported, duration: 4000 })
-            }
-          />
-        }
-      />
+      {interviewAloud ? (
+        <ConversationBar
+          conversation={spokenInterview}
+          speaking={voice.speakingTurnId !== null}
+          onEnd={endInterviewAloud}
+        />
+      ) : (
+        <Composer
+          value={draft}
+          onValueChange={setDraft}
+          onSend={(text) => {
+            setDraft('');
+            interview.dispatch({ type: 'answer', text });
+          }}
+          onStop={() => undefined}
+          busy={interview.state.phase !== 'asking'}
+          placeholder={t.interview.placeholder}
+          label={t.interview.answerLabel}
+          inputRef={inputRef}
+          voice={
+            voice.input !== 'none' ? (
+              <StartTalking
+                ref={startInterviewTalking}
+                onStart={spokenInterview.start}
+                disabled={interview.state.phase !== 'asking'}
+              />
+            ) : (
+              <VoiceControl
+                voice={voice}
+                disabled
+                onUnavailable={() =>
+                  toast({ id: 'no-voice', title: t.errors.micUnsupported, duration: 4000 })
+                }
+              />
+            )
+          }
+        />
+      )}
     </div>
   ) : (
     modeSwitch
@@ -697,7 +789,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
         {mode === 'interview' ? (
           <InterviewView
             state={interview.state}
-            dispatch={interview.dispatch}
+            dispatch={interviewDispatch}
             dock={interviewDock}
             demo={status.mode === 'demo'}
             onBack={() => setMode('ask')}

@@ -4,9 +4,10 @@ import { en } from '../src/i18n/en';
 import { expect, type Page, test } from './fixtures';
 
 /**
- * Talking out loud (P9-02), in demo mode: one tap, then turns taken with no tap in between. A
- * scripted SpeechRecognition says each line of `script` in turn, word by word, then goes quiet (an
- * empty line is someone saying nothing). speechSynthesis is recorded, and takes `sayMs` to say
+ * Talking out loud (P9-02), and the interview spoken (P9-03), in demo mode: one tap, then turns
+ * taken with no tap in between. A scripted SpeechRecognition says each line of `script` in turn,
+ * word by word, then goes quiet (an empty line is someone saying nothing; " | " is a pause in the
+ * middle). speechSynthesis is recorded, and takes `sayMs` to say
  * anything. Every start, stop and abort of the recognition, and every line said, is logged in order,
  * so a test can prove the mic was never open while Dear Steven spoke.
  */
@@ -50,12 +51,22 @@ async function stubVoice(page: Page, script: string[], sayMs = 300) {
           const said = script[line++] ?? '';
           this.timers.push(setTimeout(() => this.onaudiostart?.(), 20));
           if (!said) return;
-          this.pending = said;
+          // " | " is a pause of 1.2 s in the middle of what is said.
           const words = said.split(' ');
-          words.forEach((_, i) => {
-            const text = words.slice(0, i + 1).join(' ');
-            this.timers.push(setTimeout(() => this.result(text, false), 100 + i * 80));
-          });
+          const spoken = words.filter((w) => w !== '|');
+          this.pending = spoken.join(' ');
+          let at = 100;
+          let n = 0;
+          for (const word of words) {
+            if (word === '|') {
+              at += 1_200;
+              continue;
+            }
+            n += 1;
+            const text = spoken.slice(0, n).join(' ');
+            this.timers.push(setTimeout(() => this.result(text, false), at));
+            at += 80;
+          }
         }
         stop() {
           log('stop');
@@ -272,5 +283,102 @@ test.describe('talking out loud (P9-02)', () => {
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
       ).toBe(true);
     });
+  });
+});
+
+test.describe('the interview, spoken (P9-03)', () => {
+  const progress = (page: Page) => page.getByRole('progressbar');
+  const question = (page: Page) => page.getByRole('heading', { level: 2 });
+
+  async function startInterview(page: Page) {
+    await page.goto('/');
+    await page.getByRole('button', { name: en.terms.dismiss }).click();
+    await modes(page).getByRole('radio', { name: en.modes.interview }).click();
+    await page.getByLabel(/What should I call you\?/).fill('Sam');
+    await page.getByRole('button', { name: en.interview.start }).click();
+    await expect(progress(page)).toHaveAccessibleName('Question 1 of 7');
+    await page.getByRole('button', { name: en.conversation.start }).click();
+    await expect(bar(page)).toBeVisible();
+  }
+
+  test('each question is read and its answer heard, with no tap in between', async ({ page }) => {
+    test.slow(); // two answers, each ended by a two-second pause
+    await stubVoice(page, [
+      'I run a small design studio in Leeds.',
+      'It started at my kitchen table | with one client who paid us in pizza.',
+    ]);
+    await startInterview(page);
+    const first = await question(page).innerText();
+    await expect(progress(page)).toHaveAccessibleName('Question 2 of 7', { timeout: 15_000 });
+    const second = await question(page).innerText();
+    await expect(progress(page)).toHaveAccessibleName('Question 3 of 7', { timeout: 15_000 });
+    // The 1.2 s pause in the middle didn't end the answer: it was kept whole.
+    await expect(
+      page.getByText('“It started at my kitchen table with one client who paid us in pizza.”'),
+    ).toBeVisible();
+    await expect
+      .poll(async () => (await events(page)).filter((e) => e === 'listen').length)
+      .toBe(3);
+
+    const log = await events(page);
+    expect(log.filter((e) => e.startsWith('say '))).toEqual([
+      `say ${first}`,
+      `say ${second}`,
+      expect.stringMatching(/^say /),
+    ]);
+    expect(log.slice(0, 4)).toEqual([`say ${first}`, 'said', 'listen', 'stop']);
+    neverListeningWhileSpeaking(log);
+
+    await bar(page).getByRole('button', { name: en.conversation.end, exact: true }).click();
+    await expect(bar(page)).toHaveCount(0);
+    expect((await events(page)).at(-1)).toBe('abort');
+    await expect(page.getByRole('button', { name: en.conversation.start })).toBeFocused();
+  });
+
+  test('Skip closes the mic and the next question is read', async ({ page }) => {
+    await stubVoice(page, ['', '']);
+    await startInterview(page);
+    await expect.poll(async () => (await events(page)).at(-1)).toBe('listen');
+    await page.getByRole('button', { name: en.interview.skip }).click();
+    await expect(progress(page)).toHaveAccessibleName('Question 2 of 7');
+    const second = await question(page).innerText();
+    await expect
+      .poll(async () => (await events(page)).filter((e) => e === 'listen').length)
+      .toBe(2);
+    const log = await events(page);
+    expect(log.slice(2)).toEqual(['listen', 'abort', `say ${second}`, 'said', 'listen']);
+    await audit(page, 'a spoken interview, listening');
+  });
+
+  test.describe('in German', () => {
+    test.use({ locale: 'de-DE', reducedMotion: 'reduce' });
+    test('a spoken interview in German', async ({ page }) => {
+      await stubVoice(page, ['']);
+      await page.goto('/');
+      await page.getByRole('button', { name: de.terms.dismiss }).click();
+      await page
+        .getByRole('radiogroup', { name: de.modes.label })
+        .getByRole('radio', { name: de.modes.interview })
+        .click();
+      await page.getByRole('button', { name: de.interview.start }).click();
+      await page.getByRole('button', { name: de.conversation.start }).click();
+      const german = page.getByRole('region', { name: de.conversation.label });
+      await expect(german.getByText(de.conversation.listeningHint)).toBeVisible();
+      await audit(page, 'a spoken interview, in German');
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBe(true);
+    });
+  });
+
+  test('ending the interview ends the conversation, and the mic with it', async ({ page }) => {
+    await stubVoice(page, ['']);
+    await startInterview(page);
+    await expect.poll(async () => (await events(page)).at(-1)).toBe('listen');
+    await page.getByRole('button', { name: en.interview.end }).click();
+    await expect(page.getByRole('heading', { name: 'Thank you, Sam.' })).toBeVisible();
+    await expect(bar(page)).toHaveCount(0);
+    expect((await events(page)).slice(-1)).toEqual(['abort']);
+    expect((await events(page)).filter((e) => e === 'listen').length).toBe(1);
   });
 });
