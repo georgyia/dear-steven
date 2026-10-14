@@ -14,7 +14,7 @@ Issues are grouped by category; each category is a label on GitHub.
 
 | Category | Label | Issues |
 |----------|-------|--------|
-| Security | `track:security` | P8-01, P8-02, P8-05 |
+| Security | `track:security` | P8-01, P8-02, P8-05, P8-08, P8-09 |
 | Summaries | `track:summaries` | P8-03, P8-04 |
 
 Owner decisions (2026-10-13): one free use is one **question**. Each Ask or Talk question
@@ -230,6 +230,98 @@ whether to keep visitors' keys on the server.
 
 #### Dependencies
 P8-02. **Size:** L (if accepted).
+
+---
+
+### P8-08 — fix(security): the API refuses requests sent from other sites' pages
+
+<!-- issue {"id":"P8-08","title":"fix(security): the API refuses requests sent from other sites' pages","labels":["type:security","stage:m6","track:security","track:web","owner:ai","risk:high","needs:human-review","P0","size:S"],"milestone":"M6 Summaries and open access","depends":[],"github":94} -->
+
+#### Context
+The paid routes (`/api/ask`, `/api/interview`, `/api/speech`, `/api/transcribe`) and the free ones
+that take a body (`/api/share`, `/api/access`) don't look at where a request comes from. `/api/ask`
+and `/api/interview` parse any body as JSON whatever its type; `/api/transcribe` takes a form. So a
+page on **any other site** can make its visitors' browsers send questions with a "simple" request
+(`text/plain` or a form), which needs no preflight:
+
+```js
+fetch('https://dear-steven.example/api/ask', { method: 'POST', mode: 'no-cors', body: '{"question":"…","history":[]}' })
+```
+
+That page can't read the answer, but the server still makes the call. Found in the security re-check
+of 2026-10-15 (`plan/09-security/reviews/2026-10-15-free-questions.md`). A production server
+answered such a request (`Origin: https://attacker.example`, `Sec-Fetch-Site: cross-site`,
+`text/plain`) with `200` and a streamed answer.
+
+- **Who pays:** the operator, up to the daily cap. Each of the other site's visitors is a real
+  browser at a real address, so per-address limits don't stop it.
+- **Free questions:** no `ds_visitor` cookie goes with a cross-site POST (`SameSite=Lax`), so each
+  request counts as a new visitor on that visitor's network. Those networks lose their free
+  questions for 30 days.
+- **Without free questions set:** the operator's key answers them, limited only per address.
+- **With an access code set:** the `SameSite=Strict` access cookie isn't sent, so these requests are
+  already refused (401).
+
+#### Goal
+Only this site's own pages can call its API from a browser.
+
+#### Acceptance criteria
+- [ ] The proxy (`src/proxy.ts`) answers `403` to any `/api/*` request that isn't `GET`, `HEAD` or
+      `OPTIONS` and comes from another site, before any route runs: no rate-limit token, no free
+      question, no OpenAI call. "Another site" means:
+  - Fetch Metadata `Sec-Fetch-Site` is `cross-site` or `same-site`;
+  - or, without Fetch Metadata, `Origin` is `null` or names a host other than the request's `Host`
+    (or `X-Forwarded-Host`).
+- [ ] Unaffected:
+  - this site's own requests (`same-origin`, or a matching `Origin`);
+  - requests with neither header (scripts, `curl`), which are limited as before;
+  - `GET` reads;
+  - `/api/setup`, which has its own stricter check and answers `404`.
+- [ ] Unit tests on the proxy: every `POST` route on disk refuses a cross-site request and passes a
+      same-origin one, plus each header case.
+- [ ] e2e against the production server: a cross-site question is refused and the visitor's free
+      questions are untouched.
+- [ ] Mutation-checked: with the check removed, the tests fail.
+- [ ] THREAT-MODEL gets a new SR-23 row; DEPLOY says what a proxy in front must keep (`Host`, or
+      `X-Forwarded-Host`).
+
+#### Dependencies
+None. **Size:** S.
+
+---
+
+### P8-09 — fix(security): free questions need a daily cap
+
+<!-- issue {"id":"P8-09","title":"fix(security): free questions need a daily cap","labels":["type:security","stage:m6","track:security","track:web","owner:ai","risk:high","needs:human-review","P1","size:S"],"milestone":"M6 Summaries and open access","depends":[],"github":95} -->
+
+#### Context
+Free questions (P8-02) count per browser (n) and per network (3n), and the code and the docs both
+say the daily cap is what bounds the bill when someone has many addresses. But nothing makes the cap
+required. With `DEAR_STEVEN_FREE_QUESTIONS=3` and no `DEAR_STEVEN_DAILY_BUDGET_USD`, the operator's
+key answers strangers with no bound but per-address limits. An IPv6 /48, which a cheap server comes
+with, holds 65,536 /64 networks: about 590,000 free questions. Found in the security re-check of
+2026-10-15 (`plan/09-security/reviews/2026-10-15-free-questions.md`).
+
+#### Goal
+Free questions are given only when a daily cap bounds what they can cost.
+
+#### Acceptance criteria
+- [ ] With free questions set and no daily cap:
+  - no free question is given: `/api/ask` and `/api/interview` answer `needs_key` with no OpenAI
+    call;
+  - `/api/status` reports none left;
+  - the server log says why once per process, naming both variables.
+- [ ] With a cap set (any value, including `0`), nothing changes. A visitor's own key is never
+      affected.
+- [ ] The `needs_key` sentence reads right when a visitor had none, in English and German.
+- [ ] Tests:
+  - unit, each case and the log line;
+  - routes against the fake OpenAI, with no network call;
+  - the e2e free-questions server gets a cap.
+- [ ] `docs/DEPLOY.md`, `.env.example` and THREAT-MODEL SR-02 say the cap is required.
+
+#### Dependencies
+None. **Size:** S.
 
 ---
 
