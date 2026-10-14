@@ -131,6 +131,10 @@ The fixed replies and the helpline list are reviewed by a human before release
 citations, honest attribution ("in my conversation with Dana"). Played in a stock OpenAI voice or
 the browser's — never an imitation of Steven Bartlett's voice.
 
+`spoken` is model-written and not validated, so it is read only for Ask. In Talk (P9-01) the
+reply itself is read aloud, block by block, as each block passes validation: what you hear is
+word for word what you can read, with its sources.
+
 ## 7a. Talk mode (P7-05)
 
 In Talk, the visitor wants a back-and-forth, not a considered answer. The question travels with a
@@ -140,8 +144,9 @@ spoken version too), leading with a view, no pull quote or takeaway, and often o
 back. The eval holds the average under 60 words. Everything else is
 unchanged: the same retrieval, the same four kinds of statement with the same evidence rules, the
 same validator, repair and downgrade, and the same safety rails. A talk reply cites a conversation
-only when it genuinely helps. `pnpm eval --answers --mode talk` measures the average length and
-runs the integrity checks and the red team in talk mode.
+only when it genuinely helps, and is read aloud exactly as written (§7). `pnpm eval --answers
+--mode talk` measures the average length and runs the integrity checks and the red team in talk
+mode.
 
 ## 7b. Interview mode (P7-06)
 

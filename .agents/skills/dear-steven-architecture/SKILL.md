@@ -11,7 +11,8 @@ Source of truth: `docs/ARCHITECTURE.md` (current) and `plan/12-adr/` (why).
 
 - `packages/core` decides; it imports no `next`/`react`/`motion`/`apps/*`/`packages/ingest`.
 - `apps/web` renders and transports; route handlers call core; client components import only
-  client-safe core entry points: `schema` (types), `limits`, `copy`, `format`, `youtube`.
+  client-safe core entry points: `schema` (types), `limits`, `copy`, `format`, `youtube`, `speech`,
+  `language`.
 - `packages/ingest` orchestrates I/O around core's pure ingest logic; never imported by the web.
 
 ## Adding a feature end to end

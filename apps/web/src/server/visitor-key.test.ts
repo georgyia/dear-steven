@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { EMPTY_KNOWLEDGE_REPLY } from '@dear-steven/core/copy';
 import { MODELS } from '@dear-steven/core/models';
+import { SPEECH_CONTENT_TYPE } from '@dear-steven/core/speech';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { POST as ask } from '@/app/api/ask/route';
 import { POST as checkKey } from '@/app/api/key/route';
@@ -244,7 +245,7 @@ describe('POST /api/speech with a key', () => {
     openai(200, new Uint8Array([1, 2, 3]).buffer);
     const res = await speech(say());
     expect(res.status).toBe(200);
-    expect(res.headers.get('content-type')).toBe('audio/mpeg');
+    expect(res.headers.get('content-type')).toBe(SPEECH_CONTENT_TYPE);
     expectRanOnCanary();
     expect(logs.join('\n')).not.toContain(CANARY);
     expectNothingKept();

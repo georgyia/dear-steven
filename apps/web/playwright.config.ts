@@ -16,7 +16,10 @@ const SETUP_PORT = PORT + 2;
 const FIXTURE_PORT = PORT + 3;
 /** The same build on an operator key (P8-01): `operator-key.spec.ts` only. */
 const LIVE_PORT = PORT + 4;
-/** The same build on a (fake) operator key with three free questions (P8-02): `free-questions.spec.ts`. */
+/**
+ * The same build on a (fake) operator key with three free questions (P8-02): `free-questions.spec.ts`,
+ * and on a visitor's own key, so with server speech, `spoken-reply.spec.ts` (P9-01).
+ */
 const FREE_PORT = PORT + 5;
 const SERVER_ENV = {
   DEAR_STEVEN_DEMO: '1',
@@ -43,12 +46,12 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop',
-      testIgnore: /(access|setup|operator-key|free-questions)\.spec\.ts/,
+      testIgnore: /(access|setup|operator-key|free-questions|spoken-reply)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 820 } },
     },
     {
       name: 'mobile',
-      testIgnore: /(access|setup|operator-key|free-questions)\.spec\.ts/,
+      testIgnore: /(access|setup|operator-key|free-questions|spoken-reply)\.spec\.ts/,
       use: { ...devices['Pixel 7'], viewport: { width: 375, height: 760 } },
     },
     {
@@ -68,7 +71,7 @@ export default defineConfig({
     },
     {
       name: 'free',
-      testMatch: /free-questions\.spec\.ts/,
+      testMatch: /(free-questions|spoken-reply)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], baseURL: `http://localhost:${FREE_PORT}` },
     },
   ],

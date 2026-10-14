@@ -51,7 +51,8 @@ docs/                         what exists today          plan/  what we build ne
 | any module | itself, circularly | `pnpm arch` |
 | client bundle | zod (use `@dear-steven/core/limits`, `/copy`, `/format`, `/youtube`, types) | review |
 
-Client-safe core entry points: `schema` (types only), `limits`, `copy`, `format`, `youtube`.
+Client-safe core entry points: `schema` (types only), `limits`, `copy`, `format`, `youtube`,
+`speech` (what is said aloud for a block, P9-01) and `language`.
 
 ## 3. Where each decision is made
 
@@ -90,6 +91,11 @@ Client-safe core entry points: `schema` (types only), `limits`, `copy`, `format`
    authoritative blocks, citations (with relevance notes), episodes, spoken summary, caveats, mode.
 6. The client reducer (`lib/conversation.ts`) places blocks by index; the stage machine drives
    visuals. Chips open the drawer, which fetches `/api/passages/:id` for context.
+7. Spoken replies (P9-01). In Talk, each `block.done` is read aloud as it arrives: its own text
+   (`speakable`, `@dear-steven/core/speech`), never the model's separate `spoken` field, which
+   only Ask still reads, at the end. `/api/speech` streams 24 kHz PCM as OpenAI synthesises it;
+   the browser plays it as it arrives on the Web Audio clock and fetches the next part while one
+   plays (`lib/voice/speech-queue.ts`, `speaker.ts`).
 
 SSE events: `status` · `sources` · `block.start` · `block.done` · `final` · `error`
 (`packages/core/src/schema/ask.ts`). The plan's `block.delta` became `block.start`: no partial,
@@ -163,6 +169,6 @@ signed with, created on first use, owner-only).
 | Repair call fails | Deterministic downgrade still applies. |
 | Mic denied / unsupported | Explained in a toast; typing unaffected; retry works. |
 | Web Speech network error | Switches to server transcription when available. |
-| Server TTS fails | Falls back to `speechSynthesis`. |
+| Server TTS fails | Falls back to `speechSynthesis`, part by part: one refused part is read by the browser, in its place. |
 | Browser storage blocked | Voice settings apply for the visit; the settings say they won't be kept. |
 | On-device recognition missing | The switch is disabled; it is never probed outside Google Chrome. |

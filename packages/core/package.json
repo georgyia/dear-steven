@@ -10,6 +10,7 @@
     "./limits": "./src/schema/limits.ts",
     "./youtube": "./src/youtube/links.ts",
     "./format": "./src/format/time.ts",
+    "./speech": "./src/format/speech.ts",
     "./config": "./src/config/env.ts",
     "./models": "./src/config/models.ts",
     "./store": "./src/store/index.ts",

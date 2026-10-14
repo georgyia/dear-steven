@@ -1,5 +1,6 @@
 'use client';
 
+import { speakable } from '@dear-steven/core/speech';
 import type { ReactNode } from 'react';
 import { ThinkingDots } from '@/components/ui/ThinkingDots';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -19,7 +20,8 @@ interface TalkTurnProps {
 /**
  * One exchange in talk mode (P7-05), set like a transcript rather than chat bubbles: who is
  * speaking, then the line. Steven's line keeps its citation chips; the full answer furniture (pull
- * quotes, takeaway, conversation cards) stays with Ask.
+ * quotes, takeaway, conversation cards) stays with Ask. Listen reads the line itself, exactly as
+ * it is written (P9-01).
  */
 export function TalkTurn({
   turn,
@@ -68,7 +70,7 @@ export function TalkTurn({
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <ListenButton
               turnId={turn.id}
-              spoken={turn.final.spoken}
+              spoken={turn.blocks.map(speakable).join(' ')}
               language={turn.final.language}
             />
             {demo ? (

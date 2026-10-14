@@ -1,7 +1,9 @@
 'use client';
 
+import { detectLanguage } from '@dear-steven/core/language';
 import { LIMITS } from '@dear-steven/core/limits';
 import type { AskErrorCode, Citation, KnowledgeStatus, SetupState } from '@dear-steven/core/schema';
+import { speakable } from '@dear-steven/core/speech';
 import { InformationCircleIcon, VoiceIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { LayoutGroup, MotionConfig } from 'motion/react';
@@ -41,6 +43,7 @@ import { useConversationMemory } from '@/lib/useConversationMemory';
 import { useInterview } from '@/lib/useInterview';
 import { useVoicePreferences } from '@/lib/voice/preferences';
 import { unlockAudio } from '@/lib/voice/speaker';
+import type { SpeechQueue } from '@/lib/voice/speech-queue';
 import { useVoice, VoiceContext } from '@/lib/voice/useVoice';
 import { AboutDialog } from './AboutDialog';
 import { AboutYouControl } from './AboutYouControl';
@@ -308,6 +311,10 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       let settled = false;
+      // Talk is read aloud block by block, each one as soon as it has passed its checks (P9-01).
+      const readAloud = mode === 'talk' && spokenTurns.current.has(id);
+      const replyLanguage = detectLanguage(question);
+      let reading: SpeechQueue | null = null;
       try {
         for await (const event of askStream(
           {
@@ -327,12 +334,19 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
             (event.type === 'status' && event.step === 'writing')
           ) {
             send({ type: 'WRITING' });
+          } else if (event.type === 'block.done' && readAloud) {
+            reading ??= voiceRef.current.reply(id);
+            reading.add(speakable(event.block), replyLanguage);
           } else if (event.type === 'final') {
             settled = true;
             send({ type: 'ANSWERED', insufficient: event.answer.mode === 'insufficient' });
             // Spoken replies follow a spoken question, or any question with "always speak" on — both
-            // start from a gesture that unlocked audio.
-            if (spokenTurns.current.has(id) && event.answer.spoken) {
+            // start from a gesture that unlocked audio. Talk has been reading its blocks already.
+            if (reading) {
+              reading.close();
+              // Still talking once the answer is complete (it may already have finished).
+              if (reading.playing) send({ type: 'SPEAK_STARTED' });
+            } else if (spokenTurns.current.has(id) && event.answer.spoken) {
               voiceRef.current.speak(id, event.answer.spoken, event.answer.language);
             }
           } else if (event.type === 'error') {
@@ -372,6 +386,9 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
           send({ type: 'FAILED', error: STAGE_ERROR[code] });
         }
       } finally {
+        // Stopped: silence. Failed part way: what was checked is still said.
+        if (ctrl.signal.aborted) reading?.stop();
+        else reading?.close();
         if (abortRef.current === ctrl) abortRef.current = null;
         if (onFreeQuestions.current) void refreshStatus();
       }

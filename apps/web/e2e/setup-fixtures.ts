@@ -7,10 +7,17 @@
 // what the app does with a provider's echo.
 //
 // And the free-questions e2e server's OpenAI (P8-02): moderation, answers streamed back as a fixture
-// synthesis paragraph, interview questions, and key checks (`e2e/fake-openai.ts`).
+// synthesis paragraph, interview questions, and key checks (`e2e/fake-openai.ts`). Answers hold
+// back what follows their blocks for a moment, and speech streams back as PCM (P9-01).
 import { rmSync } from 'node:fs';
 import { createServer, type ServerResponse } from 'node:http';
-import { answerStream, FAKE_QUESTION, jsonReply, MODERATION_OK } from './fake-openai.ts';
+import {
+  answerStreamParts,
+  FAKE_QUESTION,
+  jsonReply,
+  MODERATION_OK,
+  speechPieces,
+} from './fake-openai.ts';
 import { E2E_OPERATOR_CANARY } from './live-env.ts';
 import { E2E_SETUP_DB, E2E_SETUP_ENV_FILE } from './setup-env.ts';
 
@@ -28,6 +35,8 @@ for (const file of [
 }
 
 const EPISODES = [1, 2];
+/** How long a streamed answer holds back what follows its blocks (P9-01). */
+const ANSWER_TAIL_MS = 1_000;
 
 const feed = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:podcast="https://podcastindex.org/namespace/1.0">
@@ -118,10 +127,23 @@ createServer((req, res) => {
     });
     req.on('end', () => {
       if ((JSON.parse(body) as { stream?: boolean }).stream) {
-        res.writeHead(200, { 'Content-Type': 'text/event-stream' }).end(answerStream());
+        // The blocks first; the rest a moment later, as a model still writing its evidence (P9-01).
+        const [head, tail] = answerStreamParts();
+        res.writeHead(200, { 'Content-Type': 'text/event-stream' }).write(head);
+        setTimeout(() => res.end(tail), ANSWER_TAIL_MS);
       } else {
         json(res, jsonReply(FAKE_QUESTION));
       }
+    });
+  } else if (req.method === 'POST' && req.url === '/v1/audio/speech') {
+    // Speech as it streams (P9-01): PCM in pieces, a little apart.
+    req.resume();
+    req.on('end', () => {
+      res.writeHead(200, { 'Content-Type': 'application/octet-stream' });
+      const [first, second, third] = speechPieces();
+      res.write(first);
+      setTimeout(() => res.write(second), 80);
+      setTimeout(() => res.end(third), 160);
     });
   } else if (req.method === 'GET' && req.url?.startsWith('/v1/models/')) {
     json(res, {

@@ -1,6 +1,7 @@
 import { speechCostUsd } from '@dear-steven/core/models';
 import { synthesizeSpeech } from '@dear-steven/core/openai';
 import { SpeechRequestSchema } from '@dear-steven/core/schema';
+import { SPEECH_CONTENT_TYPE } from '@dear-steven/core/speech';
 import { describeFailure } from '@/server/errors';
 import { freeLimitApplies } from '@/server/free-questions';
 import { getOpenAI } from '@/server/knowledge';
@@ -12,8 +13,9 @@ import { jsonError } from '@/server/sse';
 export const dynamic = 'force-dynamic';
 
 /**
- * Spoken replies (POST { text } → audio/mpeg). The client falls back to the browser's own
- * speechSynthesis whenever this returns an error, including in demo mode.
+ * Spoken replies (POST { text } → 24 kHz PCM, streamed as it is synthesised, P9-01). The client
+ * falls back to the browser's own speechSynthesis whenever this returns an error, including in
+ * demo mode.
  */
 export async function POST(req: Request) {
   const { config, refused } = requestConfig(req);
@@ -45,7 +47,7 @@ export async function POST(req: Request) {
     });
     recordSpend(config, speechCostUsd(parsed.data.text));
     return new Response(body, {
-      headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store' },
+      headers: { 'Content-Type': SPEECH_CONTENT_TYPE, 'Cache-Control': 'no-store' },
     });
   } catch (error) {
     const failure = describeFailure(error, undefined, config.keySource);
