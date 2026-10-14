@@ -40,33 +40,63 @@ export const FAKE_QUESTION = {
 
 /** A streamed answer, as Server-Sent Events the OpenAI SDK reads: the JSON in pieces, then usage. */
 export function answerStream(answer: unknown = FAKE_ANSWER): string {
+  return answerStreamParts(answer).join('');
+}
+
+/**
+ * The same stream in two parts (P9-01): everything up to the moment the blocks are complete (the
+ * `evidence` key has begun), then the rest. A server can hold the second part back, the way a real
+ * model is still writing the evidence, `spoken` and caveats after the blocks.
+ */
+export function answerStreamParts(answer: unknown = FAKE_ANSWER): [string, string] {
   const text = JSON.stringify(answer);
-  const events: unknown[] = [];
-  for (let i = 0; i < text.length; i += 40) {
-    events.push({
-      type: 'response.output_text.delta',
-      item_id: 'msg_fixture',
-      output_index: 0,
-      content_index: 0,
-      delta: text.slice(i, i + 40),
-    });
-  }
-  events.push({
-    type: 'response.completed',
-    response: {
-      id: 'resp_fixture',
-      object: 'response',
-      status: 'completed',
-      output: [],
-      usage: FAKE_USAGE,
+  const cut = text.indexOf('"evidence":[') + '"evidence":['.length;
+  const deltas = (part: string) => {
+    const out: unknown[] = [];
+    for (let i = 0; i < part.length; i += 40) {
+      out.push({
+        type: 'response.output_text.delta',
+        item_id: 'msg_fixture',
+        output_index: 0,
+        content_index: 0,
+        delta: part.slice(i, i + 40),
+      });
+    }
+    return out;
+  };
+  const head = deltas(text.slice(0, cut));
+  const tail = [
+    ...deltas(text.slice(cut)),
+    {
+      type: 'response.completed',
+      response: {
+        id: 'resp_fixture',
+        object: 'response',
+        status: 'completed',
+        output: [],
+        usage: FAKE_USAGE,
+      },
     },
-  });
-  return events
-    .map(
-      (e, i) =>
-        `event: ${(e as { type: string }).type}\ndata: ${JSON.stringify({ ...(e as object), sequence_number: i })}\n\n`,
-    )
-    .join('');
+  ];
+  const sse = (events: unknown[], from: number) =>
+    events
+      .map(
+        (e, i) =>
+          `event: ${(e as { type: string }).type}\ndata: ${JSON.stringify({ ...(e as object), sequence_number: from + i })}\n\n`,
+      )
+      .join('');
+  return [sse(head, 0), sse(tail, head.length)];
+}
+
+/** Half a second of a quiet tone as 24 kHz PCM (P9-01), in three pieces, as speech streams. */
+export function speechPieces(): Uint8Array[] {
+  const samples = 12_000;
+  const bytes = new Uint8Array(samples * 2);
+  const view = new DataView(bytes.buffer);
+  for (let i = 0; i < samples; i++) {
+    view.setInt16(i * 2, Math.round(Math.sin((i / 24_000) * 2 * Math.PI * 220) * 2_000), true);
+  }
+  return [bytes.slice(0, 7_001), bytes.slice(7_001, 16_000), bytes.slice(16_000)];
 }
 
 /** A whole response, as `responses.create` without streaming returns it. */

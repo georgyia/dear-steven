@@ -3,8 +3,8 @@ import { expect, type Page, test } from './fixtures';
 
 /**
  * Talk mode (P7-05), in demo mode: the switch by the composer, the reply set as a transcript with
- * its chips only, read aloud by default, and a mode that holds for the visit without ever costing
- * the conversation. speechSynthesis is recorded instead of played.
+ * its chips only, read aloud by default (the line itself, P9-01), and a mode that holds for the
+ * visit without ever costing the conversation. speechSynthesis is recorded instead of played.
  */
 async function recordSpeech(page: Page) {
   await page.addInitScript(() => {
@@ -16,6 +16,10 @@ async function recordSpeech(page: Page) {
     };
   });
 }
+
+/** The demo's talk reply about procrastination, its segments joined: what is said aloud. */
+const PROCRASTINATION_REPLY =
+  'Honestly? It’s almost never about not knowing what to do. In one of my conversations, the point came up that we delay what makes us feel something unpleasant far more than what’s simply hard. So what does this one make you feel?';
 
 const spoken = (page: Page) =>
   page.evaluate(() => (window as unknown as { __spoken: string[] }).__spoken);
@@ -54,8 +58,12 @@ test.describe('talk mode (P7-05)', () => {
     await expect(page.getByRole('region', { name: 'Conversations cited' })).toHaveCount(0);
     await expect(turn.getByText('If I were you', { exact: true })).toHaveCount(0);
 
+    // What is read aloud is the line on screen, word for word (P9-01).
     await expect.poll(() => spoken(page)).toHaveLength(1);
-    expect((await spoken(page))[0]).toMatch(/^Honestly, it’s almost never/);
+    expect((await spoken(page))[0]).toBe(PROCRASTINATION_REPLY);
+    await expect(
+      turn.getByText('Honestly? It’s almost never about not knowing what to do.'),
+    ).toBeVisible();
 
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

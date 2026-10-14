@@ -28,7 +28,7 @@ module.exports = {
     {
       name: 'client-never-imports-server-core',
       comment:
-        'Client components may only use the pure, browser-safe core entry points (schema, youtube, format).',
+        'Client components may only use the pure, browser-safe core entry points (schema, youtube, format, speech, language).',
       severity: 'error',
       from: { path: '^apps/web/src/components/' },
       to: {

@@ -50,6 +50,7 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 | YouTube matching (P6-15, real feed) | 536 of 739 full episodes linked: 535 of 548 full conversations since the channel's first upload (the rest are podcast-only compilations); 218 `exact` from shared chapters (58 with a mid-episode step), predicting 99.3% of 6,735 shared chapters within 2 s; 318 `estimated` (≈ two in three within 10 s, held-out); human spot check H-10 |
 | Strict CSP (P6-09) | every e2e test fails on a CSP violation: none; injected inline script, event handler and foreign `<script src>` refused; `next dev` answers with no console errors |
 | Embeddings (`pnpm ingest index`, 2026-10-10) | 8,394 passages from 114 episodes embedded, $0.077; retrieval eval recall@10 95% (19/20, hybrid) |
+| Talk read aloud as it is checked (P9-01), live 2026-10-14 | time from sending a talk question to the first sound, median of five on the real model: **7.3 s → 3.4 s**. Before, the whole answer (median 3.6 s) and then the whole MP3 of `spoken` (4.1 s); now the first checked block (2.9 s) and then the first PCM bytes of its own text (0.7 s). Every reply was one block. About $0.06 |
 | Answers from the real model (P3-08, `pnpm eval --answers`) | citations resolve 100% · 0 attribution violations · 0 quote mismatches · persona lint clean · unanswerable 3/3 · 2 violations caught before display · **first block p50 3,666 ms (target < 3 s: missed)** · modes: 2 grounded, 18 partial, 3 insufficient · $0.019 a run. Baseline: `eval/baselines/2026-10-10-first-live.json` |
 
 ## Waiting on a human
@@ -209,6 +210,6 @@ Categories are labels: voice `track:voice` (P9-01–03).
 
 | Id | # | Issue | Pri | Risk | State | Depends on | Needs |
 |----|---|-------|-----|------|-------|------------|-------|
-| P9-01 | #86 | feat(voice): Steven starts answering out loud as soon as his reply is checked | P1 | medium | open | — | — |
+| P9-01 | #86 | feat(voice): Steven starts answering out loud as soon as his reply is checked | P1 | medium | done, PR open | — | — |
 | P9-02 | #87 | feat(voice): talk hands-free — Steven listens, answers out loud, and listens again | P1 | medium | open | P9-01 | — |
 | P9-03 | #88 | feat(voice): the interview, spoken — Steven asks aloud, you answer aloud, and he moves on when you've finished | P1 | medium | open | P9-02 | — |

@@ -49,6 +49,10 @@ export function speechInstructions(language?: string): string {
     : SPEECH_STYLE;
 }
 
+/**
+ * Speech as it is synthesised (P9-01): raw PCM (`SPEECH_SAMPLE_RATE`, mono, 16-bit), which the
+ * browser can start playing from the first bytes, where an MP3 had to arrive whole first.
+ */
 export async function synthesizeSpeech(
   client: OpenAI,
   text: string,
@@ -60,7 +64,7 @@ export async function synthesizeSpeech(
       voice: options.voice ?? SPEECH_VOICE,
       input: text,
       instructions: speechInstructions(options.language),
-      response_format: 'mp3',
+      response_format: 'pcm',
     },
     { signal: options.signal },
   );

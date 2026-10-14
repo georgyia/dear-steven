@@ -35,6 +35,7 @@ import {
 } from './recognition';
 import { MicDeniedError, type Recording, startRecording, transcribe } from './recorder';
 import { createSpeaker, unlockAudio } from './speaker';
+import type { SpeechQueue } from './speech-queue';
 
 export interface VoiceApi {
   input: VoiceInput;
@@ -45,6 +46,11 @@ export interface VoiceApi {
   onPillStop: (info: { reason: VoicePillStopReason }) => void;
   /** Must be called from a user gesture (or after one already unlocked audio). */
   speak: (turnId: string, text: string, language: string) => void;
+  /**
+   * A reply read aloud part by part, each part as soon as it arrives (P9-01). Like `speak`, only
+   * after a gesture in this visit. Stops whatever was playing.
+   */
+  reply: (turnId: string) => SpeechQueue;
   stopSpeaking: () => void;
   speakingTurnId: string | null;
   /** Chrome on-device recognition for this browser; `unknown` until checked. */
@@ -92,6 +98,8 @@ export function useVoice({
   const pillRef = useRef<VoicePillHandle | null>(null);
   const session = useRef<Session | null>(null);
   const cancelled = useRef(false);
+  /** Which reading aloud is the current one: a stopped one ending late changes nothing. */
+  const reading = useRef(0);
   const { t, locale } = useI18n();
   const listenFor = recognitionLang(locale);
   const latest = useRef({ send, setDraft, onTranscript, notify, t });
@@ -169,6 +177,7 @@ export function useVoice({
 
   const onPillStart = useCallback(() => {
     unlockAudio();
+    reading.current += 1;
     speaker.stop();
     setSpeakingTurnId(null);
     cancelled.current = false;
@@ -256,25 +265,39 @@ export function useVoice({
     [fail, finish, transcribeFailed],
   );
 
+  const handlersFor = useCallback((turnId: string) => {
+    reading.current += 1;
+    const mine = reading.current;
+    return {
+      onStart: () => {
+        if (mine !== reading.current) return;
+        setSpeakingTurnId(turnId);
+        latest.current.send({ type: 'SPEAK_STARTED' });
+      },
+      onEnd: () => {
+        if (mine !== reading.current) return;
+        setSpeakingTurnId((current) => (current === turnId ? null : current));
+        latest.current.send({ type: 'SPEAK_ENDED' });
+      },
+    };
+  }, []);
+
   const speak = useCallback(
     (turnId: string, text: string, language: string) => {
-      void speaker.speak(text, language, {
-        onStart: () => {
-          setSpeakingTurnId(turnId);
-          latest.current.send({ type: 'SPEAK_STARTED' });
-        },
-        onEnd: () => {
-          setSpeakingTurnId((current) => (current === turnId ? null : current));
-          latest.current.send({ type: 'SPEAK_ENDED' });
-        },
-      });
+      void speaker.speak(text, language, handlersFor(turnId));
     },
-    [speaker],
+    [speaker, handlersFor],
+  );
+
+  const reply = useCallback(
+    (turnId: string) => speaker.reply(handlersFor(turnId)),
+    [speaker, handlersFor],
   );
 
   const preview = useCallback(
     (text: string) => {
       unlockAudio();
+      reading.current += 1;
       setSpeakingTurnId(null);
       void speaker.speak(text, locale);
     },
@@ -289,6 +312,7 @@ export function useVoice({
   }, [listenFor]);
 
   const stopSpeaking = useCallback(() => {
+    reading.current += 1;
     speaker.stop();
     setSpeakingTurnId(null);
     latest.current.send({ type: 'SPEAK_ENDED' });
@@ -302,6 +326,7 @@ export function useVoice({
     onPillStart,
     onPillStop,
     speak,
+    reply,
     stopSpeaking,
     speakingTurnId,
     onDevice,
