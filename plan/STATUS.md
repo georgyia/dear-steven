@@ -12,7 +12,9 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
   own key audited and kept encrypted, three free questions on the operator's key, a summary of
   every conversation (all 114 summarised, about $0.42) and reading it in the explorer, plus two CI
   fixes. M5 *Conversations* merged on 2026-10-13.
-- **Next to pick:** nothing open without the owner.
+- **Next to pick:** M7 *Spoken conversations* (`plan/04-issues/phase-9.md`): P9-01 (#86), then
+  P9-02 (#87) and P9-03 (#88). Talk and the interview become a spoken conversation, on the owner's
+  request of 2026-10-14.
 - **To switch on:** `DEAR_STEVEN_FREE_QUESTIONS=3` on a deployment (`docs/DEPLOY.md`), with
   `DEAR_STEVEN_DAILY_BUDGET_USD` set and the client address configured.
 - **Waiting on the owner:** P8-05 (accounts with Supabase; a recommendation is on #73), the P6-07
@@ -200,3 +202,13 @@ instruction (2026-10-13).
 | P8-04 | #75 | feat(web): read an episode's summary in the explorer | P1 | low | done | P8-03 | — |
 | P8-05 | #73 | chore(infra): accounts and server-side key storage with Supabase — decide first | P2 | high | open, blocked | P8-02 | decision |
 | P8-06 | #81 | chore(ci): give the e2e job room for the servers it now runs | P1 | low | done | — | — |
+
+### M7 Spoken conversations
+
+Categories are labels: voice `track:voice` (P9-01–03).
+
+| Id | # | Issue | Pri | Risk | State | Depends on | Needs |
+|----|---|-------|-----|------|-------|------------|-------|
+| P9-01 | #86 | feat(voice): Steven starts answering out loud as soon as his reply is checked | P1 | medium | open | — | — |
+| P9-02 | #87 | feat(voice): talk hands-free — Steven listens, answers out loud, and listens again | P1 | medium | open | P9-01 | — |
+| P9-03 | #88 | feat(voice): the interview, spoken — Steven asks aloud, you answer aloud, and he moves on when you've finished | P1 | medium | open | P9-02 | — |
