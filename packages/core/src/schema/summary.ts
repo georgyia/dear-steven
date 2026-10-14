@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { CitationSchema } from './answer.ts';
+import { EpisodeSummarySchema } from './ask.ts';
 
 /**
  * A conversation's summary (P8-03): what it's about, its topics, its most interesting moments and
@@ -70,3 +72,24 @@ export const ModelSummarySchema = z.object({
   exchanges: z.array(z.object({ question: ModelQuoteSchema, answer: ModelQuoteSchema })),
 });
 export type ModelSummary = z.infer<typeof ModelSummarySchema>;
+
+/**
+ * A summary as the explorer shows it (P8-04): every item with the citation the evidence drawer
+ * opens, at the moment it starts. Built on the server from the stored summary
+ * (`summary/view.ts`); the excerpt of a moment, question or answer is its stored span.
+ */
+export const ConversationSummaryViewSchema = z.object({
+  episode: EpisodeSummarySchema,
+  /** `null`: this conversation has no summary yet. */
+  summary: z
+    .object({
+      about: z.string().nullable(),
+      speakers: z.enum(['verified', 'unverified']),
+      topics: z.array(z.object({ title: z.string(), citation: CitationSchema })),
+      moments: z.array(z.object({ label: z.string(), citation: CitationSchema })),
+      exchanges: z.array(z.object({ question: CitationSchema, answer: CitationSchema })),
+      demo: z.boolean(),
+    })
+    .nullable(),
+});
+export type ConversationSummaryView = z.infer<typeof ConversationSummaryViewSchema>;

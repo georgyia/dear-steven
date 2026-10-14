@@ -1,6 +1,7 @@
 import type {
   AnswerMode,
   Citation,
+  ConversationSummaryView,
   EpisodePage,
   EpisodeRef,
   PassageCitation,
@@ -560,4 +561,124 @@ export function demoEpisodePage(query: string, offset: number): EpisodePage {
       demo: true,
     }));
   return { total: all.length, offset, episodes: all.slice(offset) };
+}
+
+/**
+ * Demo summaries (P8-04): one for each fixture episode, built from its fixture passages and
+ * labelled demo. The overview and labels are written here as fixtures; every quote is a fixture
+ * passage's own words.
+ */
+const demoSummaries: Record<
+  string,
+  {
+    about: string;
+    topics: { title: string; key: PassageKey }[];
+    moments: { label: string; key: PassageKey; text: string }[];
+    exchanges: { key: PassageKey; question: string; answer: string }[];
+  }
+> = {
+  [episodes.science.id]: {
+    about:
+      'Demo summary (fixture): procrastination as a way of avoiding a feeling, and why vague tasks wait longer than hard ones.',
+    topics: [
+      { title: 'Procrastinating on a feeling', key: 'feeling' },
+      { title: 'Vague tasks and hard tasks', key: 'mood' },
+    ],
+    moments: [
+      {
+        label: 'What people put off',
+        key: 'feeling',
+        text: 'You procrastinate on the feeling the work gives you.',
+      },
+      {
+        label: 'Why the vague task waits',
+        key: 'mood',
+        text: 'The hard-but-clear task gets done. The vague one sits there for weeks.',
+      },
+    ],
+    exchanges: [],
+  },
+  [episodes.founder.id]: {
+    about:
+      'Demo summary (fixture): shrinking the first step until it is too small to argue with, and starting from a problem rather than an idea.',
+    topics: [
+      { title: 'A first step too small to argue with', key: 'firstStep' },
+      { title: 'Problems before ideas', key: 'problem' },
+    ],
+    moments: [
+      {
+        label: 'Momentum over motivation',
+        key: 'firstStep',
+        text: 'Momentum does what motivation can’t, and by the time you notice you’re working, you’re already ten minutes in.',
+      },
+      {
+        label: 'A hobby with a logo',
+        key: 'problem',
+        text: 'If you can’t find ten people who’ll pay for the ugly first version, you don’t have a business yet — you have a hobby with a logo.',
+      },
+    ],
+    exchanges: [],
+  },
+  [episodes.coach.id]: {
+    about:
+      'Demo summary (fixture): planning for bad days with a minimum you never miss twice, and consistency that comes from identity.',
+    topics: [
+      { title: 'Motivation is the weather', key: 'systems' },
+      { title: 'Identity and consistency', key: 'identity' },
+    ],
+    moments: [
+      {
+        label: 'Never missing twice',
+        key: 'systems',
+        text: 'What you can do is decide in advance what the minimum looks like on a bad day — and make the minimum so small that you never miss it twice.',
+      },
+    ],
+    exchanges: [
+      {
+        key: 'identity',
+        question: 'The question becomes: what would someone like me do today?',
+        answer: 'Behaviour follows the story you tell about yourself.',
+      },
+    ],
+  },
+};
+
+export function demoSummaryView(episodeId: string): ConversationSummaryView | null {
+  const row = demoEpisodePage('', 0).episodes.find((e) => e.id === episodeId);
+  const demo = demoSummaries[episodeId];
+  if (!row || !demo) return null;
+  const cite = (id: string, key: PassageKey, text: string | null): Citation => {
+    const base = toCitation(id, key, '');
+    const at = text === null ? -1 : base.excerpt.indexOf(text);
+    if (text !== null && at < 0) throw new Error(`demo summary quote not in ${key}`);
+    return {
+      ...base,
+      // A summary never names a speaker (P8-03), and says so: its citations agree.
+      speaker: 'unverified',
+      speakerName: null,
+      relevance: null,
+      excerpt: text ?? base.excerpt,
+      quoteSpan: text === null ? null : { start: at, end: at + text.length },
+    };
+  };
+  return {
+    episode: row,
+    summary: {
+      about: demo.about,
+      speakers: 'unverified',
+      topics: demo.topics.map((t, i) => ({
+        title: t.title,
+        citation: cite(`summary-topic-${i}`, t.key, null),
+      })),
+      moments: demo.moments.map((m, i) => ({
+        label: m.label,
+        citation: cite(`summary-moment-${i}`, m.key, m.text),
+      })),
+      exchanges: demo.exchanges.map((x, i) => ({
+        question: cite(`summary-question-${i}`, x.key, x.question),
+        answer: cite(`summary-answer-${i}`, x.key, x.answer),
+      })),
+      demo: true,
+    },
+  };
 }

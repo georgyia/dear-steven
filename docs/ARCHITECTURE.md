@@ -97,7 +97,10 @@ unvalidated text is ever streamed.
 
 Outside the question flow, the episode explorer ("Browse the N conversations" in the setup panel)
 reads `GET /api/episodes?q=&offset=`: metadata only (title, guests, date, passage count, speaker
-and video states), 30 per page, searched by title or guest (`KnowledgeStore.browseIndexed`). The inspector's "Related moments"
+and video states), 30 per page, searched by title or guest (`KnowledgeStore.browseIndexed`). Each
+conversation's summary (P8-04) comes from `GET /api/episodes/:id/summary`: the stored summary
+(P8-03) with a citation for every item, built by `summaryView` in core; a moment opens the
+evidence drawer like an answer's citation, and closing it returns to the summary. The inspector's "Related moments"
 reads `GET /api/passages/:id/related`: up to three passages from other episodes nearest the cited
 one by its stored embedding (`buildRelatedMoments`, no model call; empty until embeddings exist).
 

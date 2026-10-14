@@ -79,6 +79,13 @@ Shape: chips 999px, composer 22px, cards 18px, panels 24px. Layout: column `44re
 - **About you** (P7-08): "Keep this on this device" under "What I learned"; afterwards, an "About
   you" block after the conversation-memory switch, with the same rules: the exact text in an
   editable field, a character count, Save, and Forget with undo.
+- **Conversation summary** (P8-04): inside the explorer dialog, "Summary" on a row turns it into
+  that conversation: a back link, the title in the display serif, then About (with a "Machine-written"
+  tag), Topics (mono times, tagged too), Most interesting moments and Questions and answers (both
+  tagged "Speakers not verified" on RSS transcripts). Moments, questions and answers are set like
+  pull quotes: the ember hairline, the display serif in italics, the time beneath in mono. Every item
+  opens the inspector at its moment and steps through the summary with [ and ]; closing the
+  inspector returns to the summary. A closing line says what is machine-written.
 - **Evidence inspector** (tabs Quote · Context · Video; Video holds the click-to-load player and
   the podcast audio): ≥ 1024px a 420px right panel; the column and composer shift left, never
   covered. < 1024px a bottom sheet (85dvh, drag handle, native modal dialog).

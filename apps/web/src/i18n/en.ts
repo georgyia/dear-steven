@@ -515,6 +515,26 @@ export const en = {
     verified: 'speakers verified',
     notVerified: 'speakers not verified',
     isNew: 'New',
+    /** A conversation's summary (P8-04). */
+    summary: {
+      open: 'Summary',
+      openLabel: (title: string) => `Summary of “${title}”`,
+      back: 'All conversations',
+      loading: 'Loading the summary…',
+      loadError: 'I couldn’t load that summary just now.',
+      none: 'There’s no summary of this conversation yet.',
+      about: 'About this conversation',
+      machine: 'Machine-written',
+      topics: 'Topics',
+      moments: 'Most interesting moments',
+      exchanges: 'Questions and answers',
+      question: 'Question',
+      answer: 'Answer',
+      unverified: 'Speakers not verified',
+      at: (time: string) => `Open the moment at ${time}`,
+      original:
+        'The overview, topics and labels are machine-written. Every quote is the conversation’s own words, in the original English.',
+    },
   },
   memory: {
     label: 'Conversation memory',

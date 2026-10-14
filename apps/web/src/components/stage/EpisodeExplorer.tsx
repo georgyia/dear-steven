@@ -1,7 +1,7 @@
 'use client';
 
 import { formatDate, isNewEpisode } from '@dear-steven/core/format';
-import type { EpisodePage, EpisodeSummary } from '@dear-steven/core/schema';
+import type { Citation, EpisodePage, EpisodeSummary } from '@dear-steven/core/schema';
 import { Cancel01Icon, Search01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useEffect, useId, useRef, useState } from 'react';
@@ -9,23 +9,29 @@ import { Dialog } from '@/components/ui/Dialog';
 import { NoVideo, YouTubeLink } from '@/components/ui/YouTubeLink';
 import { useI18n } from '@/i18n/I18nProvider';
 import { fetchEpisodes } from '@/lib/api';
+import { SummaryView } from './SummaryView';
 
 interface EpisodeExplorerProps {
   open: boolean;
   onClose: () => void;
+  /** Opens the evidence drawer at a summary's moment (P8-04). */
+  onOpenMoment: (citations: Citation[], index: number) => void;
 }
 
 type Load = { state: 'loading' } | { state: 'error' } | { state: 'ready'; page: EpisodePage };
 
 /**
  * "The conversations I know": every indexed episode, newest first, searchable by title or guest.
- * Metadata only — the speaker and video states tell you what kind of citations to expect.
+ * Metadata only — the speaker and video states tell you what kind of citations to expect. Each
+ * conversation opens its summary (P8-04); the explorer remembers which, so closing the drawer a
+ * moment opened brings it back.
  */
-export function EpisodeExplorer({ open, onClose }: EpisodeExplorerProps) {
+export function EpisodeExplorer({ open, onClose, onOpenMoment }: EpisodeExplorerProps) {
   const [query, setQuery] = useState('');
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [more, setMore] = useState<EpisodeSummary[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [selected, setSelected] = useState<EpisodeSummary | null>(null);
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const { t } = useI18n();
@@ -62,81 +68,87 @@ export function EpisodeExplorer({ open, onClose }: EpisodeExplorerProps) {
 
   return (
     <Dialog open={open} onClose={onClose} eyebrow={copy.eyebrow} title={copy.title} width="lg">
-      <label htmlFor={inputId} className="sr-only">
-        {copy.search}
-      </label>
-      <div className="flex items-center gap-2 rounded-[var(--radius-field)] border border-ink-3 bg-ink-2 px-4 focus-within:border-ember-0/60">
-        <HugeiconsIcon
-          icon={Search01Icon}
-          size={16}
-          strokeWidth={1.8}
-          className="flex-none text-ivory-2"
-        />
-        <input
-          ref={inputRef}
-          id={inputId}
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={copy.search}
-          maxLength={100}
-          className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-ivory-0 outline-none placeholder:text-ivory-2 [&::-webkit-search-cancel-button]:hidden"
-        />
-        {query ? (
-          <button
-            type="button"
-            onClick={() => {
-              setQuery('');
-              inputRef.current?.focus();
-            }}
-            aria-label={copy.clear}
-            className="-mr-2 grid h-8 w-8 flex-none place-items-center rounded-full text-ivory-2 transition-colors hover:bg-ink-3 hover:text-ivory-0"
-          >
-            <HugeiconsIcon icon={Cancel01Icon} size={14} strokeWidth={2} />
-          </button>
-        ) : null}
-      </div>
-      <p className="mt-3 font-mono text-[11.5px] text-steel" aria-live="polite">
-        {load.state === 'ready'
-          ? query.trim()
-            ? copy.matches(total)
-            : copy.indexed(total)
-          : load.state === 'loading'
-            ? copy.looking
-            : ''}
-      </p>
+      {selected ? (
+        <SummaryView episode={selected} onBack={() => setSelected(null)} onOpen={onOpenMoment} />
+      ) : (
+        <>
+          <label htmlFor={inputId} className="sr-only">
+            {copy.search}
+          </label>
+          <div className="flex items-center gap-2 rounded-[var(--radius-field)] border border-ink-3 bg-ink-2 px-4 focus-within:border-ember-0/60">
+            <HugeiconsIcon
+              icon={Search01Icon}
+              size={16}
+              strokeWidth={1.8}
+              className="flex-none text-ivory-2"
+            />
+            <input
+              ref={inputRef}
+              id={inputId}
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={copy.search}
+              maxLength={100}
+              className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-ivory-0 outline-none placeholder:text-ivory-2 [&::-webkit-search-cancel-button]:hidden"
+            />
+            {query ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery('');
+                  inputRef.current?.focus();
+                }}
+                aria-label={copy.clear}
+                className="-mr-2 grid h-8 w-8 flex-none place-items-center rounded-full text-ivory-2 transition-colors hover:bg-ink-3 hover:text-ivory-0"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} size={14} strokeWidth={2} />
+              </button>
+            ) : null}
+          </div>
+          <p className="mt-3 font-mono text-[11.5px] text-steel" aria-live="polite">
+            {load.state === 'ready'
+              ? query.trim()
+                ? copy.matches(total)
+                : copy.indexed(total)
+              : load.state === 'loading'
+                ? copy.looking
+                : ''}
+          </p>
 
-      {load.state === 'error' ? (
-        <p className="mt-4 text-[14px] text-oxblood-1">{copy.loadError}</p>
-      ) : null}
+          {load.state === 'error' ? (
+            <p className="mt-4 text-[14px] text-oxblood-1">{copy.loadError}</p>
+          ) : null}
 
-      {load.state === 'ready' && shown.length === 0 ? (
-        <p className="mt-6 text-[14.5px] leading-relaxed text-ivory-1">
-          {query.trim() ? copy.noMatch(query.trim()) : t.empty.noKnowledge}
-        </p>
-      ) : null}
+          {load.state === 'ready' && shown.length === 0 ? (
+            <p className="mt-6 text-[14.5px] leading-relaxed text-ivory-1">
+              {query.trim() ? copy.noMatch(query.trim()) : t.empty.noKnowledge}
+            </p>
+          ) : null}
 
-      <ul className="mt-3 flex flex-col divide-y divide-ink-3">
-        {shown.map((e) => (
-          <EpisodeRow key={e.id} episode={e} />
-        ))}
-      </ul>
+          <ul className="mt-3 flex flex-col divide-y divide-ink-3">
+            {shown.map((e) => (
+              <EpisodeRow key={e.id} episode={e} onSummary={() => setSelected(e)} />
+            ))}
+          </ul>
 
-      {shown.length > 0 && shown.length < total ? (
-        <button
-          type="button"
-          onClick={loadMore}
-          disabled={loadingMore}
-          className="mt-4 rounded-full border border-ink-3 px-4 py-2 text-[13px] text-ivory-1 transition-colors hover:border-ink-4 hover:text-ivory-0 disabled:opacity-50"
-        >
-          {loadingMore ? copy.loading : copy.more(total - shown.length)}
-        </button>
-      ) : null}
+          {shown.length > 0 && shown.length < total ? (
+            <button
+              type="button"
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="mt-4 rounded-full border border-ink-3 px-4 py-2 text-[13px] text-ivory-1 transition-colors hover:border-ink-4 hover:text-ivory-0 disabled:opacity-50"
+            >
+              {loadingMore ? copy.loading : copy.more(total - shown.length)}
+            </button>
+          ) : null}
+        </>
+      )}
     </Dialog>
   );
 }
 
-function EpisodeRow({ episode }: { episode: EpisodeSummary }) {
+function EpisodeRow({ episode, onSummary }: { episode: EpisodeSummary; onSummary: () => void }) {
   const { t, locale } = useI18n();
   const copy = t.explorer;
   return (
@@ -172,6 +184,14 @@ function EpisodeRow({ episode }: { episode: EpisodeSummary }) {
           ) : (
             <NoVideo demo={episode.demo} />
           )}
+          <button
+            type="button"
+            onClick={onSummary}
+            aria-label={copy.summary.openLabel(episode.title)}
+            className="rounded-full border border-ink-3 px-2.5 py-0.5 text-ivory-1 transition-colors hover:border-ember-0/60 hover:text-ivory-0"
+          >
+            {copy.summary.open}
+          </button>
         </div>
       </div>
     </li>

@@ -2,6 +2,8 @@ import {
   type AskErrorCode,
   type AskEvent,
   type AskRequest,
+  type ConversationSummaryView,
+  ConversationSummaryViewSchema,
   type EpisodePage,
   type InterviewReply,
   InterviewReplySchema,
@@ -99,6 +101,19 @@ export async function fetchStatus(signal?: AbortSignal): Promise<KnowledgeStatus
   });
   if (!res.ok) throw new Error(`status ${res.status}`);
   return (await res.json()) as KnowledgeStatus;
+}
+
+/** A conversation's summary, with every item's citation (P8-04). */
+export async function fetchSummary(
+  episodeId: string,
+  signal?: AbortSignal,
+): Promise<ConversationSummaryView> {
+  const res = await fetch(`/api/episodes/${encodeURIComponent(episodeId)}/summary`, {
+    signal,
+    headers: await keyHeaders(),
+  });
+  if (!res.ok) throw new Error(`summary ${res.status}`);
+  return ConversationSummaryViewSchema.parse(await res.json());
 }
 
 export async function fetchEpisodes(
