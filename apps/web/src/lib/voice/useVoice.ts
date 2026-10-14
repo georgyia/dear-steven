@@ -51,6 +51,10 @@ export interface VoiceApi {
    * after a gesture in this visit. Stops whatever was playing.
    */
   reply: (turnId: string) => SpeechQueue;
+  /** Resolves once nothing is being read aloud, whatever starts reading meanwhile (P9-02). */
+  whenQuiet: () => Promise<void>;
+  /** How to listen in a spoken conversation (P9-02): the language, and on the device or not. */
+  listening: { lang: string; processLocally: boolean };
   stopSpeaking: () => void;
   speakingTurnId: string | null;
   /** Chrome on-device recognition for this browser; `unknown` until checked. */
@@ -100,6 +104,8 @@ export function useVoice({
   const cancelled = useRef(false);
   /** Which reading aloud is the current one: a stopped one ending late changes nothing. */
   const reading = useRef(0);
+  /** When the current reading is over. */
+  const readingDone = useRef<Promise<void>>(Promise.resolve());
   const { t, locale } = useI18n();
   const listenFor = recognitionLang(locale);
   const latest = useRef({ send, setDraft, onTranscript, notify, t });
@@ -284,15 +290,32 @@ export function useVoice({
 
   const speak = useCallback(
     (turnId: string, text: string, language: string) => {
-      void speaker.speak(text, language, handlersFor(turnId));
+      readingDone.current = speaker.speak(text, language, handlersFor(turnId));
     },
     [speaker, handlersFor],
   );
 
   const reply = useCallback(
-    (turnId: string) => speaker.reply(handlersFor(turnId)),
+    (turnId: string) => {
+      const queue = speaker.reply(handlersFor(turnId));
+      readingDone.current = queue.done;
+      return queue;
+    },
     [speaker, handlersFor],
   );
+
+  const listening = useMemo(
+    () => ({ lang: listenFor, processLocally }),
+    [listenFor, processLocally],
+  );
+
+  const whenQuiet = useCallback(async () => {
+    let current: Promise<void>;
+    do {
+      current = readingDone.current;
+      await current;
+    } while (current !== readingDone.current);
+  }, []);
 
   const preview = useCallback(
     (text: string) => {
@@ -327,6 +350,8 @@ export function useVoice({
     onPillStop,
     speak,
     reply,
+    whenQuiet,
+    listening,
     stopSpeaking,
     speakingTurnId,
     onDevice,

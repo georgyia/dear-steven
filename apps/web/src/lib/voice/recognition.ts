@@ -14,6 +14,8 @@ export interface RecognitionHandlers {
   onPartial: (text: string) => void;
   onFinal: (text: string) => void;
   onError: (error: RecognitionError) => void;
+  /** Every end, after `onFinal` or an error: the moment it can be started again (P9-02). */
+  onEnded?: () => void;
 }
 
 export interface Recognizer {
@@ -155,8 +157,8 @@ export function createRecognizer(
     handlers.onError(kind);
   };
   rec.onend = () => {
-    if (failed) return;
-    handlers.onFinal(`${finalText}${interim}`.replace(/\s+/g, ' ').trim());
+    if (!failed) handlers.onFinal(`${finalText}${interim}`.replace(/\s+/g, ' ').trim());
+    handlers.onEnded?.();
   };
 
   return {

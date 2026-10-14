@@ -15,6 +15,7 @@ import { ModeSwitch } from '@/components/composer/ModeSwitch';
 import { EvidenceDrawer, type EvidenceTarget } from '@/components/evidence/EvidenceDrawer';
 import { InterviewView } from '@/components/interview/InterviewView';
 import { ToastProvider, ToastViewport, useToast } from '@/components/ui/Toasts';
+import { ConversationBar, StartTalking } from '@/components/voice/ConversationBar';
 import { VoiceControl } from '@/components/voice/VoiceControl';
 import { VoiceSettings } from '@/components/voice/VoiceSettings';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -44,6 +45,8 @@ import { useInterview } from '@/lib/useInterview';
 import { useVoicePreferences } from '@/lib/voice/preferences';
 import { unlockAudio } from '@/lib/voice/speaker';
 import type { SpeechQueue } from '@/lib/voice/speech-queue';
+import { TURN_TIMING } from '@/lib/voice/turn-taking';
+import { useSpokenConversation } from '@/lib/voice/useSpokenConversation';
 import { useVoice, VoiceContext } from '@/lib/voice/useVoice';
 import { AboutDialog } from './AboutDialog';
 import { AboutYouControl } from './AboutYouControl';
@@ -78,7 +81,16 @@ export function Stage({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   );
 }
 
-type Ask = (question: string, options?: { voice?: boolean }) => Promise<void>;
+/** How a question ended, for a spoken conversation to know whether to carry on (P9-02). */
+type AskOutcome = 'answered' | 'stopped' | 'failed' | 'needsKey' | 'skipped';
+type Ask = (question: string, options?: { voice?: boolean }) => Promise<AskOutcome>;
+
+/** A key press on a button, link or field belongs to it, not to a shortcut. */
+const onControl = (target: EventTarget | null) =>
+  target instanceof Element &&
+  target.closest(
+    'button, a, input, select, textarea, [role="radio"], [role="switch"], [role="tab"]',
+  ) !== null;
 
 /** Sticky user activation: has this visit had a click, tap or key press yet? */
 const hasBeenActive = () =>
@@ -118,7 +130,9 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
    * talk-mode messages unless "read talk replies aloud" is off (P7-05).
    */
   const spokenTurns = useRef(new Set<string>());
-  const askRef = useRef<Ask>(async () => undefined);
+  const askRef = useRef<Ask>(async () => 'skipped');
+  /** The question being answered right now, if any. */
+  const composingTurn = useRef<string | null>(null);
   const stageRef = useRef(stage);
   stageRef.current = stage;
   const turnsRef = useRef(conversation.turns);
@@ -144,6 +158,36 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   });
   const voiceRef = useRef(voice);
   voiceRef.current = voice;
+
+  /**
+   * Talk out loud (P9-02): one tap, then you speak, your words go when you pause, the reply is read
+   * as it is checked, and it's your turn again. Interrupting while he's still writing stops it;
+   * ending stops it being read.
+   */
+  const startTalking = useRef<HTMLButtonElement>(null);
+  const spoken = useSpokenConversation({
+    voice,
+    timing: TURN_TIMING.talk,
+    onTurn: async (text) => {
+      const outcome = await askRef.current(text, { voice: true });
+      return outcome === 'needsKey' ? 'end' : outcome === 'failed' ? 'pause' : 'next';
+    },
+    onInterrupt: () => abortRef.current?.abort(),
+    onEnd: () => {
+      if (composingTurn.current) spokenTurns.current.delete(composingTurn.current);
+    },
+    send,
+    notify: (title, description) => toast({ title, description, tone: 'error', duration: 5200 }),
+  });
+  const talkingAloud = spoken.state.phase !== 'off';
+  const endTalking = useCallback(() => {
+    spoken.end();
+    requestAnimationFrame(() => startTalking.current?.focus());
+  }, [spoken.end]);
+  // Leaving Talk ends the conversation, and with it the microphone.
+  useEffect(() => {
+    if (mode !== 'talk' && talkingAloud) spoken.end();
+  }, [mode, talkingAloud, spoken.end]);
 
   const interview = useInterview(locale);
   const interviewPhase = interview.state.phase;
@@ -290,7 +334,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       const question = raw.trim().slice(0, LIMITS.questionChars);
       // Only an answer already in flight blocks a new question. (A voice transcript arrives in the same
       // tick as TRANSCRIBED, before stageRef catches up; the reducer applies both in order.)
-      if (!question || stageRef.current.kind === 'composing') return;
+      if (!question || stageRef.current.kind === 'composing') return 'skipped';
       if (voiceRef.current.speakingTurnId) voiceRef.current.stopSpeaking();
       seq.current += 1;
       const id = `t${Date.now().toString(36)}${seq.current}`;
@@ -310,9 +354,11 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
 
       const ctrl = new AbortController();
       abortRef.current = ctrl;
+      composingTurn.current = id;
       let settled = false;
-      // Talk is read aloud block by block, each one as soon as it has passed its checks (P9-01).
-      const readAloud = mode === 'talk' && spokenTurns.current.has(id);
+      let outcome: AskOutcome = 'failed';
+      // Talk is read aloud block by block, each one as soon as it has passed its checks (P9-01),
+      // for as long as the turn is still to be read (ending a spoken conversation stops it).
       const replyLanguage = detectLanguage(question);
       let reading: SpeechQueue | null = null;
       try {
@@ -334,11 +380,16 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
             (event.type === 'status' && event.step === 'writing')
           ) {
             send({ type: 'WRITING' });
-          } else if (event.type === 'block.done' && readAloud) {
+          } else if (
+            event.type === 'block.done' &&
+            mode === 'talk' &&
+            spokenTurns.current.has(id)
+          ) {
             reading ??= voiceRef.current.reply(id);
             reading.add(speakable(event.block), replyLanguage);
           } else if (event.type === 'final') {
             settled = true;
+            outcome = 'answered';
             send({ type: 'ANSWERED', insufficient: event.answer.mode === 'insufficient' });
             // Spoken replies follow a spoken question, or any question with "always speak" on — both
             // start from a gesture that unlocked audio. Talk has been reading its blocks already.
@@ -351,11 +402,13 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
             }
           } else if (event.type === 'error') {
             settled = true;
+            outcome = event.code === 'needs_key' ? 'needsKey' : 'failed';
             send({ type: 'FAILED', error: STAGE_ERROR[event.code] });
           }
         }
         if (!settled) {
           if (ctrl.signal.aborted) {
+            outcome = 'stopped';
             dispatch({ type: 'turn.stopped', id, at: performance.now() });
             send({ type: 'STOPPED' });
           } else {
@@ -371,10 +424,12 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
         }
       } catch (error) {
         if (ctrl.signal.aborted) {
+          outcome = 'stopped';
           dispatch({ type: 'turn.stopped', id, at: performance.now() });
           send({ type: 'STOPPED' });
         } else {
           const code = error instanceof AskError ? error.code : 'network';
+          outcome = code === 'needs_key' ? 'needsKey' : 'failed';
           dispatch({
             type: 'turn.failed',
             id,
@@ -390,8 +445,10 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
         if (ctrl.signal.aborted) reading?.stop();
         else reading?.close();
         if (abortRef.current === ctrl) abortRef.current = null;
+        if (composingTurn.current === id) composingTurn.current = null;
         if (onFreeQuestions.current) void refreshStatus();
       }
+      return outcome;
     },
     [refreshStatus],
   );
@@ -466,21 +523,35 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
       if (mic?.isListening()) {
         e.preventDefault();
         mic.cancel();
-      } else if (voice.speakingTurnId) {
-        voice.stopSpeaking();
       } else if (drawer) {
         e.preventDefault();
         closeDrawer();
+      } else if (talkingAloud) {
+        e.preventDefault();
+        endTalking();
+      } else if (voice.speakingTurnId) {
+        voice.stopSpeaking();
       }
       return;
     }
     if (isTypingTarget(e.target)) return;
+    // In a spoken conversation, Space is "your turn" (P9-02), unless it is pressing a control.
+    if (e.key === ' ' && talkingAloud && !onControl(e.target) && !e.repeat) {
+      e.preventDefault();
+      if (spoken.state.phase === 'his') spoken.interrupt();
+      else if (spoken.state.phase === 'paused') spoken.resume();
+      else spoken.finishTurn();
+      return;
+    }
     if (e.key === '/') {
       e.preventDefault();
       inputRef.current?.focus();
     } else if ((e.key === 'm' || e.key === 'M') && voice.input !== 'none' && !e.repeat) {
       e.preventDefault();
-      if (mic?.isListening()) mic.stop();
+      if (mode === 'talk') {
+        if (talkingAloud) endTalking();
+        else if (!busy) spoken.start();
+      } else if (mic?.isListening()) mic.stop();
       else if (!busy) mic?.start();
     } else if (e.key === ']') {
       e.preventDefault();
@@ -503,34 +574,46 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
   const composer = (
     <div className="flex flex-col gap-2">
       <ModeSwitch mode={mode} onChange={setMode} />
-      <Composer
-        value={draft}
-        onValueChange={setDraft}
-        onSend={(q) => void ask(q)}
-        onStop={stop}
-        busy={busy}
-        placeholder={
-          listening
-            ? t.composer.listening
-            : talking
-              ? inConversation
-                ? t.composer.talkFollowUp
-                : t.composer.talkPlaceholder
-              : inConversation
-                ? t.composer.followUp
-                : t.composer.placeholder
-        }
-        inputRef={inputRef}
-        voice={
-          <VoiceControl
-            voice={voice}
-            disabled={busy}
-            onUnavailable={() =>
-              toast({ id: 'no-voice', title: t.errors.micUnsupported, duration: 4000 })
-            }
-          />
-        }
-      />
+      {talking && talkingAloud ? (
+        <ConversationBar
+          conversation={spoken}
+          speaking={voice.speakingTurnId !== null}
+          onEnd={endTalking}
+        />
+      ) : (
+        <Composer
+          value={draft}
+          onValueChange={setDraft}
+          onSend={(q) => void ask(q)}
+          onStop={stop}
+          busy={busy}
+          placeholder={
+            listening
+              ? t.composer.listening
+              : talking
+                ? inConversation
+                  ? t.composer.talkFollowUp
+                  : t.composer.talkPlaceholder
+                : inConversation
+                  ? t.composer.followUp
+                  : t.composer.placeholder
+          }
+          inputRef={inputRef}
+          voice={
+            talking && voice.input !== 'none' ? (
+              <StartTalking ref={startTalking} onStart={spoken.start} disabled={busy} />
+            ) : (
+              <VoiceControl
+                voice={voice}
+                disabled={busy}
+                onUnavailable={() =>
+                  toast({ id: 'no-voice', title: t.errors.micUnsupported, duration: 4000 })
+                }
+              />
+            )
+          }
+        />
+      )}
       {freeLeft ? (
         <p className="px-4 text-[12.5px] text-ivory-2" data-testid="free-left">
           {t.free.left(freeLeft)}

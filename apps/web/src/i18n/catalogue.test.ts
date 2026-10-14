@@ -31,6 +31,7 @@ const SAME_IN_GERMAN = new Set([
   'setup.optional',
   // A name.
   'talk.steven',
+  'conversation.speaking',
   // "Interview" and "optional" are German words too.
   'interview.label',
   'interview.eyebrow',

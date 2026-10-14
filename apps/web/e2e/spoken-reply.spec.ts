@@ -61,3 +61,67 @@ test('a talk reply starts playing before the answer is finished, and says what i
     [],
   );
 });
+
+test.describe('out of free questions', () => {
+  test.use({ extraHTTPHeaders: { 'x-forwarded-for': '198.51.100.41' } });
+
+  test('a spoken conversation ends, and offers a key of your own (P9-02)', async ({ page }) => {
+    test.slow(); // three free answers first
+    await page.addInitScript(() => {
+      const w = window as unknown as Record<string, unknown> & { __listening: number };
+      w.__listening = 0;
+      window.speechSynthesis.speak = (u: SpeechSynthesisUtterance) => {
+        setTimeout(() => u.onend?.(new Event('end') as SpeechSynthesisEvent), 10);
+      };
+      class FakeRecognition {
+        lang = '';
+        interimResults = false;
+        continuous = false;
+        maxAlternatives = 1;
+        onaudiostart: (() => void) | null = null;
+        onresult: ((e: unknown) => void) | null = null;
+        onerror: ((e: { error: string }) => void) | null = null;
+        onend: (() => void) | null = null;
+        start() {
+          w.__listening += 1;
+          setTimeout(() => this.onaudiostart?.(), 20);
+          const r = Object.assign([{ transcript: 'One more question?' }], { isFinal: false });
+          setTimeout(() => this.onresult?.({ resultIndex: 0, results: [r] }), 100);
+        }
+        stop() {
+          setTimeout(() => {
+            const r = Object.assign([{ transcript: 'One more question?' }], { isFinal: true });
+            this.onresult?.({ resultIndex: 0, results: [r] });
+            this.onend?.();
+          }, 30);
+        }
+        abort() {
+          setTimeout(() => this.onend?.(), 10);
+        }
+      }
+      w.SpeechRecognition = FakeRecognition;
+      w.webkitSpeechRecognition = FakeRecognition;
+    });
+    await page.goto('/');
+    await page.getByRole('button', { name: en.terms.dismiss }).click();
+    // This browser's three free questions, used up.
+    for (const question of ['First?', 'Second?', 'Third?']) {
+      const res = await page.request.post('/api/ask', { data: { question, history: [] } });
+      expect(res.ok()).toBe(true);
+      await res.text();
+    }
+
+    await page
+      .getByRole('radiogroup', { name: en.modes.label })
+      .getByRole('radio', { name: en.modes.talk })
+      .click();
+    await page.getByRole('button', { name: en.conversation.start }).click();
+    const alert = page.getByRole('alert').filter({ hasText: en.errors.needsKey });
+    await expect(alert).toBeVisible({ timeout: 15_000 });
+    await expect(alert.getByRole('button', { name: en.free.useOwnKey })).toBeVisible();
+    await expect(page.getByRole('region', { name: en.conversation.label })).toHaveCount(0);
+    expect(
+      await page.evaluate(() => (window as unknown as { __listening: number }).__listening),
+    ).toBe(1);
+  });
+});
