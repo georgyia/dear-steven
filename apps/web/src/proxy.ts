@@ -1,6 +1,7 @@
 import { accessCodeFrom } from '@dear-steven/core/config';
 import { type NextRequest, NextResponse } from 'next/server';
 import { ACCESS_COOKIE, ACCESS_PATH, validAccessToken } from '@/server/access';
+import { fromAnotherSite } from '@/server/cross-site';
 import {
   arrivedOverHttps,
   contentSecurityPolicy,
@@ -11,8 +12,9 @@ import {
 /**
  * Runs before every page and API request.
  *
- * - API: with an access code set, nothing but the passcode route answers a browser without a
- *   valid access cookie (P6-08). One place, so a new route can't forget it.
+ * - API: nothing but a read answers a request from another site's page (P8-08); with an access
+ *   code set, nothing but the passcode route answers a browser without a valid access cookie
+ *   (P6-08). One place, so a new route can't forget either.
  * - Pages: a fresh script nonce for every page (P6-09). Next reads the nonce from the request's
  *   Content-Security-Policy header and stamps it on its own scripts, which is why every page is
  *   rendered per request. (Whether to show the passcode screen is the page's decision.) The other
@@ -36,21 +38,30 @@ export async function proxy(request: NextRequest) {
 }
 
 async function guardApi(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  if (fromAnotherSite(request) && !OWN_CHECKS.some((p) => path === p || path.startsWith(`${p}/`))) {
+    return refuse(403, 'cross_site', 'Requests from other sites are refused.');
+  }
   const code = accessCodeFrom();
-  if (!code || request.nextUrl.pathname === ACCESS_PATH) return NextResponse.next();
+  if (!code || path === ACCESS_PATH) return NextResponse.next();
   if (await validAccessToken(code, request.cookies.get(ACCESS_COOKIE)?.value)) {
     return NextResponse.next();
   }
-  return NextResponse.json(
-    {
-      error: {
-        code: 'locked',
-        message: 'This copy of Dear Steven is private. Enter the passcode first.',
-      },
-    },
-    { status: 401, headers: { 'Cache-Control': 'no-store' } },
-  );
+  return refuse(401, 'locked', 'This copy of Dear Steven is private. Enter the passcode first.');
 }
+
+/**
+ * Routes that decide about other sites themselves (P8-08): guided setup answers 404 to anything it
+ * doesn't trust, the same as a server without setup (SR-21); CSP reports are the browser's own, in
+ * development only.
+ */
+const OWN_CHECKS = ['/api/setup', '/api/csp-report'];
+
+const refuse = (status: number, code: string, message: string) =>
+  NextResponse.json(
+    { error: { code, message } },
+    { status, headers: { 'Cache-Control': 'no-store' } },
+  );
 
 export const config = {
   // Everything but built assets: they carry no inline script and no data.

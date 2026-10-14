@@ -100,6 +100,50 @@ test.describe('an interviewee', () => {
   });
 });
 
+test.describe('a page on another site (P8-08)', () => {
+  test('can’t make its visitors ask on the operator’s key', async ({ page, baseURL }) => {
+    // Any page can send a "simple" POST that needs no preflight. It can't read the reply, but
+    // without the check each one would be a question on the operator's key, from the visitor's
+    // own address, taken from their network's free questions.
+    const api = `${baseURL}/api/ask`;
+    await page.route('https://other-site.test/**', (route) =>
+      route.fulfill({
+        contentType: 'text/html',
+        body: '<!doctype html><title>Another site</title>',
+      }),
+    );
+    // Chrome asks before a public page reaches a loopback address (Local Network Access). Against
+    // a public deployment it wouldn't ask, so the test grants it.
+    await page
+      .context()
+      .grantPermissions(['local-network-access'], { origin: 'https://other-site.test' });
+    await page.goto('https://other-site.test/');
+
+    // The page can't see the replies (they are opaque to it); the browser's network log can.
+    const answered: number[] = [];
+    page.on('response', (res) => {
+      if (res.url() === api) answered.push(res.status());
+    });
+    const first = page.waitForRequest(api);
+    await page.evaluate(async (url) => {
+      for (let i = 0; i < 5; i++) {
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify({ question: 'Should I start a business?', history: [] }),
+        });
+      }
+    }, api);
+    // Over plain HTTP the browser sends no Fetch Metadata, so here it is `Origin` that gives it away.
+    const sent = await (await first).allHeaders();
+    expect(sent).toMatchObject({
+      origin: 'https://other-site.test',
+      'content-type': 'text/plain;charset=UTF-8',
+    });
+    expect(answered).toEqual([403, 403, 403, 403, 403]);
+  });
+});
+
 test.describe('in a German browser', () => {
   test.use({ locale: 'de-DE', ...from('198.51.100.13') });
 
