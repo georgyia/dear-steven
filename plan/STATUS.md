@@ -8,13 +8,16 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 
 ## Now
 
-- **Phase:** M5 *Conversations* merged to `main` on 2026-10-13 (13 PRs, squash): talk mode,
-  interviews and practice, remembering what Steven learned about you, design polish, the latest
-  episodes. Phase 8 / M6 *Summaries and open access* planned (`plan/04-issues/phase-8.md`).
-- **Next to pick (M6):** P8-01, P8-03, P8-02, P8-04.
-- **Waiting on the owner:** the P6-07 decision (draft #33), P7-11 (how a deployment schedules
-  ingest), P8-05 (accounts with Supabase), P6-12 wording and takedown contact, H-07 (five live
-  answers), H-10 (YouTube spot check), H-11 (crisis copy and helplines).
+- **Phase:** M6 *Summaries and open access* merged to `main` on 2026-10-14 (7 PRs, squash): your
+  own key audited and kept encrypted, three free questions on the operator's key, a summary of
+  every conversation (all 114 summarised, about $0.42) and reading it in the explorer, plus two CI
+  fixes. M5 *Conversations* merged on 2026-10-13.
+- **Next to pick:** nothing open without the owner.
+- **To switch on:** `DEAR_STEVEN_FREE_QUESTIONS=3` on a deployment (`docs/DEPLOY.md`), with
+  `DEAR_STEVEN_DAILY_BUDGET_USD` set and the client address configured.
+- **Waiting on the owner:** P8-05 (accounts with Supabase; a recommendation is on #73), the P6-07
+  decision (draft #33), P7-11 (how a deployment schedules ingest), P6-12 wording and takedown
+  contact, H-07 (five live answers), H-10 (YouTube spot check), H-11 (crisis copy and helplines).
 
 ## Verified in the first pass (2026-10-10)
 
