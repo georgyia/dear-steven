@@ -66,6 +66,15 @@ Shape: chips 999px, composer 22px, cards 18px, panels 24px. Layout: column `44re
   beside each line (stacked under 640px), the reply in the display serif with its chips, a Listen
   button, and nothing else: no pull quote panel, takeaway or conversation cards. Consecutive talk
   turns sit together under a "Talk" eyebrow; Ask turns keep the editorial layout.
+- **Talk out loud** (P9-02): in Talk the mic in the composer starts a spoken conversation, and a
+  conversation bar takes the composer's place until it ends. On its left, a 44px orb: an ember
+  ring that grows with your voice while it's your turn, three ember dots while he thinks, an
+  ember tint that breathes while he speaks, a steel ring when paused. Beside it, the turn in mono
+  (Listening, Thinking, Dear Steven, Paused) over your words as you say them, or a one-line hint.
+  On the right, one primary button whose label follows the turn (Send, Interrupt, Keep talking), so
+  focus never drops, and End. Keyboard: Space for the primary action, Esc or M to end. The
+  transcript keeps building above, with its chips. Reduced motion: the ring doesn't move and
+  nothing breathes.
 - **Interview me** (P7-06): its own view, same frame (top bar, docked composer). Setup: eyebrow,
   a display-serif title, two optional fields. Then one question at a time in the display serif,
   a hairline progress bar in ember, the last answer quoted in a quiet left-ruled line for context,

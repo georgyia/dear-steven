@@ -32,6 +32,9 @@ export interface TextToSpeech {
 
 let context: AudioContext | null = null;
 
+/** The page's AudioContext, once a gesture has unlocked it; listening measures the mic on it too. */
+export const audioContext = () => context;
+
 /** Call synchronously inside a click / pointerdown handler. */
 export function unlockAudio() {
   const Ctx =

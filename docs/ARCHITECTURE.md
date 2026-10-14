@@ -96,6 +96,12 @@ Client-safe core entry points: `schema` (types only), `limits`, `copy`, `format`
    only Ask still reads, at the end. `/api/speech` streams 24 kHz PCM as OpenAI synthesises it;
    the browser plays it as it arrives on the Web Audio clock and fetches the next part while one
    plays (`lib/voice/speech-queue.ts`, `speaker.ts`).
+8. Talk out loud (P9-02): `useSpokenConversation` takes turns. On your turn `listenForTurn`
+   opens the mic: with speech recognition, its words drive the pause; without it, a level gate
+   on the recording does (`turn-taking.ts`: `turnVerdict`, `LevelGate`), the recording restarts
+   every 4 s of quiet, and nothing is uploaded unless you spoke. Your words go to `/api/ask` as
+   any question does; when the reply has been read (`whenQuiet`), it's your turn again. The mic is
+   closed on his turn, when paused and when off (`spoken-conversation.ts`, SR-10).
 
 SSE events: `status` · `sources` · `block.start` · `block.done` · `final` · `error`
 (`packages/core/src/schema/ask.ts`). The plan's `block.delta` became `block.start`: no partial,
@@ -167,7 +173,8 @@ signed with, created on first use, owner-only).
 | OpenAI 401 / 429 / 5xx | `error` event with an actionable message; nothing unvalidated shown. |
 | Model output malformed | `error` event; blocks already shown were validated. |
 | Repair call fails | Deterministic downgrade still applies. |
-| Mic denied / unsupported | Explained in a toast; typing unaffected; retry works. |
+| Mic denied / unsupported | Explained in a toast; typing unaffected; retry works. A spoken conversation ends. |
+| Spoken conversation: a reply fails, or listening fails | The conversation pauses with the message, mic off; Keep talking carries on. Out of free questions it ends, with Use your own key. |
 | Web Speech network error | Switches to server transcription when available. |
 | Server TTS fails | Falls back to `speechSynthesis`, part by part: one refused part is read by the browser, in its place. |
 | Browser storage blocked | Voice settings apply for the visit; the settings say they won't be kept. |

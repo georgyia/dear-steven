@@ -137,6 +137,32 @@ export const de: Messages = {
     steven: 'Dear Steven',
     thinking: 'Dear Steven denkt nach…',
   },
+  conversation: {
+    label: 'Gespräch mit der Stimme',
+    start: 'Laut mit Steven reden (M)',
+    yours: 'Ich höre zu',
+    thinking: 'Ich denke nach',
+    speaking: 'Dear Steven',
+    paused: 'Pausiert',
+    listeningHint: 'Ich höre zu. Mach einfach eine Pause, wenn du fertig bist.',
+    thinkingHint: 'Ich denke über das nach, was du gesagt hast …',
+    speakingHint: 'Unterbrich mich, oder drück die Leertaste, um einzuhaken.',
+    pausedIdle: (seconds: number) =>
+      `Ich habe nach ${seconds} Sekunden Stille aufgehört zuzuhören.`,
+    pausedHidden: 'Ich habe aufgehört zuzuhören, während dieser Tab im Hintergrund war.',
+    pausedFailed: 'Da ist etwas schiefgegangen. Sprich weiter, wenn du so weit bist.',
+    send: 'Senden',
+    interrupt: 'Unterbrechen',
+    resume: 'Weiterreden',
+    end: 'Beenden',
+    announce: {
+      yours: 'Du bist dran. Ich höre zu.',
+      thinking: 'Ich denke nach.',
+      speaking: 'Dear Steven spricht.',
+      paused: 'Pausiert. Das Mikrofon ist aus.',
+      ended: 'Gespräch beendet. Das Mikrofon ist aus.',
+    },
+  },
   disclosure:
     'Dear Steven ist eine KI-Persona — nicht Steven Bartlett und nicht mit der Show verbunden.',
   terms: {
@@ -597,7 +623,7 @@ export const de: Messages = {
     originalsHeading: 'Schau dir die Originale an',
     originals: `Alles hier stammt aus den Gesprächen von ${brand.show}, und die kannst du kostenlos auf YouTube ansehen. Das ist ein Fanprojekt, das Menschen zur Show schickt, kein Ersatz dafür: Wo eine Folge ihrem Video zugeordnet ist, verlinken ihre Quellen auf den Moment, aus dem sie stammen, und die ganzen Folgen anzusehen ist die beste Art, die Menschen zu unterstützen, die sie gemacht haben.`,
     dataHeading: 'Deine Daten',
-    data: 'Fragen werden an den Server und an OpenAI gesendet, um eine Antwort zu formulieren, und nicht gespeichert, es sei denn, wer diese Kopie betreibt, schaltet das Protokollieren von Antworten zur Auswertung ein. Das Mikrofon wird nur benutzt, solange du es gedrückt hältst oder einschaltest. Kurze Zitate mit Quellenangabe verweisen auf die Originalfolgen; vollständige Transkripte werden nie veröffentlicht. Videoplayer und Podcast-Audio laden erst dann von YouTube und vom Host des Podcasts, wenn du auf Abspielen drückst. Wenn du eine Sprache wählst, merkt sich ein kleines Cookie diese Wahl, damit die Seite in dieser Sprache öffnet. Wenn du deinen eigenen OpenAI-Schlüssel einfügst, bleibt er in diesem Tab (oder auf diesem Gerät, wenn du willst) und geht nur mit deinen Anfragen an diese Seite; der Server speichert oder protokolliert ihn nie. Ein geteilter Link trägt die Frage und die Antwort in sich selbst; auf dem Server wird dazu nichts gespeichert, und beim Öffnen prüft der Server nur, ob er diese Antwort geschrieben hat. Stimmeinstellungen — und, nur wenn du es einschaltest, das Gespräch selbst — bleiben ausschließlich in diesem Browser, bis du sie vergessen lässt.',
+    data: 'Fragen werden an den Server und an OpenAI gesendet, um eine Antwort zu formulieren, und nicht gespeichert, es sei denn, wer diese Kopie betreibt, schaltet das Protokollieren von Antworten zur Auswertung ein. Das Mikrofon wird nur benutzt, solange du es gedrückt hältst oder einschaltest, oder in einem Gespräch, das du beginnst, solange du an der Reihe bist. Kurze Zitate mit Quellenangabe verweisen auf die Originalfolgen; vollständige Transkripte werden nie veröffentlicht. Videoplayer und Podcast-Audio laden erst dann von YouTube und vom Host des Podcasts, wenn du auf Abspielen drückst. Wenn du eine Sprache wählst, merkt sich ein kleines Cookie diese Wahl, damit die Seite in dieser Sprache öffnet. Wenn du deinen eigenen OpenAI-Schlüssel einfügst, bleibt er in diesem Tab (oder auf diesem Gerät, wenn du willst) und geht nur mit deinen Anfragen an diese Seite; der Server speichert oder protokolliert ihn nie. Ein geteilter Link trägt die Frage und die Antwort in sich selbst; auf dem Server wird dazu nichts gespeichert, und beim Öffnen prüft der Server nur, ob er diese Antwort geschrieben hat. Stimmeinstellungen — und, nur wenn du es einschaltest, das Gespräch selbst — bleiben ausschließlich in diesem Browser, bis du sie vergessen lässt.',
     fullVersion: 'Die vollständige Fassung, mit dem, was versprochen wird und was nicht:',
   },
   voice: {
