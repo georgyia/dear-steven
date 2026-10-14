@@ -101,7 +101,10 @@ Client-safe core entry points: `schema` (types only), `limits`, `copy`, `format`
    on the recording does (`turn-taking.ts`: `turnVerdict`, `LevelGate`), the recording restarts
    every 4 s of quiet, and nothing is uploaded unless you spoke. Your words go to `/api/ask` as
    any question does; when the reply has been read (`whenQuiet`), it's your turn again. The mic is
-   closed on his turn, when paused and when off (`spoken-conversation.ts`, SR-10).
+   closed on his turn, when paused and when off (`spoken-conversation.ts`, SR-10). The interview
+   (P9-03) runs the same loop with a longer pause: each answer is one interview step, the next
+   question is read aloud, and Skip, End and Retry are his turn (`act`). It ends with the
+   interview.
 
 SSE events: `status` · `sources` · `block.start` · `block.done` · `final` · `error`
 (`packages/core/src/schema/ask.ts`). The plan's `block.delta` became `block.start`: no partial,

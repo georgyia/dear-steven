@@ -16,6 +16,9 @@ import type { VoiceApi } from './useVoice';
 /** What happens after a turn: carry on, pause (it failed), or end (it can't go on). */
 export type TurnOutcome = 'next' | 'pause' | 'end';
 
+/** A turn of his that isn't a reply to your words: an interview's Skip, End or Retry (P9-03). */
+type Step = () => Promise<TurnOutcome>;
+
 interface Options {
   voice: VoiceApi;
   timing: TurnTiming;
@@ -42,6 +45,11 @@ export interface SpokenConversation {
   interrupt: () => void;
   /** Send what you've said now, without waiting for the pause. */
   finishTurn: () => void;
+  /**
+   * His turn now, for `step` (an interview's Skip, End or Retry): the mic closes or his voice
+   * stops, the step runs, and the conversation carries on as after any turn. False when off.
+   */
+  act: (step: Step) => boolean;
   end: () => void;
 }
 
@@ -56,6 +64,9 @@ export function useSpokenConversation(options: Options): SpokenConversation {
   const session = useRef<AbortController | null>(null);
   const listener = useRef<TurnListener | null>(null);
   const hidden = useRef(false);
+  const pendingStep = useRef<Step | null>(null);
+  const phase = useRef(state.phase);
+  phase.current = state.phase;
   const latest = useRef(options);
   latest.current = options;
   const { t } = useI18n();
@@ -65,6 +76,7 @@ export function useSpokenConversation(options: Options): SpokenConversation {
   const close = useCallback(() => {
     session.current?.abort();
     session.current = null;
+    pendingStep.current = null;
     listener.current?.cancel();
     listener.current = null;
     level.current = 0;
@@ -87,10 +99,30 @@ export function useSpokenConversation(options: Options): SpokenConversation {
   );
 
   const run = useCallback(
-    async (signal: AbortSignal) => {
+    async (signal: AbortSignal, first?: Step) => {
+      /** His turn: a reply, or a step of his own. False when the conversation stops there. */
+      const his = async (step: Step) => {
+        const next = await step();
+        if (signal.aborted) return false;
+        if (next === 'end') end();
+        else if (next === 'pause') pause('failed');
+        return next === 'next';
+      };
+      /** A step asked for while it was his turn, or yours (the mic is closed by now). */
+      const asked = () => {
+        const step = pendingStep.current;
+        pendingStep.current = null;
+        return step;
+      };
+      if (first && !(await his(first))) return;
       for (;;) {
         await latest.current.voice.whenQuiet();
         if (signal.aborted) return;
+        const step = asked();
+        if (step) {
+          if (!(await his(step))) return;
+          continue;
+        }
         if (document.visibilityState === 'hidden') return pause('hidden');
         dispatch({ type: 'replied' });
         const { voice, timing, send, notify } = latest.current;
@@ -138,6 +170,12 @@ export function useSpokenConversation(options: Options): SpokenConversation {
         }
         if (said === null) {
           send({ type: 'LISTEN_CANCELLED' });
+          const step = asked();
+          if (step) {
+            dispatch({ type: 'sent' });
+            if (!(await his(step))) return;
+            continue;
+          }
           const reason = hidden.current ? 'hidden' : 'idle';
           hidden.current = false;
           return pause(reason);
@@ -149,28 +187,41 @@ export function useSpokenConversation(options: Options): SpokenConversation {
           continue;
         }
         dispatch({ type: 'sent' });
-        const next = await latest.current.onTurn(said);
-        if (signal.aborted) return;
-        if (next === 'end') return end();
-        if (next === 'pause') return pause('failed');
+        const text = said;
+        if (!(await his(() => latest.current.onTurn(text)))) return;
       }
     },
     [end, pause],
   );
 
   const begin = useCallback(
-    (first: 'yours' | 'his', resuming: boolean) => {
+    (first: 'yours' | 'his', resuming: boolean, step?: Step) => {
       if (session.current) return;
       unlockAudio();
       const ctrl = new AbortController();
       session.current = ctrl;
       hidden.current = false;
-      if (resuming) dispatch({ type: 'resume' });
+      if (resuming) dispatch({ type: 'resume', first });
       else dispatch({ type: 'start', first });
       if (first === 'his' && !resuming) latest.current.onBegin?.();
-      void run(ctrl.signal);
+      void run(ctrl.signal, step);
     },
     [run],
+  );
+
+  const act = useCallback(
+    (step: Step) => {
+      if (session.current) {
+        pendingStep.current = step;
+        if (listener.current) listener.current.cancel();
+        else latest.current.voice.stopSpeaking();
+        return true;
+      }
+      if (phase.current !== 'paused') return false;
+      begin('his', true, step);
+      return true;
+    },
+    [begin],
   );
 
   const start = useCallback(() => begin(latest.current.onBegin ? 'his' : 'yours', false), [begin]);
@@ -197,5 +248,5 @@ export function useSpokenConversation(options: Options): SpokenConversation {
 
   useEffect(() => close, [close]);
 
-  return { state, level, start, resume, interrupt, finishTurn, end };
+  return { state, level, start, resume, interrupt, finishTurn, act, end };
 }

@@ -54,6 +54,8 @@ describe('a spoken conversation (P9-02)', () => {
       ]);
       expect(paused).toEqual({ phase: 'paused', reason });
       expect(run([{ type: 'resume' }], paused)).toEqual({ phase: 'yours', words: '' });
+      // An interview's Retry carries on with his next question (P9-03).
+      expect(run([{ type: 'resume', first: 'his' }], paused)).toEqual({ phase: 'his' });
     }
     expect(
       run([
