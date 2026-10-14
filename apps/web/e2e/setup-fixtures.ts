@@ -5,8 +5,12 @@
 // It is also the live e2e server's OpenAI (P8-01): a call made with the canary operator key is
 // rejected the way OpenAI rejects a key, echoing its last four characters, so the canary test sees
 // what the app does with a provider's echo.
+//
+// And the free-questions e2e server's OpenAI (P8-02): moderation, answers streamed back as a fixture
+// synthesis paragraph, interview questions, and key checks (`e2e/fake-openai.ts`).
 import { rmSync } from 'node:fs';
-import { createServer } from 'node:http';
+import { createServer, type ServerResponse } from 'node:http';
+import { answerStream, FAKE_QUESTION, jsonReply, MODERATION_OK } from './fake-openai.ts';
 import { E2E_OPERATOR_CANARY } from './live-env.ts';
 import { E2E_SETUP_DB, E2E_SETUP_ENV_FILE } from './setup-env.ts';
 
@@ -105,7 +109,32 @@ createServer((req, res) => {
         }),
       );
     });
+  } else if (req.method === 'POST' && req.url === '/v1/moderations') {
+    json(res, MODERATION_OK);
+  } else if (req.method === 'POST' && req.url === '/v1/responses') {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+    });
+    req.on('end', () => {
+      if ((JSON.parse(body) as { stream?: boolean }).stream) {
+        res.writeHead(200, { 'Content-Type': 'text/event-stream' }).end(answerStream());
+      } else {
+        json(res, jsonReply(FAKE_QUESTION));
+      }
+    });
+  } else if (req.method === 'GET' && req.url?.startsWith('/v1/models/')) {
+    json(res, {
+      id: req.url.slice('/v1/models/'.length),
+      object: 'model',
+      created: 0,
+      owned_by: 'fixture',
+    });
   } else {
     res.writeHead(404).end();
   }
 }).listen(port, '127.0.0.1');
+
+function json(res: ServerResponse, body: unknown) {
+  res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(body));
+}

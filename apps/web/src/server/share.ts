@@ -1,7 +1,5 @@
 import 'server-only';
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { deflateRawSync, inflateRawSync } from 'node:zlib';
 import { stillSourced } from '@dear-steven/core/answer';
 import type { AppConfig } from '@dear-steven/core/config';
@@ -14,6 +12,7 @@ import {
   ShareTokenSchema,
 } from '@dear-steven/core/schema';
 import { relinked } from '@/lib/memory';
+import { deploymentSecret } from './deployment-secret';
 import { getStore } from './knowledge';
 
 /**
@@ -28,48 +27,6 @@ import { getStore } from './knowledge';
 const VERSION = 'v1';
 /** Inflated JSON is capped, so a crafted token can't be a decompression bomb. */
 const MAX_JSON_BYTES = 512 * 1024;
-const SECRET_BYTES = 32;
-
-const g = globalThis as typeof globalThis & { __dearStevenShareSecrets?: Map<string, Buffer> };
-
-/**
- * The signing secret: `share-secret` beside the knowledge base, created on first use (owner-only).
- * If it can't be saved, a per-process secret still works — links then stop opening after a restart.
- */
-function secret(config: AppConfig): Buffer {
-  g.__dearStevenShareSecrets ??= new Map();
-  const path = join(dirname(config.dbPath), 'share-secret');
-  let key = g.__dearStevenShareSecrets.get(path) ?? readSecret(path);
-  if (!key) {
-    key = randomBytes(SECRET_BYTES);
-    try {
-      mkdirSync(dirname(path), { recursive: true });
-      writeFileSync(path, key, { mode: 0o600, flag: 'wx' });
-    } catch (error) {
-      // Another request may have just created it.
-      const saved = readSecret(path);
-      if (saved) key = saved;
-      else {
-        console.error(
-          '[share] could not save the share secret; links will stop opening after a restart:',
-          error instanceof Error ? error.name : error,
-        );
-      }
-    }
-  }
-  g.__dearStevenShareSecrets.set(path, key);
-  return key;
-}
-
-function readSecret(path: string): Buffer | null {
-  try {
-    const saved = readFileSync(path);
-    return saved.length >= SECRET_BYTES ? saved : null;
-  } catch {
-    return null;
-  }
-}
-
 const sign = (key: Buffer, body: string) =>
   createHmac('sha256', key).update(`dear-steven/share/${VERSION}.${body}`).digest('base64url');
 
@@ -89,7 +46,7 @@ export function shareToken(
     },
   };
   const body = deflateRawSync(JSON.stringify(shared)).toString('base64url');
-  const token = `${VERSION}.${body}.${sign(secret(config), body)}`;
+  const token = `${VERSION}.${body}.${sign(deploymentSecret(config, 'share-secret'), body)}`;
   return token.length <= LIMITS.shareTokenChars ? token : undefined;
 }
 
@@ -97,7 +54,7 @@ export function shareToken(
 export function openShareToken(config: AppConfig, token: string): SharedAnswer | null {
   if (!ShareTokenSchema.safeParse(token).success) return null;
   const [, body = '', signature = ''] = token.split('.');
-  const expected = Buffer.from(sign(secret(config), body));
+  const expected = Buffer.from(sign(deploymentSecret(config, 'share-secret'), body));
   if (!timingSafeEqual(Buffer.from(signature), expected)) return null;
   try {
     const json = inflateRawSync(Buffer.from(body, 'base64url'), {

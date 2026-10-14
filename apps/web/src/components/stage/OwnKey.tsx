@@ -1,7 +1,7 @@
 'use client';
 
 import { VisitorKeySchema } from '@dear-steven/core/schema';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import SquishSwitch from '@/components/vendor/react-bits/SquishSwitch';
 import { useI18n } from '@/i18n/I18nProvider';
 import { testKey } from '@/lib/api';
@@ -12,7 +12,7 @@ import { canUseOwnKey, forgetKey, saveKey, storedKey } from '@/lib/visitor-key';
  * only stored once the server has confirmed it works, sealed (P8-01), and the field is cleared
  * straight after.
  */
-export function OwnKey({ onChange }: { onChange: () => void }) {
+export function OwnKey({ onChange, focus = false }: { onChange: () => void; focus?: boolean }) {
   const id = useId();
   const { t } = useI18n();
   const copy = t.setup.ownKey;
@@ -24,6 +24,14 @@ export function OwnKey({ onChange }: { onChange: () => void }) {
   const [remember, setRemember] = useState(false);
   const [testing, setTesting] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const field = useRef<HTMLInputElement>(null);
+  // Opened to add a key, after the free questions ran out (P8-02). A frame later: the dialog opens
+  // after this runs, and opening it moves the focus to its first control.
+  useEffect(() => {
+    if (!focus) return;
+    const frame = requestAnimationFrame(() => field.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [focus]);
 
   useEffect(() => {
     setSecure(canUseOwnKey());
@@ -98,6 +106,7 @@ export function OwnKey({ onChange }: { onChange: () => void }) {
       </label>
       <div className="flex flex-wrap gap-2">
         <input
+          ref={field}
           id={`${id}-key`}
           type="password"
           autoComplete="off"

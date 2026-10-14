@@ -59,6 +59,13 @@ secrets is a human step (`plan/human/api-keys.md`).
   visitor asks to be remembered. `OPENAI_BASE_URL`, if you set it, sends every OpenAI call there, visitors' keys
   included: point it only at an endpoint you would trust with them. To stop visitors spending your key, set
   `DEAR_STEVEN_ALLOW_OPERATOR_KEY=0`: without a key of their own they get demo mode.
+- **Free questions** (P8-02): set `DEAR_STEVEN_FREE_QUESTIONS=3` and each visitor without a key of
+  their own gets three questions on yours (an interview counts once), then is asked for their own.
+  Counted per browser (an anonymous cookie) and per network (three times as many), kept 30 days as
+  hashes in `/data/free-questions.json`, under a secret in `/data/free-secret`. Server voice is
+  not offered on free questions; the browser's own voice is. Someone with many addresses can get
+  more than three: keep `DEAR_STEVEN_DAILY_BUDGET_USD` set, which bounds the bill whatever happens.
+  Set the client address up correctly (below), or every visitor shares one network's allowance.
 - **Guided setup** (P6-04) is for a local clone only: never set `DEAR_STEVEN_SETUP_TOKEN` or
   `DEAR_STEVEN_SETUP_HOST` on a deployment. Without them every `/api/setup` route answers 404, as
   it also does for any request whose Host isn't loopback.

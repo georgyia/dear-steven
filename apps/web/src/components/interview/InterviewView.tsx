@@ -21,6 +21,8 @@ interface InterviewViewProps {
   dock: ReactNode;
   demo: boolean;
   onBack: () => void;
+  /** Opens the setup panel at "Use your own key" when the free questions are used up (P8-02). */
+  onUseOwnKey?: () => void;
   /** What Dear Steven keeps about the visitor (P7-08), and a way to keep what was learned. */
   about: {
     text: string | null;
@@ -43,6 +45,7 @@ export function InterviewView({
   demo,
   onBack,
   about,
+  onUseOwnKey,
 }: InterviewViewProps) {
   const { t } = useI18n();
   const copy = t.interview;
@@ -61,7 +64,7 @@ export function InterviewView({
         >
           {state.phase === 'setup' ? <Setup dispatch={dispatch} demo={demo} /> : null}
           {state.phase === 'waiting' || state.phase === 'asking' || state.phase === 'error' ? (
-            <Question state={state} dispatch={dispatch} />
+            <Question state={state} dispatch={dispatch} onUseOwnKey={onUseOwnKey} />
           ) : null}
           {state.phase === 'learned' ? (
             <Learned state={state} dispatch={dispatch} onBack={onBack} about={about} />
@@ -242,7 +245,11 @@ function Setup({ dispatch, demo }: Pick<InterviewViewProps, 'dispatch' | 'demo'>
   );
 }
 
-function Question({ state, dispatch }: Pick<InterviewViewProps, 'state' | 'dispatch'>) {
+function Question({
+  state,
+  dispatch,
+  onUseOwnKey,
+}: Pick<InterviewViewProps, 'state' | 'dispatch' | 'onUseOwnKey'>) {
   const { t } = useI18n();
   const copy = t.interview;
   const q = state.current;
@@ -260,7 +267,7 @@ function Question({ state, dispatch }: Pick<InterviewViewProps, 'state' | 'dispa
       <div className="flex flex-col gap-4">
         <p className={eyebrow}>{copy.eyebrow}</p>
         {state.phase === 'error' ? (
-          <Problem state={state} dispatch={dispatch} />
+          <Problem state={state} dispatch={dispatch} onUseOwnKey={onUseOwnKey} />
         ) : (
           <ThinkingDots className="h-8" label={copy.starting} />
         )}
@@ -312,7 +319,9 @@ function Question({ state, dispatch }: Pick<InterviewViewProps, 'state' | 'dispa
       </h2>
 
       {waiting ? <ThinkingDots className="h-8" label={t.talk.thinking} /> : null}
-      {state.phase === 'error' ? <Problem state={state} dispatch={dispatch} /> : null}
+      {state.phase === 'error' ? (
+        <Problem state={state} dispatch={dispatch} onUseOwnKey={onUseOwnKey} />
+      ) : null}
       {state.phase === 'asking' ? (
         <div className="flex flex-wrap items-center gap-3">
           <ListenButton turnId={`interview-${q.index}`} spoken={q.question} language={q.language} />
@@ -443,14 +452,36 @@ function KeepAbout({
   );
 }
 
-function Problem({ state, dispatch }: Pick<InterviewViewProps, 'state' | 'dispatch'>) {
+function Problem({
+  state,
+  dispatch,
+  onUseOwnKey,
+}: Pick<InterviewViewProps, 'state' | 'dispatch' | 'onUseOwnKey'>) {
   const { t } = useI18n();
   return (
     <div
       role="alert"
       className="flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border border-oxblood/50 bg-oxblood-tint px-4 py-3 text-[15px] text-oxblood-1"
     >
-      <span>{state.error}</span>
+      <span>
+        {state.needsKey ? (
+          <>
+            {t.errors.needsKey}
+            <span className="mt-0.5 block text-[13px] text-ivory-2">{state.error}</span>
+          </>
+        ) : (
+          state.error
+        )}
+      </span>
+      {state.needsKey && onUseOwnKey ? (
+        <button
+          type="button"
+          onClick={onUseOwnKey}
+          className="rounded-full bg-ember-0 px-3.5 py-1 text-[13px] font-medium text-ink-0 transition-colors hover:bg-ember-1"
+        >
+          {t.free.useOwnKey}
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={() => dispatch({ type: 'retry' })}

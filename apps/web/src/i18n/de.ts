@@ -208,6 +208,7 @@ export const de: Messages = {
     micUnsupported:
       'Dieser Browser kann hier keine Spracheingabe. Tippen funktioniert genauso gut.',
     clipboard: 'Die Zwischenablage war nicht erreichbar',
+    needsKey: 'Das war deine letzte freie Frage hier.',
   },
   serverErrors: {
     keyRejected:
@@ -241,6 +242,8 @@ export const de: Messages = {
     setupOverBudget: (estimate: string, cap: string) =>
       `Das Einbetten würde etwa ${estimate} kosten, mehr als dein Limit von ${cap}. Es wurde nichts ausgegeben.`,
     interviewBroken: 'Dieses Interview konnte ich nicht lesen. Fangen wir noch einmal an?',
+    needsKey: (limit) =>
+      `Du hattest ${limit === 1 ? 'eine freie Frage' : `${limit} freie Fragen`} auf dem Schlüssel dieser Seite. Um weiterzumachen, füge deinen eigenen OpenAI-Schlüssel hinzu: Er bleibt verschlüsselt in deinem Browser und geht nur an diese Seite.`,
     interviewSlow:
       'Das sind viele Antworten auf einmal. Atme kurz durch und schick das dann noch einmal.',
     shareSlow:
@@ -261,6 +264,10 @@ export const de: Messages = {
   empty: {
     noKnowledge:
       'Noch ist nichts geladen. Führe den Ingest-Befehl aus, dann habe ich etwas zu sagen — siehe „Einrichten“.',
+  },
+  free: {
+    left: (n) => (n === 1 ? 'Noch 1 freie Frage' : `Noch ${n} freie Fragen`),
+    useOwnKey: 'Eigenen Schlüssel nutzen',
   },
   turn: {
     demoTag: 'Demo-Beispiel: nicht von KI erzeugt und nicht quellengeprüft',

@@ -14,6 +14,8 @@ interface TurnViewProps {
   activeCitationId: string | null;
   onOpenCitation: (turnId: string, citationId: string) => void;
   onRetry: (question: string) => void;
+  /** Opens the setup panel at "Use your own key" (P8-02). */
+  onUseOwnKey?: () => void;
 }
 
 const ERROR_KEY = {
@@ -24,10 +26,17 @@ const ERROR_KEY = {
   bad_request: 'generic',
   internal: 'generic',
   locked: 'locked',
+  needs_key: 'needsKey',
 } as const;
 
 /** One exchange: the question as an editorial heading, the thinking, then the answer. */
-export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: TurnViewProps) {
+export function TurnView({
+  turn,
+  activeCitationId,
+  onOpenCitation,
+  onRetry,
+  onUseOwnKey,
+}: TurnViewProps) {
   const { t } = useI18n();
   const open = (citationId: string) => onOpenCitation(turn.id, citationId);
   const demo = turn.final?.demo ?? Object.values(turn.citations).some((c) => c.episode.demo);
@@ -109,13 +118,17 @@ export function TurnView({ turn, activeCitationId, onOpenCitation, onRetry }: Tu
         <ShareControls question={turn.question} answer={turn.final} />
       ) : null}
 
-      <TurnProblems turn={turn} onRetry={onRetry} />
+      <TurnProblems turn={turn} onRetry={onRetry} onUseOwnKey={onUseOwnKey} />
     </article>
   );
 }
 
 /** How a turn ended when it didn't end well, with a retry; and "Answer complete." when it did. */
-export function TurnProblems({ turn, onRetry }: Pick<TurnViewProps, 'turn' | 'onRetry'>) {
+export function TurnProblems({
+  turn,
+  onRetry,
+  onUseOwnKey,
+}: Pick<TurnViewProps, 'turn' | 'onRetry' | 'onUseOwnKey'>) {
   const { t } = useI18n();
   return (
     <>
@@ -130,11 +143,22 @@ export function TurnProblems({ turn, onRetry }: Pick<TurnViewProps, 'turn' | 'on
         >
           <span>
             {t.errors[ERROR_KEY[turn.error.code]]}
-            {(turn.error.code === 'not_configured' || turn.error.code === 'upstream') &&
+            {(turn.error.code === 'not_configured' ||
+              turn.error.code === 'upstream' ||
+              turn.error.code === 'needs_key') &&
             turn.error.message ? (
               <span className="mt-0.5 block text-[13px] text-ivory-2">{turn.error.message}</span>
             ) : null}
           </span>
+          {turn.error.code === 'needs_key' && onUseOwnKey ? (
+            <button
+              type="button"
+              onClick={onUseOwnKey}
+              className="rounded-full bg-ember-0 px-3.5 py-1 text-[13px] font-medium text-ink-0 transition-colors hover:bg-ember-1"
+            >
+              {t.free.useOwnKey}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => onRetry(turn.question)}
