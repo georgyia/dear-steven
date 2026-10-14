@@ -191,6 +191,7 @@ instruction (2026-10-13).
 | Id | # | Issue | Pri | Risk | State | Depends on | Needs |
 |----|---|-------|-----|------|-------|------------|-------|
 | P8-01 | #71 | fix(security): your own key, audited and kept encrypted, behind limits that can't be reset | P0 | high | done, merged on the owner's instruction (2026-10-13) | — | — |
+| P8-07 | #82 | test(web): the sealed-key tamper test always changes what it tampers with | P1 | low | done | P8-01 | — |
 | P8-02 | #72 | feat(security): three free questions on the operator's key, then your own | P1 | high | open | P8-01 | — |
 | P8-03 | #74 | feat(ingest): episode summaries, with every line quoted from the transcript | P1 | medium | done | — | — |
 | P8-04 | #75 | feat(web): read an episode's summary in the explorer | P1 | low | open | P8-03 | — |

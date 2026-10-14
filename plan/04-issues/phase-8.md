@@ -101,6 +101,28 @@ None. **Size:** M.
 
 ---
 
+### P8-07 — test(web): the sealed-key tamper test always changes what it tampers with
+
+<!-- issue {"id":"P8-07","title":"test(web): the sealed-key tamper test always changes what it tampers with","labels":["type:test","track:web","owner:ai","risk:low","P1","size:S","stage:m6"],"milestone":"M6 Summaries and open access","depends":["P8-01"],"github":82} -->
+
+#### Context
+`lib/visitor-key.test.ts` › "treats anything else in storage as nothing" (#71) tampers with a
+sealed key by setting its second-to-last character to `A`, or to `B` when the last character is
+`A`. When that character already *is* `A`, nothing changes, the key opens, and the test fails.
+With a random IV that happens about once in 64 runs, on any PR. It failed `check` on #80.
+
+#### Goal
+The tamper check always tampers.
+
+#### Acceptance criteria
+- [ ] The test changes a character of the ciphertext to one it is not, every time.
+- [ ] 500 runs in a row pass.
+
+#### Dependencies
+P8-01. **Size:** S.
+
+---
+
 ### P8-02 — feat(security): three free questions on the operator's key, then your own
 
 <!-- issue {"id":"P8-02","title":"feat(security): three free questions on the operator's key, then your own","labels":["type:security","stage:m6","track:security","track:web","track:setup","owner:ai","risk:high","needs:human-review","P1","size:L"],"milestone":"M6 Summaries and open access","depends":["P8-01"],"github":72} -->

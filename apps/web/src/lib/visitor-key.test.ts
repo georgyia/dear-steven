@@ -9,6 +9,8 @@ import { newSealingKey, openKey, REMEMBER_DAYS, sealKey } from './visitor-key';
 const KEY = `sk-proj-${'Ab3'.repeat(16)}`;
 const NOW = Date.UTC(2026, 9, 13);
 const DAY = 86_400_000;
+/** Seals tampered with: enough that a one-in-64 slip would show (P8-07). */
+const SEALS = 200;
 
 describe('sealing the visitor’s key', () => {
   it('keeps no trace of the key in what is stored', async () => {
@@ -64,8 +66,14 @@ describe('sealing the visitor’s key', () => {
     for (const junk of ['', 'v1', 'v1.tab.0..', 'v2.tab.0.aaaa.bbbb', 'v1.tab.0.@@@@.####', KEY]) {
       expect(await openKey(junk, sealing, false, NOW)).toBe(null);
     }
-    const tab = await sealKey(KEY, sealing, false, NOW);
-    const flipped = `${tab.slice(0, -2)}${tab.endsWith('A') ? 'B' : 'A'}${tab.slice(-1)}`;
-    expect(await openKey(flipped, sealing, false, NOW)).toBe(null);
+    // One changed character of the ciphertext, whatever it was (P8-07), over many fresh seals: the
+    // second-to-last carries six bits of data, so it can't hide in base64 padding.
+    for (let i = 0; i < SEALS; i++) {
+      const tab = await sealKey(KEY, sealing, false, NOW);
+      const at = tab.length - 2;
+      const flipped = `${tab.slice(0, at)}${tab[at] === 'A' ? 'B' : 'A'}${tab.slice(at + 1)}`;
+      expect(flipped).not.toBe(tab);
+      expect(await openKey(flipped, sealing, false, NOW)).toBe(null);
+    }
   });
 });
