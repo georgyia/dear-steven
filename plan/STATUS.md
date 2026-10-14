@@ -8,18 +8,22 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 
 ## Now
 
-- **Phase:** M6 *Summaries and open access* merged to `main` on 2026-10-14 (7 PRs, squash): your
-  own key audited and kept encrypted, three free questions on the operator's key, a summary of
-  every conversation (all 114 summarised, about $0.42) and reading it in the explorer, plus two CI
-  fixes. M5 *Conversations* merged on 2026-10-13.
-- **Next to pick:** M7 *Spoken conversations* (`plan/04-issues/phase-9.md`): P9-01 (#86), then
-  P9-02 (#87) and P9-03 (#88). Talk and the interview become a spoken conversation, on the owner's
-  request of 2026-10-14.
+- **Phase:** M7 *Spoken conversations* merged to `main` on 2026-10-15 (4 PRs, squash): Steven's
+  replies read aloud as soon as they are checked (median time to the first sound 7.3 s → 3.4 s),
+  Talk hands-free, and a spoken interview. Merged on the owner's instruction **without CI**, which
+  GitHub Actions wasn't starting because of the account's billing. The same checks ran locally on
+  the final tree instead: `pnpm check` (619 tests), build, audit, `pnpm e2e` (200 passed), the
+  PR-title lint and a scan for secrets. The Docker build didn't run. Not yet tried on a real device
+  or browser. M6 *Summaries and open access* merged on 2026-10-14.
+- **Next to pick:** nothing planned after M7. A possible follow-up: interrupting Steven by voice
+  while he speaks, with headphones (not an issue yet).
 - **To switch on:** `DEAR_STEVEN_FREE_QUESTIONS=3` on a deployment (`docs/DEPLOY.md`), with
   `DEAR_STEVEN_DAILY_BUDGET_USD` set and the client address configured.
-- **Waiting on the owner:** P8-05 (accounts with Supabase; a recommendation is on #73), the P6-07
-  decision (draft #33), P7-11 (how a deployment schedules ingest), P6-12 wording and takedown
-  contact, H-07 (five live answers), H-10 (YouTube spot check), H-11 (crisis copy and helplines).
+- **Waiting on the owner:** GitHub billing, so CI runs again (then re-run it on `main`); trying
+  spoken Talk and the interview in Chrome, Safari and Firefox on a real device; P8-05 (accounts
+  with Supabase; a recommendation is on #73), the P6-07 decision (draft #33), P7-11 (how a
+  deployment schedules ingest), P6-12 wording and takedown contact, H-07 (five live answers), H-10
+  (YouTube spot check), H-11 (crisis copy and helplines).
 
 ## Verified in the first pass (2026-10-10)
 
@@ -206,10 +210,11 @@ instruction (2026-10-13).
 
 ### M7 Spoken conversations
 
-Categories are labels: voice `track:voice` (P9-01–03).
+Categories are labels: voice `track:voice` (P9-01–03). M7 merged on the owner's instruction
+(2026-10-15) without CI, which wasn't starting; the same checks ran locally.
 
 | Id | # | Issue | Pri | Risk | State | Depends on | Needs |
 |----|---|-------|-----|------|-------|------------|-------|
-| P9-01 | #86 | feat(voice): Steven starts answering out loud as soon as his reply is checked | P1 | medium | done, PR open | — | — |
-| P9-02 | #87 | feat(voice): talk hands-free — Steven listens, answers out loud, and listens again | P1 | medium | done, PR open; no real device or browser tried yet (scripted recognition and a fake mic in e2e) | P9-01 | — |
-| P9-03 | #88 | feat(voice): the interview, spoken — Steven asks aloud, you answer aloud, and he moves on when you've finished | P1 | medium | done, PR open; no real device or browser tried yet | P9-02 | — |
+| P9-01 | #86 | feat(voice): Steven starts answering out loud as soon as his reply is checked | P1 | medium | done | — | — |
+| P9-02 | #87 | feat(voice): talk hands-free — Steven listens, answers out loud, and listens again | P1 | medium | done; no real device or browser tried yet (scripted recognition and a fake mic in e2e) | P9-01 | — |
+| P9-03 | #88 | feat(voice): the interview, spoken — Steven asks aloud, you answer aloud, and he moves on when you've finished | P1 | medium | done; no real device or browser tried yet | P9-02 | — |
