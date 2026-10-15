@@ -14,7 +14,11 @@ import type { Context } from '../context.ts';
  * audio left behind to fill the disk. ffmpeg and OpenAI are stand-ins here; the real ones are
  * exercised by `openai-transcribe.test.ts` and the first paid run.
  */
-const audio = vi.hoisted(() => ({ downloaded: [] as string[], fail: new Set<string>() }));
+const audio = vi.hoisted(() => ({
+  downloaded: [] as string[],
+  fail: new Set<string>(),
+  chunkSeconds: [] as (number | undefined)[],
+}));
 
 vi.mock('../lib/ffmpeg.ts', async (actual) => ({
   ...(await actual<typeof import('../lib/ffmpeg.ts')>()),
@@ -24,7 +28,10 @@ vi.mock('../lib/ffmpeg.ts', async (actual) => ({
     writeFileSync(path, 'mp3');
     audio.downloaded.push(path);
   },
-  splitAudio: (input: string) => [{ path: input, offsetMs: 0, durationMs: 3_600_000 }],
+  splitAudio: (input: string, _out: string, seconds?: number) => {
+    audio.chunkSeconds.push(seconds);
+    return [{ path: input, offsetMs: 0, durationMs: 3_600_000 }];
+  },
 }));
 
 vi.mock('../sources/openai-transcribe.ts', async (actual) => ({
@@ -120,6 +127,7 @@ const byGuid = (ctx: Context, guid: string) =>
 beforeEach(() => {
   audio.downloaded.length = 0;
   audio.fail.clear();
+  audio.chunkSeconds.length = 0;
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 
@@ -165,6 +173,8 @@ describe('a batch of paid transcription (H-05)', () => {
       transcriptSource: 'openai-diarize',
     });
     expect(byGuid(ctx, 'missing-old').transcriptStatus).toBe('none');
+    // Five-minute chunks, which OpenAI answers well within Node's wait for a response.
+    expect(audio.chunkSeconds).toEqual([300]);
     // The publisher's transcript is left as it is.
     expect(byGuid(ctx, 'covered').transcriptSource).toBe('rss-vtt');
     // A second run carries on where the first stopped.

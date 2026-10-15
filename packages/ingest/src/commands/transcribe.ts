@@ -7,6 +7,7 @@ import { download, hasBinary, probeDurationMs, splitAudio } from '../lib/ffmpeg.
 import { fetchText, mapLimit } from '../lib/http.ts';
 import { c, progress, usd } from '../lib/output.ts';
 import {
+  DIARIZE_CHUNK_SECONDS,
   diarizationCostUsd,
   diarizeChunks,
   hostReference,
@@ -150,7 +151,7 @@ async function diarize(ctx: Context, opts: TranscribeOptions) {
     try {
       console.log(`${c.bold(e.title)} ${c.dim(`~${usd(estimate)}`)}`);
       await download(e.audioUrl as string, audio);
-      const chunks = splitAudio(audio, work);
+      const chunks = splitAudio(audio, work, DIARIZE_CHUNK_SECONDS);
       const durationMs = chunks.reduce((n, ch) => n + ch.durationMs, 0);
       const bar = progress(chunks.length, 'audio chunks');
       const diarized = await diarizeChunks(client, chunks, reference, () => bar.tick(e.title));

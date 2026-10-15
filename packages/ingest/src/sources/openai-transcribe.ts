@@ -4,7 +4,7 @@ import { MODELS, PRICES } from '@dear-steven/core/models';
 import type { OpenAI } from '@dear-steven/core/openai';
 import type { Segment } from '@dear-steven/core/schema';
 import type { AudioChunk } from '../lib/ffmpeg.ts';
-import { withRetry } from '../lib/http.ts';
+import { mapLimit, withRetry } from '../lib/http.ts';
 
 /** The label OpenAI returns for the enrolled host voice. */
 export const HOST_LABEL = 'Steven';
@@ -60,10 +60,18 @@ export function hostReference(path: string): string {
 }
 
 /**
- * Diarizing a 23-minute chunk takes minutes, far past the shared client's 60 s, so each request
- * gets its own timeout and no retries of the SDK's own: `withRetry` decides (`retryDiarization`).
+ * OpenAI takes about 0.45× a chunk's length to answer (measured 2026-10-15: 115–136 s for five
+ * minutes), and Node's fetch gives up on a response with no headers after five minutes. So chunks
+ * are five minutes long, and a few are asked at once to keep a long batch to hours, not days.
  */
-export const DIARIZE_REQUEST = { timeout: 20 * 60_000, maxRetries: 0 } as const;
+export const DIARIZE_CHUNK_SECONDS = 300;
+export const DIARIZE_PARALLEL = 6;
+
+/**
+ * Each request gets its own timeout, past the shared client's 60 s, and no retries of the SDK's
+ * own: `withRetry` decides (`retryDiarization`).
+ */
+export const DIARIZE_REQUEST = { timeout: 10 * 60_000, maxRetries: 0 } as const;
 
 /**
  * Rate limits, server errors and dropped connections are tried again. A timeout is not: OpenAI may
@@ -81,14 +89,15 @@ export function retryDiarization(error: unknown): boolean {
   return typeof status !== 'number' || status === 429 || status >= 500;
 }
 
+/** Each chunk diarized with the host enrolled, `parallel` at a time, returned in order. */
 export async function diarizeChunks(
   client: OpenAI,
   chunks: AudioChunk[],
   reference: string,
   onChunk?: (i: number) => void,
+  parallel = DIARIZE_PARALLEL,
 ): Promise<DiarizedChunk[]> {
-  const out: DiarizedChunk[] = [];
-  for (const [i, chunk] of chunks.entries()) {
+  return mapLimit(chunks, parallel, async (chunk, i) => {
     const res = await withRetry(
       () =>
         client.audio.transcriptions.create(
@@ -106,7 +115,8 @@ export async function diarizeChunks(
       { retry: retryDiarization, baseMs: 5_000 },
     );
     const segments = 'segments' in res && Array.isArray(res.segments) ? res.segments : [];
-    out.push({
+    onChunk?.(i);
+    return {
       offsetMs: chunk.offsetMs,
       segments: segments.map((s) => ({
         start: Number((s as { start: number }).start),
@@ -114,8 +124,6 @@ export async function diarizeChunks(
         speaker: String((s as { speaker?: string }).speaker ?? ''),
         text: String((s as { text: string }).text),
       })),
-    });
-    onChunk?.(i);
-  }
-  return out;
+    };
+  });
 }

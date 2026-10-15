@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import type { OpenAI } from '@dear-steven/core/openai';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  DIARIZE_CHUNK_SECONDS,
   DIARIZE_REQUEST,
   diarizationCostUsd,
   diarizeChunks,
@@ -68,7 +69,9 @@ describe('diarizeChunks: waiting and retrying', () => {
     const create = vi.fn(async () => reply);
     await diarizeChunks(client(create), chunk(), 'data:audio/wav;base64,AAAA');
     expect(create).toHaveBeenCalledWith(expect.anything(), DIARIZE_REQUEST);
-    expect(DIARIZE_REQUEST.timeout).toBeGreaterThanOrEqual(15 * 60_000);
+    // Past Node's own five-minute wait for headers, so that is the limit a chunk must answer within.
+    expect(DIARIZE_REQUEST.timeout).toBeGreaterThan(5 * 60_000);
+    expect(DIARIZE_CHUNK_SECONDS).toBeLessThanOrEqual(300);
     expect(DIARIZE_REQUEST.maxRetries).toBe(0);
   });
 
@@ -81,6 +84,26 @@ describe('diarizeChunks: waiting and retrying', () => {
     });
     await expect(diarizeChunks(client(create), chunk(), 'ref')).rejects.toThrow('timed out');
     expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks a few chunks at once, and keeps them in order', async () => {
+    const chunks = Array.from({ length: 7 }, (_, i) => ({
+      ...chunk()[0],
+      offsetMs: i * 300_000,
+    })) as ReturnType<typeof chunk>;
+    let inFlight = 0;
+    let most = 0;
+    const create = vi.fn(async () => {
+      inFlight += 1;
+      most = Math.max(most, inFlight);
+      await new Promise((r) => setTimeout(r, 5 + Math.random() * 10));
+      inFlight -= 1;
+      return reply;
+    });
+    const out = await diarizeChunks(client(create), chunks, 'ref', undefined, 3);
+    expect(out.map((c) => c.offsetMs)).toEqual(chunks.map((c) => c.offsetMs));
+    expect(most).toBe(3);
+    expect(create).toHaveBeenCalledTimes(7);
   });
 
   it('tells what to try again: rate limits, server errors and dropped connections only', () => {
