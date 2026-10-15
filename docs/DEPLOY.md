@@ -83,6 +83,10 @@ secrets is a human step (`plan/human/api-keys.md`).
   client can't (`fly-client-ip` on Fly.io, `cf-connecting-ip` behind Cloudflare), set
   `DEAR_STEVEN_CLIENT_IP_HEADER` to it instead: it is then the only source. Never name a header
   your platform doesn't overwrite. IPv6 clients count by their /64.
+- **Requests from other sites** (P8-08): the API refuses anything but a read when the browser says
+  it comes from another site's page (Fetch Metadata, or an `Origin` that isn't this host), so no
+  other page can make its visitors ask on your key. A proxy in front must pass on the `Host` the
+  browser asked for, or set `X-Forwarded-Host`; most do.
 - **Costs** scale with questions: each live answer is one answer call, one embedding, plus one
   condensation call for follow-ups, and occasionally one repair call.
 - **Logs** contain no questions, keys or provider error text. Answer logging is opt-in
