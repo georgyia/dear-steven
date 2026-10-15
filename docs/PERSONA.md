@@ -119,7 +119,7 @@ asked a second time, the question isn't answered: the person sees a short error 
 
 | Route | When | What the person gets |
 |-------|------|----------------------|
-| crisis | they may be at risk themselves | a fixed, human-written reply that leads with a helpline for their country and the emergency number; no persona, no sources, no model call |
+| crisis | they may be at risk themselves | a fixed, human-written reply that leads with a helpline for their country and the emergency number, then how to find a helpline wherever they are (findahelpline.com, P10-07: the country comes from the browser's language); no persona, no sources, no model call |
 | refuse | weapons, violence or sexual content involving minors | a one-line refusal and an offer to talk about what's underneath |
 | impersonation | asks for invented words, endorsements or announcements from Steven | a refusal that offers what the conversations actually show |
 | answer | everything else | the normal answer; for suicide or self-harm as a topic, a helpline line leads it; for medical, legal or financial questions, a `<care>` note asks for a concrete view plus when a professional matters |
