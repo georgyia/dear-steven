@@ -19,7 +19,8 @@ import { deploymentSecret } from './deployment-secret';
  *    gets several people's worth.
  * Both are kept for 30 days from their first question, only as HMACs under a deployment secret, in
  * `data/free-questions.json` beside the spend ledger. A determined visitor with many addresses gets
- * more; the daily cap (P6-08) is what bounds the operator's bill.
+ * more; the daily cap (P6-08) is what bounds the operator's bill, so without one there are no free
+ * questions at all (P8-09).
  */
 export const VISITOR_COOKIE = 'ds_visitor';
 export const TICKET_HEADER = 'x-interview-ticket';
@@ -198,6 +199,7 @@ export class FreeLedger {
 const g = globalThis as typeof globalThis & {
   __dearStevenFree?: Map<string, FreeLedger>;
   __dearStevenTickets?: Map<string, { steps: number; expires: number }>;
+  __dearStevenFreeWithoutCap?: boolean;
 };
 
 function ledger(config: AppConfig): FreeLedger {
@@ -220,6 +222,23 @@ const hmac = (config: AppConfig, what: string) =>
 /** Whether this request counts against a limit: the operator's key, with a limit set. */
 export const freeLimitApplies = (config: AppConfig) =>
   config.keySource === 'operator' && config.freeQuestions !== null;
+
+/**
+ * How many free questions each visitor gets: as many as set, but none without a daily cap (P8-09).
+ * Someone with many addresses gets more than n, and only the cap bounds what that costs. Said once
+ * in the log, so the operator knows why.
+ */
+export function freeAllowance(config: AppConfig): number {
+  const asked = config.freeQuestions ?? 0;
+  if (config.dailyBudgetUsd !== null) return asked;
+  if (asked > 0 && !g.__dearStevenFreeWithoutCap) {
+    g.__dearStevenFreeWithoutCap = true;
+    console.error(
+      '[free] DEAR_STEVEN_FREE_QUESTIONS is set without DEAR_STEVEN_DAILY_BUDGET_USD: no free questions until a daily cap bounds what they can cost.',
+    );
+  }
+  return 0;
+}
 
 function cookieValue(req: Request, name: string): string | undefined {
   for (const part of (req.headers.get('cookie') ?? '').split(';')) {
@@ -246,8 +265,8 @@ export const visitorCookie = (id: string) =>
 
 /** This visitor's free questions, for `/api/status`; `null` where no limit applies. */
 export function freeStatus(config: AppConfig, req: Request): KnowledgeStatus['free'] {
-  if (!freeLimitApplies(config) || config.freeQuestions === null) return null;
-  const limit = config.freeQuestions;
+  if (!freeLimitApplies(config)) return null;
+  const limit = freeAllowance(config);
   const remaining = ledger(config).remaining(visitorOf(config, req), limit);
   return { limit, used: limit - remaining, remaining };
 }
@@ -258,7 +277,7 @@ export type FreeQuestion =
 
 /** Counts one free question for this request, if it has one left. */
 export function takeFreeQuestion(config: AppConfig, req: Request): FreeQuestion {
-  const limit = config.freeQuestions ?? 0;
+  const limit = freeAllowance(config);
   const visitor = visitorOf(config, req);
   const book = ledger(config);
   if (!book.take(visitor, limit)) return { ok: false, limit };
@@ -318,4 +337,5 @@ export function resetFreeQuestions() {
   for (const book of g.__dearStevenFree?.values() ?? []) book.flush();
   g.__dearStevenFree?.clear();
   g.__dearStevenTickets?.clear();
+  g.__dearStevenFreeWithoutCap = false;
 }

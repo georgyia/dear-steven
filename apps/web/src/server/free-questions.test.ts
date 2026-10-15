@@ -5,6 +5,7 @@ import { readConfig } from '@dear-steven/core/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   FreeLedger,
+  freeAllowance,
   freeStatus,
   issueTicket,
   MAX_ENTRIES,
@@ -87,6 +88,7 @@ describe('FreeLedger', () => {
       DEAR_STEVEN_DB_PATH: join(dir, 'kb.db'),
       OPENAI_API_KEY: 'sk-test-not-a-real-key',
       DEAR_STEVEN_FREE_QUESTIONS: '3',
+      DEAR_STEVEN_DAILY_BUDGET_USD: '5',
     });
     const req = new Request('https://x.test/api/ask', {
       headers: {
@@ -121,6 +123,7 @@ describe('the visitor and their status', () => {
       DEAR_STEVEN_DB_PATH: join(dir, 'kb.db'),
       OPENAI_API_KEY: 'sk-test-not-a-real-key',
       DEAR_STEVEN_FREE_QUESTIONS: '3',
+      DEAR_STEVEN_DAILY_BUDGET_USD: '5',
     });
 
   it('is a new visitor without a well-formed cookie, and the same one with it', () => {
@@ -157,6 +160,47 @@ describe('the visitor and their status', () => {
     expect(freeStatus(c, req)).toEqual({ limit: 3, used: 1, remaining: 2 });
     expect(freeStatus({ ...c, freeQuestions: null }, req)).toBe(null);
     expect(freeStatus({ ...c, keySource: 'visitor' }, req)).toBe(null);
+  });
+});
+
+describe('the allowance (P8-09)', () => {
+  const config = (env: Record<string, string>) =>
+    readConfig({
+      DEAR_STEVEN_DB_PATH: join(dir, 'kb.db'),
+      OPENAI_API_KEY: 'sk-test-not-a-real-key',
+      ...env,
+    });
+
+  it('is what was set, once a daily cap bounds it (even a cap of 0)', () => {
+    const warned = vi.spyOn(console, 'error').mockImplementation(() => {});
+    for (const cap of ['5', '0.5', '0']) {
+      const c = config({ DEAR_STEVEN_FREE_QUESTIONS: '3', DEAR_STEVEN_DAILY_BUDGET_USD: cap });
+      expect(freeAllowance(c), cap).toBe(3);
+    }
+    expect(warned).not.toHaveBeenCalled();
+  });
+
+  it('is none without a cap, said once in the log', () => {
+    const warned = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const c = config({ DEAR_STEVEN_FREE_QUESTIONS: '3' });
+    expect(freeAllowance(c)).toBe(0);
+    expect(freeAllowance(c)).toBe(0);
+    expect(warned).toHaveBeenCalledTimes(1);
+    expect(String(warned.mock.calls[0]?.[0])).toMatch(
+      /DEAR_STEVEN_FREE_QUESTIONS is set without DEAR_STEVEN_DAILY_BUDGET_USD/,
+    );
+    const req = new Request('https://x.test/api/ask', {
+      headers: { 'x-forwarded-for': '203.0.113.9' },
+    });
+    expect(freeStatus(c, req)).toEqual({ limit: 0, used: 0, remaining: 0 });
+    expect(takeFreeQuestion(c, req)).toEqual({ ok: false, limit: 0 });
+  });
+
+  it('says nothing when no free questions were asked for', () => {
+    const warned = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(freeAllowance(config({}))).toBe(0);
+    expect(freeAllowance(config({ DEAR_STEVEN_FREE_QUESTIONS: '0' }))).toBe(0);
+    expect(warned).not.toHaveBeenCalled();
   });
 });
 
