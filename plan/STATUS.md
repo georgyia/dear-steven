@@ -8,25 +8,33 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 
 ## Now
 
-- **Phase:** M7 *Spoken conversations* merged to `main` on 2026-10-15 (4 PRs, squash): Steven's
-  replies read aloud as soon as they are checked (median time to the first sound 7.3 s → 3.4 s),
-  Talk hands-free, and a spoken interview. Merged on the owner's instruction **without CI**, which
-  GitHub Actions wasn't starting because of the account's billing. The same checks ran locally on
-  the final tree instead: `pnpm check` (619 tests), build, audit, `pnpm e2e` (200 passed), the
-  PR-title lint and a scan for secrets. The Docker build didn't run. Not yet tried on a real device
-  or browser. M6 *Summaries and open access* merged on 2026-10-14.
-- **Next to pick:** P8-08 (#94), then P8-09 (#95), from the security re-check of 2026-10-15
-  (`plan/09-security/reviews/2026-10-15-free-questions.md`): other sites' pages can send
-  questions on the operator's key, and free questions can run without a daily cap. The re-check
-  found the rest sound, and no need for Supabase now (#73). A possible follow-up to M7:
-  interrupting Steven by voice while he speaks, with headphones (not an issue yet).
+- **Phase:** M8 *Launch readiness* (`plan/04-issues/phase-10.md`), opened on 2026-10-16 after a
+  read-only launch audit of the whole repository. The owner asked to "fix what needs to be fixed
+  before launch". Every M8 PR merges once `pnpm check`, the build and `pnpm e2e` pass locally,
+  `risk:high` included, on the owner's instruction for this milestone. CI still isn't starting
+  (billing).
+- **Merged first (2026-10-16), on the owner's instruction, without CI:** the stack #96 → #104 (the
+  security re-check, P8-08 and P8-09, the paid transcription fixes P8-10 to P8-12). The same tree
+  passed `pnpm check` (653 tests) and `pnpm e2e` (201 passed, 12 skipped) locally.
+- **Next to pick:** P10-01 (#105) to P10-12 (#116), in order.
+- **Running:** the paid diarization batch, resumed 2026-10-16 from `main` (owner-approved, total
+  diarization within about $133): guest names from descriptions first, then up to 182 episodes
+  with no transcript, to reach 300. After it: `chunk`, `index`, `summarise`, `attribute`
+  (`plan/human/transcription-budget.md`).
 - **To switch on:** `DEAR_STEVEN_FREE_QUESTIONS=3` on a deployment (`docs/DEPLOY.md`), with
   `DEAR_STEVEN_DAILY_BUDGET_USD` set and the client address configured.
-- **Waiting on the owner:** GitHub billing, so CI runs again (then re-run it on `main`); trying
-  spoken Talk and the interview in Chrome, Safari and Firefox on a real device; P8-05 (accounts
-  with Supabase; a recommendation is on #73), the P6-07 decision (draft #33), P7-11 (how a
-  deployment schedules ingest), P6-12 wording and takedown contact, H-07 (five live answers), H-10
-  (YouTube spot check), H-11 (crisis copy and helplines).
+- **Waiting on the owner, before a public launch:**
+  - permission from, or a legal view on, using the podcast's transcripts and Steven Bartlett's
+    name (none is recorded);
+  - the contact address and the operator's details for the legal notice;
+  - a lawyer's review of the policies (P6-12);
+  - H-11 (crisis copy and helplines; #35 needs it too);
+  - H-08 (hosting account and secrets);
+  - GitHub billing, so CI runs again (then re-run it on `main`);
+  - H-07 (five live answers) and H-10 (YouTube spot check);
+  - spoken Talk and the interview on a real device in Chrome, Safari and Firefox.
+- **Waiting on the owner, not blocking launch:** P8-05 (accounts with Supabase; a recommendation
+  is on #73), the P6-07 decision (draft #33), P7-11 (how a deployment schedules ingest).
 
 ## Verified in the first pass (2026-10-10)
 
@@ -210,11 +218,11 @@ instruction (2026-10-13).
 | P8-04 | #75 | feat(web): read an episode's summary in the explorer | P1 | low | done | P8-03 | — |
 | P8-05 | #73 | chore(infra): accounts and server-side key storage with Supabase — decide first | P2 | high | open, blocked | P8-02 | decision |
 | P8-06 | #81 | chore(ci): give the e2e job room for the servers it now runs | P1 | low | done | — | — |
-| P8-08 | #94 | fix(security): the API refuses requests sent from other sites' pages | P0 | high | done, PR open; waits for the owner's review | — | human |
-| P8-09 | #95 | fix(security): free questions need a daily cap | P1 | high | done, PR open; waits for the owner's review | — | human |
-| P8-10 | #99 | fix(ingest): paid transcription in batches: only episodes with no transcript, and no audio left on disk | P1 | medium | done, PR open | — | — |
-| P8-11 | #101 | fix(ingest): a diarized voice is credited to the guest only when the labels leave no doubt | P0 | medium | done, PR open | P8-10 | — |
-| P8-12 | #103 | fix(ingest): inserted ads are dropped from audio transcripts, and the timing after them closes up | P0 | medium | done, PR open | P8-11 | — |
+| P8-08 | #94 | fix(security): the API refuses requests sent from other sites' pages | P0 | high | done, #97, merged on the owner's instruction without CI (2026-10-16) | — | — |
+| P8-09 | #95 | fix(security): free questions need a daily cap | P1 | high | done, #98, merged on the owner's instruction without CI (2026-10-16) | — | — |
+| P8-10 | #99 | fix(ingest): paid transcription in batches: only episodes with no transcript, and no audio left on disk | P1 | medium | done, #100, merged without CI (2026-10-16) | — | — |
+| P8-11 | #101 | fix(ingest): a diarized voice is credited to the guest only when the labels leave no doubt | P0 | medium | done, #102, merged without CI (2026-10-16) | P8-10 | — |
+| P8-12 | #103 | fix(ingest): inserted ads are dropped from audio transcripts, and the timing after them closes up | P0 | medium | done, #104, merged without CI (2026-10-16) | P8-11 | — |
 
 ### M7 Spoken conversations
 
@@ -226,3 +234,24 @@ Categories are labels: voice `track:voice` (P9-01–03). M7 merged on the owner'
 | P9-01 | #86 | feat(voice): Steven starts answering out loud as soon as his reply is checked | P1 | medium | done | — | — |
 | P9-02 | #87 | feat(voice): talk hands-free — Steven listens, answers out loud, and listens again | P1 | medium | done; no real device or browser tried yet (scripted recognition and a fake mic in e2e) | P9-01 | — |
 | P9-03 | #88 | feat(voice): the interview, spoken — Steven asks aloud, you answer aloud, and he moves on when you've finished | P1 | medium | done; no real device or browser tried yet | P9-02 | — |
+
+### M8 Launch readiness
+
+Categories are labels: deployment `track:infra` (P10-01–03), security and safety `track:security`
+(P10-04–07), visitor-facing `track:web` (P10-08–11), policies `track:policy` (P10-12). Every M8 PR
+merges after local checks on the owner's instruction (2026-10-16), `risk:high` included.
+
+| Id | # | Issue | Pri | Risk | State | Depends on | Needs |
+|----|---|-------|-----|------|-------|------------|-------|
+| P10-01 | #105 | fix(security): a public deployment won't spend the operator's key without a daily cap | P0 | high | open | — | — |
+| P10-02 | #106 | feat(infra): a health check that fails when the site can't answer | P0 | medium | open | P10-01 | — |
+| P10-03 | #107 | chore(infra): Fly.io configuration and a runbook for the knowledge base | P0 | medium | open | P10-01, P10-02 | — |
+| P10-04 | #108 | fix(security): request bodies are capped before they are read | P1 | medium | open | — | — |
+| P10-05 | #109 | fix(security): a free question isn't used up when OpenAI fails to answer it | P1 | high | open | — | — |
+| P10-06 | #110 | fix(security): no question is answered without its safety check | P1 | high | open | — | — |
+| P10-07 | #111 | fix(security): a crisis reply always says how to find a helpline in any country | P1 | high | open | — | H-11 reviews the line |
+| P10-08 | #112 | fix(web): visitors see errors in their own words; the operator's details go to the log | P1 | low | open | — | — |
+| P10-09 | #113 | feat(web): an error page and a not-found page in Dear Steven's own design | P1 | low | open | — | — |
+| P10-10 | #114 | feat(web): an icon and a link preview that say it's an unofficial AI persona | P2 | low | open | — | — |
+| P10-11 | #115 | fix(web): the interview shows the AI disclosure too, and it says it isn't advice | P1 | low | open | — | — |
+| P10-12 | #116 | docs: a privacy notice that says where data goes, and a legal notice page | P0 | medium | open | — | owner's details, lawyer (P6-12) |
