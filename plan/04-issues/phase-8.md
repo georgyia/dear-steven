@@ -524,6 +524,41 @@ P8-10 (#99). **Size:** S.
 
 ---
 
+### P8-12 — fix(ingest): inserted ads are dropped from audio transcripts, and the timing after them closes up
+
+<!-- issue {"id":"P8-12","title":"fix(ingest): inserted ads are dropped from audio transcripts, and the timing after them closes up","labels":["type:service","stage:m6","track:ingest","track:answers","owner:ai","risk:medium","P0","size:S"],"milestone":"M6 Summaries and open access","depends":["P8-11"],"github":103} -->
+
+#### Context
+Audio downloaded from the feed carries ads that the ad service inserts for each listener. The first
+real diarized episode (2026-10-15, downloaded from Germany) began with a 23 s German ad for mineral
+water and ended with a 28 s German ad for Shopify. The download ran 48 s longer than the feed's
+duration. Both ads went into the transcript, which does two kinds of harm:
+
+- **Content.** Ads become passages in the knowledge base, and could be retrieved or quoted as if
+  they were part of the conversation.
+- **Timing.** Every timestamp after an ad is late by that ad's length. A citation's "exact moment"
+  (the podcast player, the YouTube link) is timed against the feed's own, ad-free version, as the
+  publisher's transcripts are.
+
+#### Goal
+A diarized transcript holds only the conversation, timed as the feed's own audio is.
+
+#### Acceptance criteria
+- [ ] Segments in another language than the episode's English (the inserted ads where the audio is
+      downloaded), and the unlabelled lines that run on from them, are dropped.
+- [ ] Each dropped block's length is taken off every timestamp after it.
+- [ ] The run says, per episode, how much was dropped against how much longer the download was than
+      the feed says. This is kept in the run's record, so a mismatch can be looked at.
+- [ ] Unit tests: a pre-roll, a post-roll, a mid-roll, English lines that stay (names, short
+      replies), and timing after each.
+- [ ] Mutation-checked; INGESTION says so, including the limit: ads in English aren't caught this
+      way.
+
+#### Dependencies
+P8-11 (#101). **Size:** S.
+
+---
+
 ### P8-06 — chore(ci): give the e2e job room for the servers it now runs
 
 <!-- issue {"id":"P8-06","title":"chore(ci): give the e2e job room for the servers it now runs","labels":["type:infra","track:infra","owner:ai","risk:low","P1","size:S","stage:m6"],"milestone":"M6 Summaries and open access","depends":[],"github":81} -->
