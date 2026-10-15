@@ -17,7 +17,11 @@ const transient = (error: unknown) =>
 
 export async function withRetry<T>(
   fn: (attempt: number) => Promise<T>,
-  { tries = 4, baseMs = 800 }: { tries?: number; baseMs?: number } = {},
+  {
+    tries = 4,
+    baseMs = 800,
+    retry = transient,
+  }: { tries?: number; baseMs?: number; retry?: (error: unknown) => boolean } = {},
 ): Promise<T> {
   let last: unknown;
   for (let attempt = 1; attempt <= tries; attempt += 1) {
@@ -25,7 +29,7 @@ export async function withRetry<T>(
       return await fn(attempt);
     } catch (error) {
       last = error;
-      if (attempt === tries || !transient(error)) break;
+      if (attempt === tries || !retry(error)) break;
       await sleep(baseMs * 2 ** (attempt - 1) + Math.random() * 250);
     }
   }

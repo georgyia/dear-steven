@@ -59,6 +59,28 @@ export function hostReference(path: string): string {
   return `data:${mime};base64,${readFileSync(path).toString('base64')}`;
 }
 
+/**
+ * Diarizing a 23-minute chunk takes minutes, far past the shared client's 60 s, so each request
+ * gets its own timeout and no retries of the SDK's own: `withRetry` decides (`retryDiarization`).
+ */
+export const DIARIZE_REQUEST = { timeout: 20 * 60_000, maxRetries: 0 } as const;
+
+/**
+ * Rate limits, server errors and dropped connections are tried again. A timeout is not: OpenAI may
+ * have finished, and billed, the attempt the client stopped waiting for. Nor is a request it
+ * refused (4xx), which would fail the same way again.
+ */
+export function retryDiarization(error: unknown): boolean {
+  if (
+    error instanceof Error &&
+    (error.name.includes('Timeout') || /timed out/i.test(error.message))
+  ) {
+    return false;
+  }
+  const status = (error as { status?: unknown } | null)?.status;
+  return typeof status !== 'number' || status === 429 || status >= 500;
+}
+
 export async function diarizeChunks(
   client: OpenAI,
   chunks: AudioChunk[],
@@ -67,16 +89,21 @@ export async function diarizeChunks(
 ): Promise<DiarizedChunk[]> {
   const out: DiarizedChunk[] = [];
   for (const [i, chunk] of chunks.entries()) {
-    const res = await withRetry(() =>
-      client.audio.transcriptions.create({
-        file: createReadStream(chunk.path),
-        model: MODELS.diarize,
-        response_format: 'diarized_json',
-        chunking_strategy: 'auto',
-        language: 'en',
-        known_speaker_names: [HOST_LABEL],
-        known_speaker_references: [reference],
-      }),
+    const res = await withRetry(
+      () =>
+        client.audio.transcriptions.create(
+          {
+            file: createReadStream(chunk.path),
+            model: MODELS.diarize,
+            response_format: 'diarized_json',
+            chunking_strategy: 'auto',
+            language: 'en',
+            known_speaker_names: [HOST_LABEL],
+            known_speaker_references: [reference],
+          },
+          DIARIZE_REQUEST,
+        ),
+      { retry: retryDiarization, baseMs: 5_000 },
     );
     const segments = 'segments' in res && Array.isArray(res.segments) ? res.segments : [];
     out.push({
