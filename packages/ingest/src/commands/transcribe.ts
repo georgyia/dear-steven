@@ -6,6 +6,7 @@ import type { Context } from '../context.ts';
 import { download, hasBinary, probeDurationMs, splitAudio } from '../lib/ffmpeg.ts';
 import { fetchText, mapLimit } from '../lib/http.ts';
 import { c, progress, usd } from '../lib/output.ts';
+import { withoutInsertedAds } from '../sources/inserted-ads.ts';
 import {
   DIARIZE_CHUNK_SECONDS,
   diarizationCostUsd,
@@ -156,18 +157,28 @@ async function diarize(ctx: Context, opts: TranscribeOptions) {
       const bar = progress(chunks.length, 'audio chunks');
       const diarized = await diarizeChunks(client, chunks, reference, () => bar.tick(e.title));
       bar.end();
-      const segments = mapDiarizedSegments(diarized, e.guestNames);
+      const { segments, droppedMs } = withoutInsertedAds(
+        mapDiarizedSegments(diarized, e.guestNames),
+      );
+      // What the ad service added to this download, by the feed's own length: a check on droppedMs.
+      const extraMs = Math.max(0, durationMs - (e.durationMs ?? durationMs));
       if (segments.length === 0) throw new Error('Diarization returned no segments');
       ctx.store.replaceTranscript(e.id, segments, 'openai-diarize');
       const cost = diarizationCostUsd(durationMs);
       spent += cost;
       const hostShare = segments.filter((s) => s.speaker === 'host').length / segments.length;
       ctx.store.finishRun(run, 'done', {
-        meta: { costUsd: cost, segments: segments.length, hostShare },
+        meta: {
+          costUsd: cost,
+          segments: segments.length,
+          hostShare,
+          adsDroppedMs: droppedMs,
+          extraMs,
+        },
       });
       console.log(
         c.dim(
-          `  ${segments.length} segments · host speaks in ${Math.round(hostShare * 100)}% · ${usd(cost)}`,
+          `  ${segments.length} segments · host speaks in ${Math.round(hostShare * 100)}% · ${usd(cost)} · inserted ads: ${Math.round(droppedMs / 1000)} s dropped, the download ran ${Math.round(extraMs / 1000)} s past the feed's length`,
         ),
       );
     } catch (error) {

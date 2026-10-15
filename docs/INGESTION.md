@@ -88,7 +88,12 @@ The explorer marks episodes published in the last 7 days as new.
    evidence of who spoke. A diarized chunk (five minutes) credits its other voices to the guest(s)
    only when the host was heard in it and there are no more other voices than the episode has
    guests; otherwise they are `unknown` / `none` (P8-11), because OpenAI sometimes returns the host
-   under a second label.
+   under a second label. Ads the ad service inserts into a download are dropped from diarized
+   transcripts, and the timing after each closes up, so timestamps match the feed's own audio
+   (P8-12). They are found by language: the episodes are English, and the inserted ads are in the
+   language of wherever the audio is downloaded (German, from Germany). Ads in English are not
+   caught; each run records what it dropped against how much longer the download was than the feed
+   says, so a mismatch shows.
 2. **Units**: consecutive segments by the same verified speaker form a turn; unverified cues are
    their own units. A turn longer than 520 tokens is split at segment boundaries.
 3. **Packing**: units are packed to ~420 tokens (max 520), never splitting a unit, with up to 70
