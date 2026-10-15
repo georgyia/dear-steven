@@ -226,18 +226,24 @@ export const en = {
     micUnsupported: 'This browser can’t do voice here. Typing works just as well.',
     clipboard: 'Couldn’t reach the clipboard',
     needsKey: 'No free questions left here.',
+    crossSite: `I only answer questions asked on ${brand.name} itself, and this one came from another site. Open ${brand.name} at its own address and ask there.`,
   },
   /** Details under the error sentence; written on the server, in the visitor's language. */
   serverErrors: {
-    keyRejected: 'The OpenAI key was rejected. Check OPENAI_API_KEY in .env and restart.',
-    rateLimited: 'OpenAI is rate-limiting this key, or it has run out of credit.',
+    keyRejected:
+      'OpenAI didn’t accept the key this copy answers with, so I can’t answer just now. Try again later, or use your own key in Setup.',
+    rateLimited:
+      'OpenAI is holding back the key this copy answers with: too many questions at once, or no credit left. Try again later, or use your own key in Setup.',
     providerDown: 'OpenAI had a problem answering just now.',
     refused: 'OpenAI turned the request down.',
     unreachable: 'I couldn’t reach OpenAI just now.',
     internal: 'Something went wrong on my end.',
-    noKey: 'No OpenAI key is configured.',
-    noKnowledgeBase: 'The knowledge base could not be opened.',
+    noKey:
+      'This copy isn’t connected to OpenAI yet, so I can’t answer. Try again later, or use your own key in Setup.',
+    noKnowledgeBase:
+      'The conversations I answer from can’t be opened just now. Try again in a little while.',
     yourKeyRejected: 'OpenAI rejected your key. Check it in Setup, or forget it there.',
+    yourKeyRateLimited: 'OpenAI is rate-limiting your key, or it has run out of credit.',
     keyMalformed: 'That doesn’t look like an OpenAI secret key — they start with “sk-”.',
     keyNeedsHttps: 'Your own key can only be sent over HTTPS.',
     keyNoModel: (model: string) =>
@@ -274,8 +280,7 @@ export const en = {
     recording: 'The recording couldn’t be transcribed.',
   },
   empty: {
-    noKnowledge:
-      'Nothing’s loaded yet. Run the ingest command and I’ll have something to say — see “Set up”.',
+    noKnowledge: 'No conversations are loaded here yet, so there’s nothing to browse for now.',
   },
   /** Free questions on the operator's key (P8-02). */
   free: {
@@ -383,8 +388,7 @@ export const en = {
   video: {
     demoOff:
       'Video links are switched off in demo mode — demo episodes are fixtures, not real recordings.',
-    notLinked:
-      'This episode isn’t linked to its YouTube video yet. Run the match-youtube ingest step to add it.',
+    notLinked: 'This episode isn’t linked to its YouTube video yet.',
     notLinkedAudio:
       'This episode isn’t linked to its YouTube video yet — the podcast audio is below.',
     playFrom: (moment: string) => `Play the video here from ${moment}`,

@@ -93,35 +93,71 @@ describe('interface catalogues (P6-02)', () => {
   });
 });
 
-describe('no "·" separators (P7-02)', () => {
-  /** Every string a catalogue can produce: plain values, and functions called with sample values. */
-  function* strings(value: unknown, path: string): Generator<[string, string]> {
-    if (typeof value === 'string') yield [path, value];
-    else if (typeof value === 'function') {
-      for (const args of [
-        [3, 7, '2026-10-13', 4],
-        ['Ada', '12:34', 'Speaker not verified', 'twelve minutes', 'x'],
-        [true, false],
-        [1],
-      ]) {
-        try {
-          const out = (value as (...a: unknown[]) => unknown)(...args);
-          yield* strings(out, `${path}()`);
-        } catch {
-          // Not this signature; the next sample set may fit.
-        }
+/** Every string a catalogue can produce: plain values, and functions called with sample values. */
+function* strings(value: unknown, path: string): Generator<[string, string]> {
+  if (typeof value === 'string') yield [path, value];
+  else if (typeof value === 'function') {
+    for (const args of [
+      [3, 7, '2026-10-13', 4],
+      ['Ada', '12:34', 'Speaker not verified', 'twelve minutes', 'x'],
+      [true, false],
+      [1],
+      [0],
+    ]) {
+      try {
+        const out = (value as (...a: unknown[]) => unknown)(...args);
+        yield* strings(out, `${path}()`);
+      } catch {
+        // Not this signature; the next sample set may fit.
       }
-    } else if (Array.isArray(value)) {
-      for (const [i, v] of value.entries()) yield* strings(v, `${path}[${i}]`);
-    } else if (value && typeof value === 'object') {
-      for (const [k, v] of Object.entries(value)) yield* strings(v, `${path}.${k}`);
     }
+  } else if (Array.isArray(value)) {
+    for (const [i, v] of value.entries()) yield* strings(v, `${path}[${i}]`);
+  } else if (value && typeof value === 'object') {
+    for (const [k, v] of Object.entries(value)) yield* strings(v, `${path}.${k}`);
   }
+}
 
+describe('no "·" separators (P7-02)', () => {
   it('no visible string in either language uses a middle dot to separate things', () => {
     for (const [locale, messages] of Object.entries({ en, de })) {
       const dotted = [...strings(messages, locale)].filter(([, s]) => s.includes('·'));
       expect(dotted.map(([p, s]) => `${p}: ${s}`)).toEqual([]);
     }
+  });
+});
+
+describe('visitors read no operator steps (P10-08)', () => {
+  /**
+   * Written for whoever runs this copy, so they may name the env file, its settings and the CLI:
+   * the setup panel (`setup`; on a public copy it says what is configured), and the replies of
+   * guided setup (`serverErrors.setup*`), which only a `pnpm dev:setup` server on this machine
+   * sends. Everything else reaches visitors, who can do none of those things.
+   */
+  const OPERATOR_ONLY = /^(setup\.|serverErrors\.setup)/;
+  const OPERATOR_STEPS = [
+    { name: 'the env file', pattern: /\.env\b/ },
+    { name: 'an environment variable', pattern: /[A-Z_]{6,}/ },
+    { name: 'a CLI command', pattern: /\bpnpm\b|\bingest\b|\bmatch-youtube\b/i },
+  ];
+
+  it.each(Object.entries({ en, de }))(
+    'no visitor-facing %s string names one',
+    (locale, messages) => {
+      const found = [...strings(messages, '')]
+        .map(([path, text]) => [path.replace(/^\./, ''), text] as const)
+        .filter(([path]) => !OPERATOR_ONLY.test(path))
+        .flatMap(([path, text]) =>
+          OPERATOR_STEPS.filter(({ pattern }) => pattern.test(text)).map(
+            ({ name }) => `${locale}.${path} names ${name}: ${text}`,
+          ),
+        );
+      expect(found).toEqual([]);
+    },
+  );
+
+  it('still gives the operator their steps in the setup panel', () => {
+    expect(en.setup.openai.missing).toMatch(/OPENAI_API_KEY/);
+    expect(en.setup.kb.none).toMatch(/pnpm ingest/);
   });
 });

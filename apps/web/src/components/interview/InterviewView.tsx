@@ -9,6 +9,7 @@ import { ThinkingDots } from '@/components/ui/ThinkingDots';
 import GradualBlur from '@/components/vendor/react-bits/GradualBlur';
 import { useI18n } from '@/i18n/I18nProvider';
 import { aboutFromLearned } from '@/lib/aboutYou';
+import { canRetry } from '@/lib/api';
 import type { InterviewAction, InterviewState } from '@/lib/interview';
 import { DebriefView } from './DebriefView';
 import { button, display, eyebrow, field, primary } from './styles';
@@ -458,22 +459,25 @@ function Problem({
   onUseOwnKey,
 }: Pick<InterviewViewProps, 'state' | 'dispatch' | 'onUseOwnKey'>) {
   const { t } = useI18n();
+  const needsKey = state.errorCode === 'needs_key';
   return (
     <div
       role="alert"
       className="flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border border-oxblood/50 bg-oxblood-tint px-4 py-3 text-[15px] text-oxblood-1"
     >
       <span>
-        {state.needsKey ? (
+        {needsKey ? (
           <>
             {t.errors.needsKey}
             <span className="mt-0.5 block text-[13px] text-ivory-2">{state.error}</span>
           </>
+        ) : state.errorCode === 'cross_site' ? (
+          t.errors.crossSite
         ) : (
           state.error
         )}
       </span>
-      {state.needsKey && onUseOwnKey ? (
+      {needsKey && onUseOwnKey ? (
         <button
           type="button"
           onClick={onUseOwnKey}
@@ -482,13 +486,15 @@ function Problem({
           {t.free.useOwnKey}
         </button>
       ) : null}
-      <button
-        type="button"
-        onClick={() => dispatch({ type: 'retry' })}
-        className="rounded-full border border-oxblood-1/50 px-3 py-1 text-[13px] text-ivory-0 transition-colors hover:bg-oxblood/30"
-      >
-        {t.interview.retry}
-      </button>
+      {canRetry(state.errorCode) ? (
+        <button
+          type="button"
+          onClick={() => dispatch({ type: 'retry' })}
+          className="rounded-full border border-oxblood-1/50 px-3 py-1 text-[13px] text-ivory-0 transition-colors hover:bg-oxblood/30"
+        >
+          {t.interview.retry}
+        </button>
+      ) : null}
     </div>
   );
 }

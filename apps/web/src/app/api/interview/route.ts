@@ -4,7 +4,7 @@ import { ModerationUnavailableError } from '@dear-steven/core/safety';
 import { InterviewRequestSchema } from '@dear-steven/core/schema';
 import { MESSAGES } from '@/i18n';
 import { demoInterviewStep } from '@/server/demo-interview';
-import { describeFailure } from '@/server/errors';
+import { describeFailure, OPERATOR_HINT } from '@/server/errors';
 import {
   type FreeQuestion,
   freeLimitApplies,
@@ -77,6 +77,7 @@ export async function POST(req: Request) {
     cost += usd;
   });
   if (!model) {
+    console.error(`[interview] ${OPERATOR_HINT.noKey}`);
     if (free?.ok) free.giveBack();
     return jsonError(503, 'not_configured', copy.noKey);
   }

@@ -4,6 +4,7 @@ import { routeQuestion, safetyReply } from '@dear-steven/core/safety';
 import { AskRequestSchema } from '@dear-steven/core/schema';
 import { MESSAGES } from '@/i18n';
 import { streamDemoAnswer } from '@/server/demo';
+import { OPERATOR_HINT } from '@/server/errors';
 import { type FreeQuestion, freeLimitApplies, takeFreeQuestion } from '@/server/free-questions';
 import {
   answerLogger,
@@ -104,6 +105,7 @@ export async function POST(req: Request) {
 
   const model = getAnswerModel(config, onCost);
   if (!model) {
+    console.error(`[ask] ${OPERATOR_HINT.noKey}`);
     giveBack();
     return jsonError(503, 'not_configured', errors.noKey);
   }
@@ -112,7 +114,7 @@ export async function POST(req: Request) {
     store = getStore(config);
   } catch (error) {
     console.error(
-      '[ask] knowledge base unavailable',
+      `[ask] ${OPERATOR_HINT.noKnowledgeBase}`,
       error instanceof Error ? error.message : error,
     );
     giveBack();

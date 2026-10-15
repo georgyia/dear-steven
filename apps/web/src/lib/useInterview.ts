@@ -31,7 +31,7 @@ export function useInterview(uiLocale: InterviewRequest['uiLocale']) {
           dispatch({
             type: 'failed',
             message: error instanceof Error ? error.message : String(error),
-            needsKey: error instanceof AskError && error.code === 'needs_key',
+            ...(error instanceof AskError ? { code: error.code } : {}),
           });
         }
       });

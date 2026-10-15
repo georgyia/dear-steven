@@ -235,19 +235,24 @@ export const de: Messages = {
       'Dieser Browser kann hier keine Spracheingabe. Tippen funktioniert genauso gut.',
     clipboard: 'Die Zwischenablage war nicht erreichbar',
     needsKey: 'Hier sind keine freien Fragen mehr übrig.',
+    crossSite: `Ich beantworte nur Fragen, die direkt auf ${brand.name} gestellt werden, und diese kam von einer anderen Seite. Öffne ${brand.name} unter seiner eigenen Adresse und frag dort noch einmal.`,
   },
   serverErrors: {
     keyRejected:
-      'Der OpenAI-Schlüssel wurde abgelehnt. Prüfe OPENAI_API_KEY in der .env und starte neu.',
-    rateLimited: 'OpenAI drosselt diesen Schlüssel, oder das Guthaben ist aufgebraucht.',
+      'OpenAI hat den Schlüssel, mit dem diese Kopie antwortet, nicht angenommen, deshalb kann ich gerade nicht antworten. Versuch es später noch einmal, oder nutze deinen eigenen Schlüssel unter Einrichtung.',
+    rateLimited:
+      'OpenAI bremst den Schlüssel, mit dem diese Kopie antwortet: zu viele Fragen auf einmal, oder kein Guthaben mehr. Versuch es später noch einmal, oder nutze deinen eigenen Schlüssel unter Einrichtung.',
     providerDown: 'OpenAI hatte gerade ein Problem beim Antworten.',
     refused: 'OpenAI hat die Anfrage abgelehnt.',
     unreachable: 'Ich konnte OpenAI gerade nicht erreichen.',
     internal: 'Bei mir ist etwas schiefgelaufen.',
-    noKey: 'Es ist kein OpenAI-Schlüssel eingerichtet.',
-    noKnowledgeBase: 'Die Wissensbasis konnte nicht geöffnet werden.',
+    noKey:
+      'Diese Kopie ist noch nicht mit OpenAI verbunden, deshalb kann ich nicht antworten. Versuch es später noch einmal, oder nutze deinen eigenen Schlüssel unter Einrichtung.',
+    noKnowledgeBase:
+      'Die Gespräche, aus denen ich antworte, lassen sich gerade nicht öffnen. Versuch es in einer Weile noch einmal.',
     yourKeyRejected:
       'OpenAI hat deinen Schlüssel abgelehnt. Prüf ihn unter Einrichtung, oder vergiss ihn dort.',
+    yourKeyRateLimited: 'OpenAI drosselt deinen Schlüssel, oder sein Guthaben ist aufgebraucht.',
     keyMalformed:
       'Das sieht nicht nach einem geheimen OpenAI-Schlüssel aus — die beginnen mit „sk-“.',
     keyNeedsHttps: 'Deinen eigenen Schlüssel kann ich nur über HTTPS annehmen.',
@@ -291,7 +296,7 @@ export const de: Messages = {
   },
   empty: {
     noKnowledge:
-      'Noch ist nichts geladen. Führe den Ingest-Befehl aus, dann habe ich etwas zu sagen — siehe „Einrichten“.',
+      'Hier sind noch keine Gespräche geladen, deshalb gibt es gerade nichts zu durchsuchen.',
   },
   free: {
     left: (n) => (n === 1 ? 'Noch 1 freie Frage' : `Noch ${n} freie Fragen`),
@@ -396,8 +401,7 @@ export const de: Messages = {
   video: {
     demoOff:
       'Im Demo-Modus sind Videolinks ausgeschaltet — Demo-Folgen sind Beispiele, keine echten Aufnahmen.',
-    notLinked:
-      'Diese Folge ist noch nicht mit ihrem YouTube-Video verknüpft. Führe den Ingest-Schritt match-youtube aus, um das nachzuholen.',
+    notLinked: 'Diese Folge ist noch nicht mit ihrem YouTube-Video verknüpft.',
     notLinkedAudio:
       'Diese Folge ist noch nicht mit ihrem YouTube-Video verknüpft — das Podcast-Audio findest du unten.',
     playFrom: (moment) => `Video hier ab ${moment} abspielen`,

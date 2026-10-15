@@ -69,6 +69,18 @@ describe('the interview on the page (P7-06)', () => {
     expect(state).toMatchObject({ phase: 'learned', learned: { lines: [], demo: true } });
   });
 
+  it('keeps why a step failed until it is retried (P10-08)', () => {
+    let state = run({ type: 'start', setup: {} });
+    state = interviewReducer(state, {
+      type: 'failed',
+      message: 'No free questions left.',
+      code: 'needs_key',
+    });
+    expect(state).toMatchObject({ phase: 'error', errorCode: 'needs_key' });
+    state = interviewReducer(state, { type: 'retry' });
+    expect(state).toMatchObject({ phase: 'waiting', error: null, errorCode: null });
+  });
+
   it('ends with the safety reply when the server stops the interview', () => {
     const state = run(
       { type: 'start', setup: {} },
