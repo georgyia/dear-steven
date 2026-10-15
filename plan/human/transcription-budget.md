@@ -14,6 +14,8 @@ evidence. Cost: ~$0.36 per audio hour → ~$0.50 per average episode; ~$10 for 2
 2. Run, newest first:
    ```bash
    pnpm ingest transcribe --diarize --budget 5 --host-clip data/voiceprints/steven.wav --limit 10
+   # or, to add conversations the publisher has no transcript for:
+   pnpm ingest transcribe --diarize --missing --budget 5 --host-clip data/voiceprints/steven.wav --limit 10
    pnpm ingest attribute        # check host share and flags before trusting the labels
    pnpm ingest chunk --force    # re-chunk the diarized episodes
    pnpm ingest index            # embed the new passages

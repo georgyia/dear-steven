@@ -4,7 +4,7 @@ import { MODELS, PRICES } from '@dear-steven/core/models';
 import type { OpenAI } from '@dear-steven/core/openai';
 import type { Segment } from '@dear-steven/core/schema';
 import type { AudioChunk } from '../lib/ffmpeg.ts';
-import { withRetry } from '../lib/http.ts';
+import { mapLimit, withRetry } from '../lib/http.ts';
 
 /** The label OpenAI returns for the enrolled host voice. */
 export const HOST_LABEL = 'Steven';
@@ -59,27 +59,65 @@ export function hostReference(path: string): string {
   return `data:${mime};base64,${readFileSync(path).toString('base64')}`;
 }
 
+/**
+ * OpenAI takes about 0.45× a chunk's length to answer (measured 2026-10-15: 115–136 s for five
+ * minutes), and Node's fetch gives up on a response with no headers after five minutes. So chunks
+ * are five minutes long, and ten are asked at once to keep a long batch to hours, not days (the
+ * account allows 3,000 requests a minute; ten at once is about five).
+ */
+export const DIARIZE_CHUNK_SECONDS = 300;
+export const DIARIZE_PARALLEL = 10;
+
+/**
+ * Each request gets its own timeout, past the shared client's 60 s, and no retries of the SDK's
+ * own: `withRetry` decides (`retryDiarization`).
+ */
+export const DIARIZE_REQUEST = { timeout: 10 * 60_000, maxRetries: 0 } as const;
+
+/**
+ * Rate limits, server errors and dropped connections are tried again. A timeout is not: OpenAI may
+ * have finished, and billed, the attempt the client stopped waiting for. Nor is a request it
+ * refused (4xx), which would fail the same way again.
+ */
+export function retryDiarization(error: unknown): boolean {
+  if (
+    error instanceof Error &&
+    (error.name.includes('Timeout') || /timed out/i.test(error.message))
+  ) {
+    return false;
+  }
+  const status = (error as { status?: unknown } | null)?.status;
+  return typeof status !== 'number' || status === 429 || status >= 500;
+}
+
+/** Each chunk diarized with the host enrolled, `parallel` at a time, returned in order. */
 export async function diarizeChunks(
   client: OpenAI,
   chunks: AudioChunk[],
   reference: string,
   onChunk?: (i: number) => void,
+  parallel = DIARIZE_PARALLEL,
 ): Promise<DiarizedChunk[]> {
-  const out: DiarizedChunk[] = [];
-  for (const [i, chunk] of chunks.entries()) {
-    const res = await withRetry(() =>
-      client.audio.transcriptions.create({
-        file: createReadStream(chunk.path),
-        model: MODELS.diarize,
-        response_format: 'diarized_json',
-        chunking_strategy: 'auto',
-        language: 'en',
-        known_speaker_names: [HOST_LABEL],
-        known_speaker_references: [reference],
-      }),
+  return mapLimit(chunks, parallel, async (chunk, i) => {
+    const res = await withRetry(
+      () =>
+        client.audio.transcriptions.create(
+          {
+            file: createReadStream(chunk.path),
+            model: MODELS.diarize,
+            response_format: 'diarized_json',
+            chunking_strategy: 'auto',
+            language: 'en',
+            known_speaker_names: [HOST_LABEL],
+            known_speaker_references: [reference],
+          },
+          DIARIZE_REQUEST,
+        ),
+      { retry: retryDiarization, baseMs: 5_000 },
     );
     const segments = 'segments' in res && Array.isArray(res.segments) ? res.segments : [];
-    out.push({
+    onChunk?.(i);
+    return {
       offsetMs: chunk.offsetMs,
       segments: segments.map((s) => ({
         start: Number((s as { start: number }).start),
@@ -87,8 +125,6 @@ export async function diarizeChunks(
         speaker: String((s as { speaker?: string }).speaker ?? ''),
         text: String((s as { text: string }).text),
       })),
-    });
-    onChunk?.(i);
-  }
-  return out;
+    };
+  });
 }

@@ -451,6 +451,45 @@ P8-03. **Size:** M.
 
 ## Maintenance
 
+### P8-10 — fix(ingest): paid transcription in batches: only episodes with no transcript, and no audio left on disk
+
+<!-- issue {"id":"P8-10","title":"fix(ingest): paid transcription in batches: only episodes with no transcript, and no audio left on disk","labels":["type:service","stage:m6","track:ingest","owner:ai","risk:medium","P1","size:S"],"milestone":"M6 Summaries and open access","depends":[],"github":99} -->
+
+#### Context
+The owner asked for 186 more conversations to be transcribed from their audio, with speaker labels
+(H-05), to reach 300 of 739. That's about $133 and 368 hours of audio. Three things in `pnpm ingest
+transcribe --diarize` stand in the way of a batch that size:
+
+- **It picks the wrong episodes.** It takes every episode not yet diarized, newest first, so
+  `--limit 186` would re-do the 114 that already have the publisher's transcripts before reaching
+  any of the 625 that have none.
+- **It fills the disk.** Each episode's audio (about a megabyte a minute, 112 MB on average for
+  these) stays in `data/cache/audio/` after use. The batch would leave about 21 GB on a disk with 16
+  GB free.
+- **A download cut short is taken for the whole file.** A run of 186 downloads will see a dropped
+  connection. The partial file is kept under its final name and used next time.
+
+#### Goal
+A paid transcription batch adds only conversations that have no transcript, can run to the end on a
+nearly full disk, and can be stopped and resumed.
+
+#### Acceptance criteria
+- [ ] `--missing` takes only episodes with no transcript (status not `fetched`), newest first.
+      Without it, behaviour is as before.
+- [ ] Each episode's audio and chunks are deleted after it, whether it worked or failed.
+- [ ] Downloads go to `<file>.part` and are renamed when complete; a cut-short download leaves
+      nothing under the final name.
+- [ ] The run says first how many episodes it covers, roughly what they cost, and where it stops.
+- [ ] A diarization request gets long enough to finish (minutes, not the shared client's 60 s),
+  and a timeout is never tried again: OpenAI may have billed it. *(Added after the first real run
+  timed out, 2026-10-15.)*
+- [ ] Tests for each, mutation-checked. INGESTION and the H-05 runbook name `--missing`.
+
+#### Dependencies
+None. **Size:** S.
+
+---
+
 ### P8-06 — chore(ci): give the e2e job room for the servers it now runs
 
 <!-- issue {"id":"P8-06","title":"chore(ci): give the e2e job room for the servers it now runs","labels":["type:infra","track:infra","owner:ai","risk:low","P1","size:S","stage:m6"],"milestone":"M6 Summaries and open access","depends":[],"github":81} -->

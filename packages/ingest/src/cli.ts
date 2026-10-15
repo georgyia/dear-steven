@@ -28,8 +28,9 @@ ${c.ember('Stages')} ${c.dim('(each idempotent and resumable)')}
   match-youtube [--refresh]        link episodes to YouTube videos (needs YOUTUBE_API_KEY)
   transcribe --from vtt [--limit N] [--episode <ref>] [--force]
                                    fetch the publisher's free VTT transcripts
-  transcribe --diarize --budget <usd> --host-clip <file> [--limit N | --episode <ref>]
-                                   paid: speaker-labelled transcripts from the audio
+  transcribe --diarize --budget <usd> --host-clip <file> [--missing] [--limit N | --episode <ref>]
+                                   paid: speaker-labelled transcripts from the audio;
+                                   --missing: only episodes with no transcript yet
   attribute                        QA report on diarized speaker labels
   chunk [--force] [--episode <ref>] split transcripts into passages (keyword search works now)
   index [--dry-run] [--budget <usd>]
@@ -67,6 +68,7 @@ async function main(argv: string[]) {
       diarize: { type: 'boolean', default: false },
       budget: { type: 'string' },
       'host-clip': { type: 'string' },
+      missing: { type: 'boolean', default: false },
       'include-bonus': { type: 'boolean', default: false },
       guests: { type: 'string' },
       feed: { type: 'string' },
@@ -124,6 +126,7 @@ async function main(argv: string[]) {
           force: values.force,
           budget: num(values.budget, 'budget'),
           hostClip: values['host-clip'],
+          missing: values.missing,
         });
       }
       case 'attribute':

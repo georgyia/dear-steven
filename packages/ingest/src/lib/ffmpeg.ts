@@ -1,5 +1,12 @@
 import { spawnSync } from 'node:child_process';
-import { createWriteStream, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import {
+  createWriteStream,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  renameSync,
+  statSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -29,16 +36,22 @@ export function probeDurationMs(path: string): number {
   return Math.round(seconds * 1000);
 }
 
+/**
+ * Downloads to `<path>.part` and renames it once complete, so a download cut short (a dropped
+ * connection, Ctrl-C) is never taken for the whole file next time.
+ */
 export async function download(url: string, path: string): Promise<void> {
   if (existsSync(path) && statSync(path).size > 0) return;
+  const part = `${path}.part`;
   await withRetry(async () => {
     const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT }, redirect: 'follow' });
     if (!res.ok || !res.body) throw new Error(`Download failed: HTTP ${res.status}`);
     await pipeline(
       Readable.fromWeb(res.body as import('node:stream/web').ReadableStream),
-      createWriteStream(path),
+      createWriteStream(part),
     );
   });
+  renameSync(part, path);
 }
 
 export interface AudioChunk {

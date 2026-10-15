@@ -7,6 +7,7 @@ import { download, hasBinary, probeDurationMs, splitAudio } from '../lib/ffmpeg.
 import { fetchText, mapLimit } from '../lib/http.ts';
 import { c, progress, usd } from '../lib/output.ts';
 import {
+  DIARIZE_CHUNK_SECONDS,
   diarizationCostUsd,
   diarizeChunks,
   hostReference,
@@ -23,6 +24,11 @@ export interface TranscribeOptions {
   /** Required for `diarize`: the most this run may spend, in USD. */
   budget?: number;
   hostClip?: string;
+  /**
+   * `diarize` only: just the episodes with no transcript at all, newest first, so a batch adds
+   * conversations instead of re-doing ones the publisher's transcripts already cover.
+   */
+  missing?: boolean;
 }
 
 function pick(ctx: Context, opts: TranscribeOptions, eligible: (e: Episode) => boolean): Episode[] {
@@ -42,6 +48,19 @@ function pick(ctx: Context, opts: TranscribeOptions, eligible: (e: Episode) => b
     .listEpisodes({ types: ['full'] })
     .filter((e) => (only === null || only.has(e.id)) && eligible(e))
     .slice(0, opts.limit ?? Number.MAX_SAFE_INTEGER);
+}
+
+/**
+ * Which episodes a diarized run takes: any with audio not yet diarized (`--force`: diarized ones
+ * too), or with `--missing` only those with no transcript at all.
+ */
+export function diarizable(
+  e: Episode,
+  opts: Pick<TranscribeOptions, 'force' | 'missing'>,
+): boolean {
+  if (e.audioUrl === null) return false;
+  if (opts.missing) return e.transcriptStatus !== 'fetched';
+  return opts.force || e.transcriptSource !== 'openai-diarize';
 }
 
 export async function transcribe(ctx: Context, opts: TranscribeOptions) {
@@ -107,13 +126,13 @@ async function diarize(ctx: Context, opts: TranscribeOptions) {
 
   const client = ctx.openai();
   const reference = hostReference(clip);
-  const episodes = pick(
-    ctx,
-    opts,
-    (e) => e.audioUrl !== null && (opts.force || e.transcriptSource !== 'openai-diarize'),
-  );
+  const episodes = pick(ctx, opts, (e) => diarizable(e, opts));
   const cacheDir = join(ctx.dataDir, 'cache', 'audio');
   mkdirSync(cacheDir, { recursive: true });
+  const total = episodes.reduce((n, e) => n + diarizationCostUsd(e.durationMs ?? 0), 0);
+  console.log(
+    `${episodes.length} episodes, about ${usd(total)} of audio; this run stops at ${usd(opts.budget)}.`,
+  );
 
   let spent = 0;
   for (const e of episodes) {
@@ -127,12 +146,12 @@ async function diarize(ctx: Context, opts: TranscribeOptions) {
       break;
     }
     const run = ctx.store.startRun(e.id, 'transcribe', { mode: 'diarize', estimateUsd: estimate });
+    const audio = join(cacheDir, `${e.id}.mp3`);
     const work = join(cacheDir, `${e.id}.chunks`);
     try {
       console.log(`${c.bold(e.title)} ${c.dim(`~${usd(estimate)}`)}`);
-      const audio = join(cacheDir, `${e.id}.mp3`);
       await download(e.audioUrl as string, audio);
-      const chunks = splitAudio(audio, work);
+      const chunks = splitAudio(audio, work, DIARIZE_CHUNK_SECONDS);
       const durationMs = chunks.reduce((n, ch) => n + ch.durationMs, 0);
       const bar = progress(chunks.length, 'audio chunks');
       const diarized = await diarizeChunks(client, chunks, reference, () => bar.tick(e.title));
@@ -157,7 +176,10 @@ async function diarize(ctx: Context, opts: TranscribeOptions) {
       });
       console.log(c.red(`  failed: ${error instanceof Error ? error.message : error}`));
     } finally {
+      // An episode's audio is about a megabyte a minute: kept, a batch would fill the disk.
       rmSync(work, { recursive: true, force: true });
+      rmSync(audio, { force: true });
+      rmSync(`${audio}.part`, { force: true });
     }
   }
   console.log(`Spent ${usd(spent)} of ${usd(opts.budget)}. ${c.dim('Next: pnpm ingest chunk')}`);
