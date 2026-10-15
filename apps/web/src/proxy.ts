@@ -13,8 +13,8 @@ import {
  * Runs before every page and API request.
  *
  * - API: nothing but a read answers a request from another site's page (P8-08); with an access
- *   code set, nothing but the passcode route answers a browser without a valid access cookie
- *   (P6-08). One place, so a new route can't forget either.
+ *   code set, nothing but the passcode route and the health check answers a browser without a
+ *   valid access cookie (P6-08, P10-02). One place, so a new route can't forget either.
  * - Pages: a fresh script nonce for every page (P6-09). Next reads the nonce from the request's
  *   Content-Security-Policy header and stamps it on its own scripts, which is why every page is
  *   rendered per request. (Whether to show the passcode screen is the page's decision.) The other
@@ -43,12 +43,19 @@ async function guardApi(request: NextRequest) {
     return refuse(403, 'cross_site', 'Requests from other sites are refused.');
   }
   const code = accessCodeFrom();
-  if (!code || path === ACCESS_PATH) return NextResponse.next();
+  if (!code || UNGATED.includes(path)) return NextResponse.next();
   if (await validAccessToken(code, request.cookies.get(ACCESS_COOKIE)?.value)) {
     return NextResponse.next();
   }
   return refuse(401, 'locked', 'This copy of Dear Steven is private. Enter the passcode first.');
 }
+
+/**
+ * Routes that answer without the access code: the passcode route itself, and the health check
+ * (P10-02), which container and platform checks call without a cookie and which says nothing but
+ * whether this deployment can answer, and if not, a reason code.
+ */
+const UNGATED: readonly string[] = [ACCESS_PATH, '/api/health'];
 
 /**
  * Routes that decide about other sites themselves (P8-08): guided setup answers 404 to anything it

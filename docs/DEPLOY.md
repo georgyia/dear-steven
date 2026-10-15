@@ -2,7 +2,7 @@
 
 | Status | Owner | Updated | Feeds |
 |--------|-------|---------|-------|
-| reviewed | ai | 2026-10-16 | P5-10, P10-01 |
+| reviewed | ai | 2026-10-16 | P5-10, P10-01, P10-02 |
 
 Dear Steven is one Node process and one SQLite file (ADR-001, ADR-002). Any host that runs a
 container with a persistent volume works; serverless platforms do not, while the knowledge base
@@ -29,6 +29,22 @@ contains no data and no secrets. Build the knowledge base where you like (locall
 well. Without a cap it answers as if no key was given: demo answers, `/api/status` reports
 `"demoReason":"no_daily_cap"`, and the log says once which variable to set. Visitors who bring
 their own key still get live answers. `pnpm dev` and the ingest CLI are not held back.
+
+## Health check
+
+`GET /api/health` (P10-02) answers `200 {"ok":true}` only when the deployment can do what it was
+configured to do, and `503 {"ok":false,"reason":"…"}` otherwise. The image's `HEALTHCHECK` and the
+Fly.io check poll it. It answers without the access code and says nothing else: no paths,
+messages, counts or spend. It never calls OpenAI.
+
+- **Healthy:** forced demo (`DEAR_STEVEN_DEMO=1`); or, live or keyless on purpose (visitors bring
+  their own key), a knowledge base that is ready: the database opens, it has passages, and the
+  folder it lives in can be written.
+- **Reasons:** `no_database` (no file at `DEAR_STEVEN_DB_PATH`), `empty` (no passages yet),
+  `store_error` (the file doesn't open as a knowledge base; `/api/status` and the log say why),
+  `data_dir_read_only` (the folder can't be written, so the spend ledger, the free-question counts
+  and the share-link secret can't be saved: a volume owned by root is the usual cause), and
+  `no_daily_cap` (your key is held back, above).
 
 ## Variables
 
@@ -92,9 +108,9 @@ secrets is a human step (`plan/human/api-keys.md`).
 - **Guided setup** (P6-04) is for a local clone only: never set `DEAR_STEVEN_SETUP_TOKEN` or
   `DEAR_STEVEN_SETUP_HOST` on a deployment. Without them every `/api/setup` route answers 404, as
   it also does for any request whose Host isn't loopback.
-- **Access code** (`DEAR_STEVEN_ACCESS_CODE`): the page asks for it, and every API route answers
-  401 without the signed cookie it sets. Guesses are limited to five a minute per client and
-  thirty in all.
+- **Access code** (`DEAR_STEVEN_ACCESS_CODE`): the page asks for it, and every API route but the
+  health check answers 401 without the signed cookie it sets. Guesses are limited to five a minute
+  per client and thirty in all.
 
 - **Rate limits** are in memory, per process (`apps/web/src/server/rate-limit.ts`). With more than
   one instance, put a shared limiter in front or keep to one machine.
