@@ -39,7 +39,81 @@ describe('mapDiarizedSegments', () => {
       text: 'What did you learn?',
     });
     expect(segs[1]).toMatchObject({ speaker: 'guest', speakerName: 'Dana White' });
-    expect(segs[2]).toMatchObject({ idx: 2, startMs: 1_381_000, speaker: 'guest' });
+    // The later chunk never heard the host, so its one voice could be anyone (P8-11).
+    expect(segs[2]).toMatchObject({
+      idx: 2,
+      startMs: 1_381_000,
+      speaker: 'unknown',
+      speakerName: null,
+      attributionMethod: 'none',
+    });
+  });
+
+  it('credits nobody when the host comes back under a second label', () => {
+    // The same five minutes of Oz Pearlman, diarized once: 5 s as Steven, 47 s of him as "B".
+    const segs = mapDiarizedSegments(
+      [
+        {
+          offsetMs: 0,
+          segments: [
+            {
+              start: 53,
+              end: 58,
+              speaker: HOST_LABEL,
+              text: 'And in your case, leaving Merrill Lynch…',
+            },
+            { start: 60, end: 80, speaker: 'B', text: 'Statistically, the chance of that is low.' },
+            { start: 80, end: 95, speaker: 'A', text: 'A lot of money.' },
+          ],
+        },
+      ],
+      ['Oz Pearlman'],
+    );
+    expect(segs.map((x) => [x.speaker, x.speakerName])).toEqual([
+      ['host', 'Steven Bartlett'],
+      ['unknown', null],
+      ['unknown', null],
+    ]);
+    expect(segs.filter((x) => x.speaker === 'unknown').map((x) => x.attributionMethod)).toEqual([
+      'none',
+      'none',
+    ]);
+  });
+
+  it('lets a panel have as many voices as it has guests, and no more', () => {
+    const chunk = (labels: string[]) => [
+      {
+        offsetMs: 0,
+        segments: [HOST_LABEL, ...labels].map((speaker, i) => ({
+          start: i,
+          end: i + 1,
+          speaker,
+          text: `Line ${i}.`,
+        })),
+      },
+    ];
+    const panel = ['Daniel Priestley', 'Nick Hanauer'];
+    expect(mapDiarizedSegments(chunk(['A', 'B']), panel).map((x) => x.speaker)).toEqual([
+      'host',
+      'guest',
+      'guest',
+    ]);
+    expect(mapDiarizedSegments(chunk(['A', 'B', 'C']), panel).map((x) => x.speaker)).toEqual([
+      'host',
+      'unknown',
+      'unknown',
+      'unknown',
+    ]);
+    // No guest known from the title: one other voice, unnamed; two, unverified.
+    expect(mapDiarizedSegments(chunk(['A']), []).map((x) => [x.speaker, x.speakerName])).toEqual([
+      ['host', 'Steven Bartlett'],
+      ['guest', null],
+    ]);
+    expect(mapDiarizedSegments(chunk(['A', 'B']), []).map((x) => x.speaker)).toEqual([
+      'host',
+      'unknown',
+      'unknown',
+    ]);
   });
 
   it('keeps guests anonymous on multi-guest panels', () => {

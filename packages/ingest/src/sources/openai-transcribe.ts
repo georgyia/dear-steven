@@ -15,27 +15,35 @@ export interface DiarizedChunk {
 }
 
 /**
- * Diarized chunks → transcript segments. The enrolled host voice becomes `host`; every other voice
- * is a `guest`, named only when the episode has exactly one known guest (multi-guest panels keep
- * the speaker anonymous rather than guessing which guest spoke).
+ * Diarized chunks → transcript segments. The enrolled host voice becomes `host`. Other voices are
+ * credited to the guest(s) only when a chunk leaves no doubt (P8-11): the host was heard in it, and
+ * there are no more other voices than the episode has guests (one when none is known). OpenAI
+ * doesn't always recognise the host: the same five minutes once came back with 47 s of his voice
+ * under a second label, which would have put his words in the guest's mouth. Anything less clear
+ * is "speaker not verified", as RSS transcripts are. A guest is named only when the episode has
+ * exactly one; panels keep the speaker anonymous rather than guessing which guest spoke.
  */
 export function mapDiarizedSegments(chunks: DiarizedChunk[], guestNames: string[]): Segment[] {
   const soleGuest = guestNames.length === 1 ? (guestNames[0] ?? null) : null;
   const out: Segment[] = [];
   for (const chunk of chunks) {
-    for (const s of chunk.segments) {
-      const text = s.text.trim();
-      if (!text) continue;
+    const spoken = chunk.segments.filter((s) => s.text.trim());
+    const others = new Set(spoken.map((s) => s.speaker).filter((v) => v !== HOST_LABEL));
+    const clear =
+      spoken.some((s) => s.speaker === HOST_LABEL) && others.size <= Math.max(1, guestNames.length);
+    for (const s of spoken) {
       const isHost = s.speaker === HOST_LABEL;
+      const speaker = isHost ? 'host' : clear ? 'guest' : 'unknown';
       out.push({
         idx: out.length,
         startMs: Math.round(chunk.offsetMs + s.start * 1000),
         endMs: Math.round(chunk.offsetMs + s.end * 1000),
-        speaker: isHost ? 'host' : 'guest',
-        speakerName: isHost ? 'Steven Bartlett' : soleGuest,
-        attributionMethod: 'diarization',
+        speaker,
+        speakerName:
+          speaker === 'host' ? 'Steven Bartlett' : speaker === 'guest' ? soleGuest : null,
+        attributionMethod: speaker === 'unknown' ? 'none' : 'diarization',
         attributionConfidence: null,
-        text,
+        text: s.text.trim(),
       });
     }
   }
