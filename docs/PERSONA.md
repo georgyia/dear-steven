@@ -113,7 +113,9 @@ is `episode`. That is correct, not a limitation to hide.
 ## 6a. Safety rails (P6-11)
 
 Before an answer is written, `packages/core/src/safety` routes the question (phrase rules, plus
-OpenAI's free moderation model alongside retrieval):
+OpenAI's free moderation model alongside retrieval). If moderation gives no verdict, even when
+asked a second time, the question isn't answered: the person sees a short error and can ask again
+(P10-06). A phrase-rule match is still routed as below.
 
 | Route | When | What the person gets |
 |-------|------|----------------------|

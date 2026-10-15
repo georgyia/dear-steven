@@ -1,6 +1,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { MODERATION_UNAVAILABLE } from '@dear-steven/core/copy';
 import type { InterviewReply, InterviewTurn } from '@dear-steven/core/schema';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MESSAGES } from '@/i18n';
@@ -134,5 +135,45 @@ describe('POST /api/interview past the daily cap (P6-08)', () => {
     const { reply } = await step({ setup: {}, turns: [], action: 'next' });
     expect(reply).toMatchObject({ type: 'ended', reason: 'resting' });
     expect(network).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/interview when moderation gives no verdict (P10-06)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it('stops with an upstream error in the visitor’s language, and asks the model nothing', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'dear-steven-interview-moderation-'));
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test-moderation-down');
+    vi.stubEnv('DEAR_STEVEN_DEMO', '');
+    vi.stubEnv('DEAR_STEVEN_DB_PATH', join(dir, 'kb.db'));
+    vi.stubEnv('DEAR_STEVEN_DAILY_BUDGET_USD', '');
+    vi.stubEnv('DEAR_STEVEN_FREE_QUESTIONS', '');
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // OpenAI refuses every call, echoing text that must never be shown or logged.
+    const network = vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ error: { message: 'Moderation refused: sk-test-mod' } }), {
+          status: 400,
+          headers: { 'content-type': 'application/json' },
+        }),
+    );
+
+    const { res, reply } = await step({
+      setup: {},
+      turns: [{ question: 'What do you do?', stage: 'opening', answer: 'I run a design studio.' }],
+      action: 'next',
+      uiLocale: 'de',
+    });
+    expect(res.status).toBe(502);
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(reply.error).toEqual({ code: 'upstream', message: MODERATION_UNAVAILABLE.de });
+    const called = network.mock.calls.map(([url]) => new URL(String(url)).pathname);
+    expect(called).toEqual(['/v1/moderations', '/v1/moderations']);
+    expect(log).toHaveBeenCalledTimes(1);
+    expect(String(log.mock.calls[0]?.[0])).toContain('moderation unavailable');
+    expect(JSON.stringify(log.mock.calls)).not.toContain('sk-test');
   });
 });

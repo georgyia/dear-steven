@@ -3,7 +3,14 @@ import { locateQuote, normalise } from '../answer/quotes.ts';
 import { detectLanguage } from '../language/detect.ts';
 import { RESTING_REPLY } from '../persona/copy.ts';
 import { personaLint } from '../persona/persona.ts';
-import { type ModerationResult, routeQuestion, safetyReply } from '../safety/index.ts';
+import {
+  ModerationUnavailableError,
+  type Moderator,
+  moderationVerdict,
+  routeQuestion,
+  safetyReply,
+  UNAVAILABLE,
+} from '../safety/index.ts';
 import {
   type Debrief,
   type DebriefScores,
@@ -38,7 +45,8 @@ export interface InterviewDeps {
   model: AnswerModel;
   /** For style examples; an interview works without one. */
   store: KnowledgeStore | null;
-  moderate?: (text: string, signal: AbortSignal) => Promise<ModerationResult>;
+  /** Without it (demo mode), the phrase rules decide alone; with it, no verdict means no step. */
+  moderate?: Moderator;
 }
 
 const words = (text: string) => text.split(/\s+/).filter(Boolean).length;
@@ -225,7 +233,9 @@ async function ended(
   if (!said) return null;
   let route = routeQuestion(said, null);
   if (!ENDINGS.has(route.kind) && deps.moderate) {
-    route = routeQuestion(said, await deps.moderate(said, signal).catch(() => null));
+    const verdict = await moderationVerdict(deps.moderate, said, signal);
+    if (verdict === UNAVAILABLE) throw new ModerationUnavailableError(request.uiLocale);
+    route = routeQuestion(said, verdict);
   }
   if (route.kind !== 'crisis' && route.kind !== 'refuse') return null;
   let blocks: ResolvedBlock[] = [];
@@ -251,9 +261,11 @@ export function restingInterview(locale: InterviewRequest['uiLocale'] = 'en'): I
 
 /**
  * One step of an interview (P7-06). The safety rails see every answer first: a crisis or refused
- * answer ends the interview with the fixed reply. Then either the next question (checked, retried
- * once, else a fixed question for the stage) or, once the arc is done or the visitor stops,
- * "What I learned about you" with each line's evidence checked against their own words.
+ * answer ends the interview with the fixed reply, and an answer moderation gives no verdict on
+ * throws `ModerationUnavailableError` before the model is asked anything (P10-06). Then either the
+ * next question (checked, retried once, else a fixed question for the stage) or, once the arc is
+ * done or the visitor stops, "What I learned about you" with each line's evidence checked against
+ * their own words.
  */
 export async function interviewStep(
   deps: InterviewDeps,

@@ -1,5 +1,6 @@
 import { uiLocaleFrom } from '@dear-steven/core/copy';
 import { interviewStep, restingInterview } from '@dear-steven/core/interview';
+import { ModerationUnavailableError } from '@dear-steven/core/safety';
 import { InterviewRequestSchema } from '@dear-steven/core/schema';
 import { MESSAGES } from '@/i18n';
 import { demoInterviewStep } from '@/server/demo-interview';
@@ -102,6 +103,10 @@ export async function POST(req: Request) {
     return Response.json(reply, { headers });
   } catch (error) {
     if (free?.ok && cost === 0) free.giveBack();
+    if (error instanceof ModerationUnavailableError) {
+      // No safety verdict, so no next step (P10-06); core has logged `moderation unavailable`.
+      return jsonError(502, error.code, error.message, NO_STORE);
+    }
     const failure = describeFailure(error, uiLocale, config.keySource);
     console.error('[interview] step failed:', failure.log);
     return jsonError(502, failure.code, failure.message, NO_STORE);

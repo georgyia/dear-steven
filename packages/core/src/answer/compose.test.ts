@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { MODERATION_UNAVAILABLE, type UiLocale } from '../persona/copy.ts';
 import { ABOUT_THE_USER, TALK_STYLE } from '../persona/persona.ts';
 import type { AskEvent, FinalAnswer, ModelAnswer, ModelBlock } from '../schema/index.ts';
 import type { KnowledgeStore } from '../store/index.ts';
@@ -321,6 +322,7 @@ describe('composeAnswer — safety rails (P6-11)', () => {
     question: string,
     extra: Partial<Parameters<typeof composeAnswer>[0]> = {},
     locale?: string,
+    uiLocale?: UiLocale,
   ) => {
     const events: AskEvent[] = [];
     let record: AnswerRecord | null = null;
@@ -333,7 +335,12 @@ describe('composeAnswer — safety rails (P6-11)', () => {
         onComplete: (r) => (record = r),
         ...extra,
       },
-      { question, history: [], ...(locale ? { locale } : {}) },
+      {
+        question,
+        history: [],
+        ...(locale ? { locale } : {}),
+        ...(uiLocale ? { uiLocale } : {}),
+      },
       new AbortController().signal,
     )) {
       events.push(e);
@@ -378,15 +385,98 @@ describe('composeAnswer — safety rails (P6-11)', () => {
     expect(text(final)).toMatch(/findahelpline\.com/);
   });
 
-  it('still answers when moderation is unavailable', async () => {
+  it('still answers with no moderator configured (demo mode): no moderation still answers', async () => {
     const { model, calls } = scripted(good);
-    const { final } = await compose(model, 'Why do I procrastinate?', {
-      moderate: async () => {
-        throw new Error('network down');
-      },
-    });
+    const { final } = await compose(model, 'Why do I procrastinate?');
     expect(calls.stream).toBe(1);
     expect(final?.mode).toBe('grounded');
+  });
+
+  describe('when moderation can’t give a verdict (P10-06)', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    /** A moderator that fails `failures` times (a 503), then finds nothing; it counts its calls. */
+    const flaky = (failures: number) => {
+      const calls = { n: 0 };
+      const moderate = async () => {
+        calls.n += 1;
+        if (calls.n <= failures)
+          throw Object.assign(new Error('Service Unavailable'), { status: 503 });
+        return { flagged: false, categories: {}, scores: {} };
+      };
+      return { moderate, calls };
+    };
+
+    it('fails twice: no answer, an upstream error in the interface language, one log line', async () => {
+      const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+      for (const uiLocale of ['en', 'de'] as const) {
+        log.mockClear();
+        const { model, calls } = scripted(good);
+        const moderator = flaky(Number.POSITIVE_INFINITY);
+        const { events, final, record } = await compose(
+          model,
+          'Why do I procrastinate?',
+          { moderate: moderator.moderate },
+          undefined,
+          uiLocale,
+        );
+        expect(moderator.calls.n).toBe(2);
+        expect(calls).toEqual({ stream: 0, repair: 0, condense: 0 });
+        expect(events.some((e) => e.type === 'block.done' || e.type === 'sources')).toBe(false);
+        expect(final).toBeUndefined();
+        expect(record).toBeNull();
+        expect(events.at(-1)).toEqual({
+          type: 'error',
+          code: 'upstream',
+          message: MODERATION_UNAVAILABLE[uiLocale],
+        });
+        expect(log).toHaveBeenCalledTimes(1);
+        expect(String(log.mock.calls[0]?.[0])).toContain('moderation unavailable');
+      }
+    });
+
+    it('fails once, then gives a verdict: answered as normal', async () => {
+      const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { model, calls } = scripted(good);
+      const moderator = flaky(1);
+      const { events, final } = await compose(model, 'Why do I procrastinate?', {
+        moderate: moderator.moderate,
+      });
+      expect(moderator.calls.n).toBe(2);
+      expect(calls.stream).toBe(1);
+      expect(final?.mode).toBe('grounded');
+      expect(events.some((e) => e.type === 'error')).toBe(false);
+      expect(log).not.toHaveBeenCalled();
+    });
+
+    it('is down, and a crisis phrase still gets the crisis reply, without asking it', async () => {
+      const moderator = flaky(Number.POSITIVE_INFINITY);
+      const { events, final, record } = await compose(
+        untouchable,
+        'I don’t want to be alive anymore',
+        { moderate: moderator.moderate },
+        'en-GB',
+      );
+      expect(moderator.calls.n).toBe(0);
+      expect(events.some((e) => e.type === 'error')).toBe(false);
+      expect(text(final)).toMatch(/116 123/);
+      expect(record?.safety).toEqual({ kind: 'crisis' });
+    });
+
+    it('is down in talk mode too: the model is not asked', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { model, calls } = scripted(good);
+      const events: AskEvent[] = [];
+      for await (const e of composeAnswer(
+        { store: store1(), model, embedder: null, moderate: flaky(2).moderate },
+        { question: 'Why do I procrastinate?', history: [], mode: 'talk' },
+        new AbortController().signal,
+      )) {
+        events.push(e);
+      }
+      expect(calls.stream).toBe(0);
+      expect(events.at(-1)).toMatchObject({ type: 'error', code: 'upstream' });
+    });
   });
 
   it('declines to put words in Steven’s mouth, without asking the model', async () => {

@@ -8,3 +8,9 @@ export {
 } from './replies.ts';
 export { type CrisisResources, countryOf, crisisResources } from './resources.ts';
 export { type ModerationResult, routeQuestion, type SafetyRoute, type Stakes } from './route.ts';
+export {
+  ModerationUnavailableError,
+  type Moderator,
+  moderationVerdict,
+  UNAVAILABLE,
+} from './verdict.ts';
