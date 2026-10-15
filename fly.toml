@@ -1,0 +1,49 @@
+# Dear Steven on Fly.io: one machine, one volume. The runbook is docs/DEPLOY.md.
+#
+# Change `app` and `primary_region` to yours. The port, the volume's mount path and the health
+# check must match the Dockerfile and /api/health: apps/web/src/deploy.test.ts checks that they do.
+# Secrets (OPENAI_API_KEY, DEAR_STEVEN_DAILY_BUDGET_USD, DEAR_STEVEN_ACCESS_CODE, ...) are set with
+# `fly secrets set`, never here.
+
+app = "dear-steven"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  DEAR_STEVEN_DB_PATH = "/data/dear-steven.db"
+  # Fly's proxy sets this header itself; a client can't choose it (P8-01).
+  DEAR_STEVEN_CLIENT_IP_HEADER = "fly-client-ip"
+
+# The knowledge base, the spend ledger, the free-question counts and the share and free-question
+# secrets. Create it before the first deploy (`fly volumes create kb`); it attaches to one machine.
+[mounts]
+  source = "kb"
+  destination = "/data"
+  initial_size = "3gb"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # Exactly one machine, always running. The daily cap, the free-question counts, the rate limits
+  # and the interview tickets are kept per machine, so a second machine would double the cap and
+  # lose interviews between them; deploy with `fly deploy --ha=false` and never scale past one.
+  # Stopping when idle would drop the in-memory tickets and limits mid-conversation, and make the
+  # next visitor wait for a cold start.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "15s"
+    method = "GET"
+    path = "/api/health"
+    timeout = "5s"
+
+# The knowledge base is about 110 MB at 114 episodes (8,394 passages with embeddings), on its way
+# to some 300 MB: 1 GB holds it in the page cache beside the Node server.
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"

@@ -2,7 +2,7 @@
 
 | Status | Owner | Updated | Feeds |
 |--------|-------|---------|-------|
-| reviewed | ai | 2026-10-16 | P5-10, P10-01, P10-02 |
+| reviewed | ai | 2026-10-16 | P5-10, H-08, P10-01, P10-02, P10-03 |
 
 Dear Steven is one Node process and one SQLite file (ADR-001, ADR-002). Any host that runs a
 container with a persistent volume works; serverless platforms do not, while the knowledge base
@@ -22,7 +22,8 @@ docker run -p 3000:3000 \
 
 The image is a Next.js `standalone` build on `node:22-slim`. It runs as the non-root `node` user and
 contains no data and no secrets. Build the knowledge base where you like (locally is easiest:
-`pnpm ingest all`), then copy or mount `data/dear-steven.db` into the volume.
+`pnpm ingest all`), then mount its folder, as above, or put a consistent copy of it in the volume
+(Fly.io, step 4: not the bare `.db` file, which can be missing what is still in its `-wal`).
 
 **A production server spends your key only under a daily cap** (P10-01). The image, like any
 `next start`, runs visitors on `OPENAI_API_KEY` only when `DEAR_STEVEN_DAILY_BUDGET_USD` is set as
@@ -48,33 +49,163 @@ messages, counts or spend. It never calls OpenAI.
 
 ## Variables
 
-Set secrets through the platform's secret store, never in a committed file.
+Every variable the web server reads. Set secrets through the platform's secret store
+(`fly secrets set`), never in a committed file: `fly.toml` holds only the two plain settings
+marked below.
 
-| Variable | What it does | In production |
-|----------|--------------|---------------|
+| Variable | What it does | On a deployment |
+|----------|--------------|-----------------|
 | `OPENAI_API_KEY` | Your key: answers, embeddings, voice. Unset: demo, unless visitors bring their own. | Secret. Used for visitors only with a daily cap. |
 | `DEAR_STEVEN_DAILY_BUDGET_USD` | The most the server may spend a UTC day, estimated (below). | **Required** for `OPENAI_API_KEY` to be used. |
-| `DEAR_STEVEN_ALLOW_OPERATOR_KEY` | `0`: visitors must bring their own key; yours serves no one. | Optional. |
 | `DEAR_STEVEN_FREE_QUESTIONS` | Questions each visitor gets on your key before they need their own (below). | Recommended: `3`. Needs the cap. |
+| `DEAR_STEVEN_ALLOW_OPERATOR_KEY` | `0`: visitors must bring their own key; yours serves no one. | Optional. |
 | `DEAR_STEVEN_ACCESS_CODE` | A passcode for a private deployment (below). | Optional. Secret. |
-| `DEAR_STEVEN_DB_PATH` | Where the knowledge base is. | `/data/dear-steven.db` |
-| `DEAR_STEVEN_CLIENT_IP_HEADER`, `DEAR_STEVEN_TRUSTED_PROXIES` | Where rate limits find the client's address (below). | Fly.io: `fly-client-ip`. |
+| `DEAR_STEVEN_DB_PATH` | Where the knowledge base is; the spend ledger, the free-question counts and the secrets are kept beside it. | `/data/dear-steven.db` (the image's default; in `fly.toml`). |
+| `DEAR_STEVEN_CLIENT_IP_HEADER` | A header the platform sets to the client's address, for rate limits (below). | Fly.io: `fly-client-ip` (in `fly.toml`). |
+| `DEAR_STEVEN_TRUSTED_PROXIES` | Without that header: how many proxies append to `X-Forwarded-For` (default 1). | Unset on Fly.io. |
+| `DEAR_STEVEN_DEMO` | `1`: demo answers only, even with a key. | Only until the knowledge base is uploaded (Fly.io, step 3). |
+| `YOUTUBE_API_KEY` | For `pnpm ingest match-youtube` only; the server just reports whether it is set. | Not needed. |
+| `OPENAI_BASE_URL` | Read by the OpenAI SDK: every OpenAI call goes there, visitors' keys included. | Unset, or an endpoint you trust with visitors' keys. |
+| `OPENAI_ORG_ID`, `OPENAI_PROJECT_ID` | Read by the OpenAI SDK and sent with every request. | **Don't set**: they would go out with visitors' own keys too, and fail their requests. |
+| `DEAR_STEVEN_LOG_ANSWERS` | `1`: every question and answer into `answers.jsonl`, for the eval harness. | **Don't set**: it keeps visitors' questions. |
+| `DEAR_STEVEN_SETUP_TOKEN`, `DEAR_STEVEN_SETUP_HOST` | Guided local setup (P6-04). | **Never set** (below). |
+| `DEAR_STEVEN_ENV_FILE` | Another file to read keys from instead of `.env`. | Not needed: use secrets. |
+| `DEAR_STEVEN_FEED_URL` | The feed `pnpm ingest discover` reads (the CLI's). | Not needed. |
+| `NODE_ENV`, `PORT`, `HOSTNAME` | Set by the image: `production`, `3000`, `0.0.0.0`. | Leave them: `fly.toml`'s port is the image's. |
 
-## Fly.io (one machine + one volume)
+## Fly.io, from an empty account to a live site
+
+One machine, one volume, configured by the committed `fly.toml`. Opening the account and paying
+for it is the owner's step (H-08, `plan/human/deploy.md`); everything else is below, run from the
+repository root.
+
+1. **Name the app and create it.** Install `flyctl` and `fly auth login`. In `fly.toml`, set `app`
+   (a name nobody on Fly.io has) and `primary_region` (`fly platform regions`). Then:
+
+   ```bash
+   fly apps create <app>
+   fly volumes create kb --app <app> --region <region> --size 3 --snapshot-retention 14
+   ```
+
+   `fly launch` would write a new `fly.toml`; this one is committed, so create the app directly.
+   Fly.io warns that one volume isn't redundant: that is intended (step 8). 3 GB: the knowledge
+   base is about 110 MB at 114 episodes and will be some 300 MB at 300, and replacing it keeps the
+   previous copy beside the new one until the new one is verified.
+
+2. **Set the secrets**, staged so nothing starts yet. Typed on a command line they land in your
+   shell history; `fly secrets import --stage --app <app> < file` reads the same `NAME=value`
+   lines from a file kept outside the repository, which you delete afterwards.
+
+   ```bash
+   fly secrets set --stage --app <app> OPENAI_API_KEY=sk-…
+   fly secrets set --stage --app <app> DEAR_STEVEN_DAILY_BUDGET_USD=2   # required for your key
+   fly secrets set --stage --app <app> DEAR_STEVEN_FREE_QUESTIONS=3     # three on your key each
+   fly secrets set --stage --app <app> DEAR_STEVEN_ACCESS_CODE="four words or more"   # private only
+   ```
+
+   The client address header and the database path are already in `fly.toml`. Check the table
+   above for what not to set.
+
+3. **Deploy one machine, in demo mode until the knowledge base is there.** The health check needs
+   a knowledge base unless demo is forced, so the first deploy forces it:
+
+   ```bash
+   fly secrets set --stage --app <app> DEAR_STEVEN_DEMO=1
+   fly deploy --app <app> --ha=false
+   ```
+
+   `--ha=false` keeps it to one machine (step 8).
+
+4. **Make a consistent copy of the knowledge base**, locally:
+
+   ```bash
+   sqlite3 -readonly data/dear-steven.db ".backup data/upload.db"
+   DEAR_STEVEN_DB_PATH=data/upload.db pnpm ingest status
+   ```
+
+   The database runs in WAL mode: recent writes can still be in `dear-steven.db-wal`, so copying
+   the `.db` file alone ships a stale or broken copy. `.backup` writes one self-contained file,
+   consistent even while an ingest run is writing. `pnpm ingest status` opens the copy with
+   sqlite-vec, as the server will; note its passage count. Upload `upload.db` alone: when the
+   command has finished, no `upload.db-wal` is left beside it.
+
+5. **Upload it and give it to the app's user.** `fly ssh` runs as root, so the file it uploads,
+   and on a new volume `/data` itself, belong to root. The app runs as `node` and writes beside
+   the database (the spend ledger, the free-question counts, the share and free-question secrets);
+   until it can, `/api/health` answers `503` `data_dir_read_only`.
+
+   ```bash
+   fly ssh sftp shell --app <app>
+   » put data/upload.db /data/dear-steven.db
+   » (Ctrl-D)
+   fly ssh console --app <app> -C "chown -R node:node /data"
+   ```
+
+6. **Go live.** Unsetting the secret restarts the machine and waits for its health check:
+
+   ```bash
+   fly secrets unset --app <app> DEAR_STEVEN_DEMO
+   ```
+
+7. **Verify.**
+
+   ```bash
+   fly status --app <app>                      # one machine, its check passing
+   curl -s https://<app>.fly.dev/api/health    # {"ok":true}
+   curl -s https://<app>.fly.dev/api/status    # "mode":"live", step 4's passage count, "capUsd":2
+   ```
+
+   Behind an access code `/api/status` answers 401 to `curl`: open the site, enter the code, and
+   read the setup panel instead. Then ask one question and open one citation at its moment.
+   `fly logs --app <app>` must not show `[config]` (your key held back) or `[free]` lines.
+
+8. **Why exactly one machine.** The daily cap is kept in one file (`/data/spend.json`) and in that
+   process's memory, and so are the free-question counts, the rate limits and the interview
+   tickets. Each machine would keep its own: two spend up to twice the cap and give twice the
+   free questions, and an interview loses its ticket when a step lands on the other one. A volume
+   also attaches to one machine only, so a second would start without a knowledge base. Deploy
+   with `--ha=false`, never `fly scale count 2`. `fly.toml` keeps the machine running when idle:
+   stopping it would drop the tickets and limits mid-conversation and make the next visitor wait
+   for a cold start. The price: a deploy or a host failure takes the site down for a minute.
+
+### Replacing the knowledge base
+
+Never copy over the live file. The server keeps it open, and an old `-wal` or `-shm` file next
+to a different `.db` corrupts it. Upload beside it, swap, then restart, so the server opens the new
+file afresh. The web server only reads the knowledge base, so between the swap and the restart it
+goes on serving the copy it has open.
 
 ```bash
-fly launch --no-deploy            # pick a name and region; keep one machine
-fly volumes create kb --size 1
-fly secrets set OPENAI_API_KEY=…  # never commit it
-fly secrets set DEAR_STEVEN_DAILY_BUDGET_USD=2      # the most it may spend a day
-fly secrets set DEAR_STEVEN_ACCESS_CODE="four words or more"   # optional: private deployment
-fly deploy
-fly ssh sftp shell                # put /data/dear-steven.db
+# 1. Copy and check it, as in step 4.
+# 2. Upload it beside the live one, swap the two, and restart:
+fly ssh sftp shell --app <app>
+» put data/upload.db /data/dear-steven.db.new
+» (Ctrl-D)
+fly ssh console --app <app> -C "sh -c 'cd /data && mv dear-steven.db dear-steven.db.prev && rm -f dear-steven.db-wal dear-steven.db-shm && mv dear-steven.db.new dear-steven.db && chown node:node dear-steven.db'"
+fly apps restart <app>
+# 3. Verify as in step 7: the passage count is the new one. Then drop the previous copy:
+fly ssh console --app <app> -C "rm /data/dear-steven.db.prev"
 ```
 
-`fly.toml` needs a `[mounts]` entry (`source = "kb"`, `destination = "/data"`) and
-`DEAR_STEVEN_DB_PATH = "/data/dear-steven.db"` under `[env]`. Creating the account and setting
-secrets is a human step (`plan/human/api-keys.md`).
+To go back before that last step, swap `dear-steven.db.prev` in the same way.
+
+### Backups
+
+- **Volume snapshots.** Fly.io snapshots the volume daily and keeps them for the retention set in
+  step 1 (14 days; 5 by default). They hold the knowledge base, the spend ledger, the
+  free-question counts and the `share-secret` and `free-secret` files. Take one before anything
+  risky: `fly volumes list --app <app>`, then `fly volumes snapshots create <volume-id>`. To
+  restore, create a volume from one (`fly volumes create kb --snapshot-id <id> --region <region>`),
+  destroy the machine (`fly machine destroy <machine-id> --force`), deploy again with
+  `--ha=false` so the new machine takes the restored volume, then delete the old volume.
+- **The local copy.** Keep the last `upload.db` (or the local `data/dear-steven.db` it came from):
+  the knowledge base holds nothing about visitors, and the server can always be refilled from it.
+- **The deployment's secrets.** `fly secrets list` shows only digests: keep the values (your
+  OpenAI key, the access code, the cap) in a password manager. The `share-secret` and
+  `free-secret` files live on the volume and in its snapshots; for a copy beyond Fly.io, fetch
+  them with `fly ssh sftp get /data/share-secret` into the same password manager, never into git.
+  Losing `share-secret` stops every share link made so far from opening; losing `free-secret`
+  gives everyone their free questions again.
 
 ## Operational notes
 

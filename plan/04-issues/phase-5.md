@@ -353,8 +353,12 @@ P3-08. **Size:** M.
 `fly.toml` committed; the image deployed with the knowledge base on a volume; access decided.
 
 #### Scope
-**In** — `fly.toml` (one machine, `[mounts]`, `[env]`, health check on `/api/status`), docs update.
+**In** — `fly.toml` (one machine, `[mounts]`, `[env]`, health check on `/api/health`), docs update.
 **Out** — autoscaling, multi-region.
+
+**Runbook (P10-03):** `fly.toml` is committed and `docs/DEPLOY.md` § "Fly.io, from an empty
+account to a live site" takes the owner from an empty account to a verified site (H-08). What
+remains here is the live deployment and its acceptance below.
 
 #### Acceptance criteria
 - [ ] `https://<app>.fly.dev/api/status` reports live mode and the right passage count.
