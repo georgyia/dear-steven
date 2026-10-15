@@ -213,6 +213,7 @@ instruction (2026-10-13).
 | P8-08 | #94 | fix(security): the API refuses requests sent from other sites' pages | P0 | high | done, PR open; waits for the owner's review | — | human |
 | P8-09 | #95 | fix(security): free questions need a daily cap | P1 | high | done, PR open; waits for the owner's review | — | human |
 | P8-10 | #99 | fix(ingest): paid transcription in batches: only episodes with no transcript, and no audio left on disk | P1 | medium | done, PR open | — | — |
+| P8-11 | #101 | fix(ingest): a diarized voice is credited to the guest only when the labels leave no doubt | P0 | medium | done, PR open | P8-10 | — |
 
 ### M7 Spoken conversations
 

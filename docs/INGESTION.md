@@ -85,7 +85,10 @@ The explorer marks episodes published in the last 7 days as new.
 1. **Segments** are the unit of truth: VTT cues, or diarized speaker segments. Each records start
    and end in milliseconds, `speaker` (`host | guest | unknown`), `speaker_name`, and
    `attribution_method` (`diarization | manual | none`). Only `diarization` and `manual` count as
-   evidence of who spoke.
+   evidence of who spoke. A diarized chunk (five minutes) credits its other voices to the guest(s)
+   only when the host was heard in it and there are no more other voices than the episode has
+   guests; otherwise they are `unknown` / `none` (P8-11), because OpenAI sometimes returns the host
+   under a second label.
 2. **Units**: consecutive segments by the same verified speaker form a turn; unverified cues are
    their own units. A turn longer than 520 tokens is split at segment boundaries.
 3. **Packing**: units are packed to ~420 tokens (max 520), never splitting a unit, with up to 70

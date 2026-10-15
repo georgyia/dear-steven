@@ -490,6 +490,40 @@ None. **Size:** S.
 
 ---
 
+### P8-11 — fix(ingest): a diarized voice is credited to the guest only when the labels leave no doubt
+
+<!-- issue {"id":"P8-11","title":"fix(ingest): a diarized voice is credited to the guest only when the labels leave no doubt","labels":["type:service","stage:m6","track:ingest","track:answers","owner:ai","risk:medium","P0","size:S"],"milestone":"M6 Summaries and open access","depends":["P8-10"],"github":101} -->
+
+#### Context
+`mapDiarizedSegments` credits every voice that isn't the enrolled host to the episode's guest, by
+name when there is one. But OpenAI doesn't always recognise the host. On 2026-10-15 the same five
+minutes of the Oz Pearlman episode was diarized twice:
+- the first time, 5 s went to "Steven" and 47 s to a second voice "B";
+- the second time, all 50 s went to "Steven", and there was no "B".
+
+So "B" was Steven, unrecognised. In a one-guest episode he would have become "Oz Pearlman said…":
+words in a real person's mouth that he never said. Attribution may only be weakened when in doubt
+(`SECURE-CODING.md` §5, SR-04), never strengthened.
+
+#### Goal
+A diarized transcript credits a voice to the guest only when the labels leave no doubt; anything
+else is "speaker not verified", as RSS transcripts are today.
+
+#### Acceptance criteria
+- [ ] Per chunk, voices other than the host are credited to the guest(s) only when the host was
+      heard in that chunk and the other voices are no more than the episode's known guests (one when
+      none is known). Named only for a sole guest, as before.
+- [ ] Otherwise those segments are `unknown` with `attributionMethod: 'none'`; the host's own
+      segments stay `host`.
+- [ ] Unit tests: the B case above, a chunk with no host, a panel with too many voices, a clean
+      chunk unchanged.
+- [ ] Mutation-checked; INGESTION and the attribution notes say so.
+
+#### Dependencies
+P8-10 (#99). **Size:** S.
+
+---
+
 ### P8-06 — chore(ci): give the e2e job room for the servers it now runs
 
 <!-- issue {"id":"P8-06","title":"chore(ci): give the e2e job room for the servers it now runs","labels":["type:infra","track:infra","owner:ai","risk:low","P1","size:S","stage:m6"],"milestone":"M6 Summaries and open access","depends":[],"github":81} -->
