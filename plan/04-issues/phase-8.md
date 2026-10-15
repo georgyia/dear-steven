@@ -480,6 +480,9 @@ nearly full disk, and can be stopped and resumed.
 - [ ] Downloads go to `<file>.part` and are renamed when complete; a cut-short download leaves
       nothing under the final name.
 - [ ] The run says first how many episodes it covers, roughly what they cost, and where it stops.
+- [ ] A diarization request gets long enough to finish (minutes, not the shared client's 60 s),
+  and a timeout is never tried again: OpenAI may have billed it. *(Added after the first real run
+  timed out, 2026-10-15.)*
 - [ ] Tests for each, mutation-checked. INGESTION and the H-05 runbook name `--missing`.
 
 #### Dependencies
