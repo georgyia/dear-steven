@@ -17,8 +17,9 @@ GitHub number is written back into the `github` field.
 | `phase-5.md` | M3 Depth and polish | open |
 | `phase-6.md` | M4 Reach and trust | merged 2026-10-13 — languages, setup, answers, security, policies, YouTube |
 | `phase-7.md` | M5 Conversations | open — talk mode, interviews, practice, design polish, latest episodes |
-| `phase-8.md` | M6 Summaries and open access | merged 2026-10-14 — key audit, three free questions, episode summaries; P8-05 waits on a decision; P8-08 and P8-09 open (security re-check) |
+| `phase-8.md` | M6 Summaries and open access | merged 2026-10-14 — key audit, three free questions, episode summaries; P8-05 waits on a decision; P8-08 to P8-12 merged 2026-10-16 (security re-check, paid transcription fixes) |
 | `phase-9.md` | M7 Spoken conversations | merged 2026-10-15 — streamed spoken replies, hands-free Talk, a spoken interview |
+| `phase-10.md` | M8 Launch readiness | open — spend defaults, health check, Fly config, body limits, safety fail-closed, visitor errors, error pages, link preview, AI disclosure, privacy and legal notice |
 
 Issues built in the first implementation pass (phases 0–4) are recorded briefly: what was in
 scope, how each criterion was verified, and where the work lives. Open issues are fully specified.
