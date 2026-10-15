@@ -62,10 +62,11 @@ export function hostReference(path: string): string {
 /**
  * OpenAI takes about 0.45× a chunk's length to answer (measured 2026-10-15: 115–136 s for five
  * minutes), and Node's fetch gives up on a response with no headers after five minutes. So chunks
- * are five minutes long, and a few are asked at once to keep a long batch to hours, not days.
+ * are five minutes long, and ten are asked at once to keep a long batch to hours, not days (the
+ * account allows 3,000 requests a minute; ten at once is about five).
  */
 export const DIARIZE_CHUNK_SECONDS = 300;
-export const DIARIZE_PARALLEL = 6;
+export const DIARIZE_PARALLEL = 10;
 
 /**
  * Each request gets its own timeout, past the shared client's 60 s, and no retries of the SDK's
