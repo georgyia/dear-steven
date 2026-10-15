@@ -70,7 +70,9 @@ describe('overBudget and spendStatus', () => {
       DEAR_STEVEN_DB_PATH: join(base, 'kb.db'),
       DEAR_STEVEN_DAILY_BUDGET_USD: '0.01',
     });
-    const visitor = forVisitor(operator, 'sk-visitor-0000000000000000000000');
+    const visitor = forVisitor(operator, 'sk-visitor-0000000000000000000000', {
+      production: true,
+    });
     recordSpend(visitor, 5);
     expect(existsSync(join(base, 'spend.json'))).toBe(false);
     expect(overBudget(operator)).toBe(false);

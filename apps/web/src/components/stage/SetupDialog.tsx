@@ -55,9 +55,11 @@ function items(
           text={
             s.demoReason === 'forced'
               ? copy.openai.forced
-              : s.setup.openaiKey
-                ? copy.openai.found
-                : copy.openai.missing
+              : s.demoReason === 'no_daily_cap'
+                ? copy.openai.noCap
+                : s.setup.openaiKey
+                  ? copy.openai.found
+                  : copy.openai.missing
           }
         />
       ),

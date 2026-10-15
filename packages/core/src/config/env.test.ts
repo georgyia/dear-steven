@@ -2,7 +2,14 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { clientAddressFrom, findRepoRoot, forVisitor, readConfig, requireKey } from './env.ts';
+import {
+  clientAddressFrom,
+  findRepoRoot,
+  forVisitor,
+  operatorKeyHeldBack,
+  readConfig,
+  requireKey,
+} from './env.ts';
 
 const fakeRepo = () => {
   const root = mkdtempSync(join(tmpdir(), 'dear-steven-'));
@@ -55,14 +62,16 @@ describe('readConfig', () => {
   });
 });
 
-describe('forVisitor (P6-03)', () => {
-  const OWN = 'sk-visitor-0000000000000000000000';
-  const operator = (env: Record<string, string> = {}) =>
-    readConfig({ OPENAI_API_KEY: 'sk-operator', ...env });
+const OWN = 'sk-visitor-0000000000000000000000';
+const operator = (env: Record<string, string> = {}) =>
+  readConfig({ OPENAI_API_KEY: 'sk-operator', ...env });
+const DEV = { production: false };
+const PRODUCTION = { production: true };
 
+describe('forVisitor (P6-03)', () => {
   it("runs on the visitor's own key when there is one", () => {
     for (const config of [readConfig({}), operator()]) {
-      const c = forVisitor(config, OWN);
+      const c = forVisitor(config, OWN, DEV);
       expect(c).toMatchObject({ openaiApiKey: OWN, keySource: 'visitor', mode: 'live' });
       expect(c.demoReason).toBeNull();
     }
@@ -70,7 +79,7 @@ describe('forVisitor (P6-03)', () => {
 
   it("falls back to the operator's key unless the operator says no", () => {
     expect(operator().allowOperatorKey).toBe(true);
-    expect(forVisitor(operator(), null)).toMatchObject({
+    expect(forVisitor(operator(), null, DEV)).toMatchObject({
       openaiApiKey: 'sk-operator',
       keySource: 'operator',
       mode: 'live',
@@ -79,24 +88,71 @@ describe('forVisitor (P6-03)', () => {
       const config = operator({ DEAR_STEVEN_ALLOW_OPERATOR_KEY: off });
       expect(config.allowOperatorKey).toBe(false);
       expect(config.openaiApiKey).toBe('sk-operator');
-      expect(forVisitor(config, null)).toMatchObject({
+      expect(forVisitor(config, null, DEV)).toMatchObject({
         openaiApiKey: null,
         keySource: null,
         mode: 'demo',
         demoReason: 'no_openai_key',
       });
-      expect(forVisitor(config, OWN).keySource).toBe('visitor');
+      expect(forVisitor(config, OWN, DEV).keySource).toBe('visitor');
     }
   });
 
   it('stays demo with neither key', () => {
-    expect(forVisitor(readConfig({}), null)).toMatchObject({ mode: 'demo', keySource: null });
+    expect(forVisitor(readConfig({}), null, DEV)).toMatchObject({ mode: 'demo', keySource: null });
   });
 
   it("ignores the visitor's key when demo mode is forced", () => {
-    const c = forVisitor(operator({ DEAR_STEVEN_DEMO: '1' }), OWN);
+    const c = forVisitor(operator({ DEAR_STEVEN_DEMO: '1' }), OWN, DEV);
     expect(c).toMatchObject({ mode: 'demo', demoReason: 'forced', keySource: 'operator' });
     expect(c.openaiApiKey).not.toBe(OWN);
+  });
+});
+
+describe("the operator's key on a production server needs a daily cap (P10-01)", () => {
+  const NO_KEY = { OPENAI_API_KEY: '' };
+  const OFF = { DEAR_STEVEN_ALLOW_OPERATOR_KEY: '0' };
+  const cap = (usd: string) => ({ DEAR_STEVEN_DAILY_BUDGET_USD: usd });
+  const live = (keySource: 'operator' | 'visitor') => ({
+    mode: 'live',
+    keySource,
+    demoReason: null,
+  });
+  const demo = (demoReason: string) => ({ mode: 'demo', keySource: null, demoReason });
+
+  it.each([
+    // server, environment, visitor's key → this request's configuration, and what is held back
+    ['production', {}, null, demo('no_daily_cap'), 'no_daily_cap'],
+    ['production', {}, OWN, live('visitor'), 'no_daily_cap'],
+    ['production', cap('2'), null, live('operator'), null],
+    ['production', cap('0'), null, live('operator'), null],
+    ['production', cap('5$'), null, live('operator'), null],
+    ['production', OFF, null, demo('no_openai_key'), null],
+    ['production', OFF, OWN, live('visitor'), null],
+    ['production', NO_KEY, null, demo('no_openai_key'), null],
+    ['production', { ...NO_KEY, ...cap('2') }, null, demo('no_openai_key'), null],
+    ['production', NO_KEY, OWN, live('visitor'), null],
+    ['production', { DEAR_STEVEN_DEMO: '1' }, OWN, { mode: 'demo', demoReason: 'forced' }, null],
+    ['development', {}, null, live('operator'), null],
+    ['development', cap('2'), null, live('operator'), null],
+    ['development', OFF, null, demo('no_openai_key'), null],
+    ['development', NO_KEY, null, demo('no_openai_key'), null],
+    ['development', {}, OWN, live('visitor'), null],
+  ] as const)('%s, %o, visitor key %s', (server, env, visitorKey, expected, heldBack) => {
+    const where = server === 'production' ? PRODUCTION : DEV;
+    const config = operator(env);
+    expect(operatorKeyHeldBack(config, where)).toBe(heldBack);
+    const c = forVisitor(config, visitorKey, where);
+    expect(c).toMatchObject(expected);
+    expect(c.openaiApiKey).toBe(
+      c.keySource === 'visitor' ? OWN : c.keySource === 'operator' ? 'sk-operator' : null,
+    );
+  });
+
+  it('leaves what the CLI runs on unchanged: readConfig never reads NODE_ENV', () => {
+    const c = readConfig({ OPENAI_API_KEY: 'sk-operator', NODE_ENV: 'production' });
+    expect(c).toMatchObject({ openaiApiKey: 'sk-operator', mode: 'live', demoReason: null });
+    expect(c.dailyBudgetUsd).toBeNull();
   });
 });
 

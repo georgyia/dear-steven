@@ -416,6 +416,8 @@ export const en = {
     openai: {
       title: 'OpenAI API key',
       forced: 'Not used: `DEAR_STEVEN_DEMO=1` is forcing demo mode.',
+      noCap:
+        'Not used: a production server spends it only under a daily cap, so answers are demo fixtures. Set `DEAR_STEVEN_DAILY_BUDGET_USD` and restart, or paste your own key below.',
       found: 'Found on the server. It never reaches the browser. You can use your own key instead.',
       missing:
         'Missing — answers are demo fixtures. Paste your own key below, or add `OPENAI_API_KEY` to `.env` at the repository root and restart.',

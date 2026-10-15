@@ -17,7 +17,7 @@ export interface AppConfig {
   youtubeApiKey: string | null;
   dbPath: string;
   mode: 'live' | 'demo';
-  demoReason: 'no_openai_key' | 'forced' | null;
+  demoReason: DemoReason | null;
   logAnswers: boolean;
   /**
    * `DEAR_STEVEN_DAILY_BUDGET_USD`: paid calls stop for the rest of the UTC day once the estimated
@@ -42,6 +42,21 @@ export interface AppConfig {
 }
 
 export type KeySource = 'operator' | 'visitor';
+
+/**
+ * Why answers are demo fixtures: no key to run on, the operator's key held back by a production
+ * web server for want of a daily cap (P10-01), or `DEAR_STEVEN_DEMO`.
+ */
+export type DemoReason = 'no_openai_key' | 'no_daily_cap' | 'forced';
+
+/**
+ * The web server a request's configuration is for (P10-01). `production` is a built server
+ * (`next start`, the image), not `pnpm dev`. The web app says which; the CLI never builds a
+ * request's configuration, so nothing here changes what it runs on.
+ */
+export interface WebServer {
+  production: boolean;
+}
 
 type Env = Record<string, string | undefined>;
 
@@ -105,16 +120,36 @@ function budget(value: string | undefined): number | null {
 }
 
 /**
- * The configuration for one web request (P6-03). A visitor's own key (already validated against
- * `VisitorKeySchema`) wins; without one, the operator's key only if the operator allows it.
- * Forced demo mode stays forced, and then a visitor's key is not used at all. The CLI uses
- * `readConfig()` as it is.
+ * Why a web server won't spend the operator's key although it is set and offered to visitors
+ * (P10-01, SR-02): in production, only under a daily cap, since without
+ * `DEAR_STEVEN_DAILY_BUDGET_USD` nothing but the per-network rate limit bounds what anyone can
+ * spend on it. Any value counts as a cap: an unreadable one is already 0, which spends nothing.
+ * `null` when the key may be used, or when there is none to hold back (unset,
+ * `DEAR_STEVEN_ALLOW_OPERATOR_KEY=0`, or forced demo).
  */
-export function forVisitor(config: AppConfig, visitorKey: string | null): AppConfig {
+export function operatorKeyHeldBack(config: AppConfig, server: WebServer): 'no_daily_cap' | null {
+  const offered =
+    config.demoReason !== 'forced' && config.allowOperatorKey && config.openaiApiKey !== null;
+  return server.production && offered && config.dailyBudgetUsd === null ? 'no_daily_cap' : null;
+}
+
+/**
+ * The configuration for one web request (P6-03). A visitor's own key (already validated against
+ * `VisitorKeySchema`) wins; without one, the operator's key only if the operator allows it and,
+ * on a production server, has set a daily cap (`operatorKeyHeldBack`). Forced demo mode stays
+ * forced, and then a visitor's key is not used at all. The CLI uses `readConfig()` as it is.
+ */
+export function forVisitor(
+  config: AppConfig,
+  visitorKey: string | null,
+  server: WebServer,
+): AppConfig {
   const forced = config.demoReason === 'forced';
   const own = forced ? null : visitorKey;
-  const openaiApiKey = own ?? (config.allowOperatorKey ? config.openaiApiKey : null);
-  const demoReason = forced ? 'forced' : openaiApiKey ? null : 'no_openai_key';
+  const heldBack = operatorKeyHeldBack(config, server);
+  const operator = config.allowOperatorKey && !heldBack ? config.openaiApiKey : null;
+  const openaiApiKey = own ?? operator;
+  const demoReason = forced ? 'forced' : openaiApiKey ? null : (heldBack ?? 'no_openai_key');
   return {
     ...config,
     openaiApiKey,

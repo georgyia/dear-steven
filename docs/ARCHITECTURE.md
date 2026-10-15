@@ -170,6 +170,7 @@ signed with, created on first use, owner-only).
 | Failure | Behaviour |
 |---------|-----------|
 | No `OPENAI_API_KEY` | Demo mode: labelled fixtures; voice uses the browser only. |
+| Production server, operator's key, no `DEAR_STEVEN_DAILY_BUDGET_USD` | The key is held back (`operatorKeyHeldBack` in core config, P10-01): demo mode with reason `no_daily_cap`, said once in the log; a visitor's own key still runs live. |
 | No database file | Status "no conversations indexed yet"; ask returns the in-persona empty reply. |
 | Database unreadable | Status pill "Knowledge base unavailable", setup panel shows the error. |
 | No embeddings yet | Keyword-only search; status "embeddings pending". |

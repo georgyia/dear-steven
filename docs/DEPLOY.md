@@ -2,7 +2,7 @@
 
 | Status | Owner | Updated | Feeds |
 |--------|-------|---------|-------|
-| reviewed | ai | 2026-10-10 | P5-10 |
+| reviewed | ai | 2026-10-16 | P5-10, P10-01 |
 
 Dear Steven is one Node process and one SQLite file (ADR-001, ADR-002). Any host that runs a
 container with a persistent volume works; serverless platforms do not, while the knowledge base
@@ -14,6 +14,7 @@ is a local file.
 docker build -t dear-steven .
 docker run -p 3000:3000 \
   -e OPENAI_API_KEY=… \
+  -e DEAR_STEVEN_DAILY_BUDGET_USD=2 \
   -e DEAR_STEVEN_DB_PATH=/data/dear-steven.db \
   -v "$PWD/data:/data" \
   dear-steven
@@ -22,6 +23,26 @@ docker run -p 3000:3000 \
 The image is a Next.js `standalone` build on `node:22-slim`. It runs as the non-root `node` user and
 contains no data and no secrets. Build the knowledge base where you like (locally is easiest:
 `pnpm ingest all`), then copy or mount `data/dear-steven.db` into the volume.
+
+**A production server spends your key only under a daily cap** (P10-01). The image, like any
+`next start`, runs visitors on `OPENAI_API_KEY` only when `DEAR_STEVEN_DAILY_BUDGET_USD` is set as
+well. Without a cap it answers as if no key was given: demo answers, `/api/status` reports
+`"demoReason":"no_daily_cap"`, and the log says once which variable to set. Visitors who bring
+their own key still get live answers. `pnpm dev` and the ingest CLI are not held back.
+
+## Variables
+
+Set secrets through the platform's secret store, never in a committed file.
+
+| Variable | What it does | In production |
+|----------|--------------|---------------|
+| `OPENAI_API_KEY` | Your key: answers, embeddings, voice. Unset: demo, unless visitors bring their own. | Secret. Used for visitors only with a daily cap. |
+| `DEAR_STEVEN_DAILY_BUDGET_USD` | The most the server may spend a UTC day, estimated (below). | **Required** for `OPENAI_API_KEY` to be used. |
+| `DEAR_STEVEN_ALLOW_OPERATOR_KEY` | `0`: visitors must bring their own key; yours serves no one. | Optional. |
+| `DEAR_STEVEN_FREE_QUESTIONS` | Questions each visitor gets on your key before they need their own (below). | Recommended: `3`. Needs the cap. |
+| `DEAR_STEVEN_ACCESS_CODE` | A passcode for a private deployment (below). | Optional. Secret. |
+| `DEAR_STEVEN_DB_PATH` | Where the knowledge base is. | `/data/dear-steven.db` |
+| `DEAR_STEVEN_CLIENT_IP_HEADER`, `DEAR_STEVEN_TRUSTED_PROXIES` | Where rate limits find the client's address (below). | Fly.io: `fly-client-ip`. |
 
 ## Fly.io (one machine + one volume)
 
@@ -46,7 +67,8 @@ secrets is a human step (`plan/human/api-keys.md`).
   `/data/spend.json`; at the cap, answers become an in-persona "come back tomorrow" and no OpenAI
   call is made until midnight UTC. Requests already running when it is reached still finish. The
   setup panel and `/api/status` show today's spend. Also set a hard limit in the OpenAI dashboard:
-  this cap is an estimate.
+  this cap is an estimate. A production server doesn't use your key at all without it (above);
+  `0` is a cap that spends nothing, and an unreadable value counts as `0`.
 - **Share links** (P6-17): the server signs every answer it writes with a secret it creates on
   first use at `/data/share-secret` (owner-only). Keep it on the volume: deleting it, or running
   without a writable `/data`, makes every link shared so far stop opening. Several instances behind
