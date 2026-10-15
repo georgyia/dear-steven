@@ -15,8 +15,11 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
   the final tree instead: `pnpm check` (619 tests), build, audit, `pnpm e2e` (200 passed), the
   PR-title lint and a scan for secrets. The Docker build didn't run. Not yet tried on a real device
   or browser. M6 *Summaries and open access* merged on 2026-10-14.
-- **Next to pick:** nothing planned after M7. A possible follow-up: interrupting Steven by voice
-  while he speaks, with headphones (not an issue yet).
+- **Next to pick:** P8-08 (#94), then P8-09 (#95), from the security re-check of 2026-10-15
+  (`plan/09-security/reviews/2026-10-15-free-questions.md`): other sites' pages can send
+  questions on the operator's key, and free questions can run without a daily cap. The re-check
+  found the rest sound, and no need for Supabase now (#73). A possible follow-up to M7:
+  interrupting Steven by voice while he speaks, with headphones (not an issue yet).
 - **To switch on:** `DEAR_STEVEN_FREE_QUESTIONS=3` on a deployment (`docs/DEPLOY.md`), with
   `DEAR_STEVEN_DAILY_BUDGET_USD` set and the client address configured.
 - **Waiting on the owner:** GitHub billing, so CI runs again (then re-run it on `main`); trying
@@ -207,6 +210,8 @@ instruction (2026-10-13).
 | P8-04 | #75 | feat(web): read an episode's summary in the explorer | P1 | low | done | P8-03 | — |
 | P8-05 | #73 | chore(infra): accounts and server-side key storage with Supabase — decide first | P2 | high | open, blocked | P8-02 | decision |
 | P8-06 | #81 | chore(ci): give the e2e job room for the servers it now runs | P1 | low | done | — | — |
+| P8-08 | #94 | fix(security): the API refuses requests sent from other sites' pages | P0 | high | open | — | human |
+| P8-09 | #95 | fix(security): free questions need a daily cap | P1 | high | open | — | human |
 
 ### M7 Spoken conversations
 
