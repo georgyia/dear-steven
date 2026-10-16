@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { type FormEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { AnswerBlocks } from '@/components/answer/AnswerBlocks';
 import { ListenButton } from '@/components/answer/SpokenControls';
+import { Disclosure } from '@/components/stage/Disclosure';
 import { ThinkingDots } from '@/components/ui/ThinkingDots';
 import GradualBlur from '@/components/vendor/react-bits/GradualBlur';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -111,6 +112,8 @@ export function InterviewView({
           >
             {dock}
           </motion.div>
+          {/* Talking to an AI, written or spoken, so the disclosure is in view here too (P10-11). */}
+          <Disclosure className="mt-2 text-center text-[11.5px] leading-snug text-ivory-2" />
         </div>
       </div>
     </>

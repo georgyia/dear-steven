@@ -1,4 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
+import { en } from '../src/i18n/en';
 import { expect, test } from './fixtures';
 
 const notice = (page: import('@playwright/test').Page) =>
@@ -16,7 +17,7 @@ test.describe('terms, disclaimer and the first-visit notice (P6-12)', () => {
     await page.keyboard.press('Enter');
     await expect(notice(page)).toHaveCount(0);
     // The plain disclosure, with the terms one click away, takes its place.
-    await expect(page.getByText(/is an AI persona — not Steven Bartlett/)).toBeVisible();
+    await expect(page.getByText(en.disclosure)).toBeVisible();
     await page.reload();
     await expect(page.getByRole('heading', { level: 1, name: 'Dear Steven' })).toBeVisible();
     await page.waitForTimeout(300);
