@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MODERATION_UNAVAILABLE } from '../persona/copy.ts';
 import type { ModerationResult } from './route.ts';
-import { ModerationUnavailableError, moderationVerdict, UNAVAILABLE } from './verdict.ts';
+import {
+  KeyRefused,
+  ModerationUnavailableError,
+  moderationVerdict,
+  UNAVAILABLE,
+} from './verdict.ts';
 
 const CLEAN: ModerationResult = { flagged: false, categories: {}, scores: {} };
 
@@ -53,6 +58,24 @@ describe('moderationVerdict (P10-06)', () => {
     expect(line).toContain('openai 503');
     expect(line).not.toMatch(/Incorrect|sk-/);
   });
+
+  it.each([401, 403, 429])(
+    'hands back a refused or held-back key (%i): asked once, not logged as an outage (P10-13)',
+    async (status) => {
+      const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const error = providerError(status);
+      let calls = 0;
+      const moderate = async () => {
+        calls += 1;
+        throw error;
+      };
+      const verdict = await moderationVerdict(moderate, 'hello', signal());
+      expect(verdict).toBeInstanceOf(KeyRefused);
+      expect((verdict as KeyRefused).error).toBe(error);
+      expect(calls).toBe(1);
+      expect(log).not.toHaveBeenCalled();
+    },
+  );
 
   it('does not retry or log a visitor’s abort', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});

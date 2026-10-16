@@ -700,3 +700,61 @@ The owner fills in the contact and operator details, and has the policies review
 
 #### Dependencies
 None. **Size:** M.
+
+---
+
+### P10-13 — fix(security): a rejected key is reported as such, not as a failed safety check
+
+<!-- issue {"id":"P10-13","title":"fix(security): a rejected key is reported as such, not as a failed safety check","labels":["type:security","stage:m8","track:security","track:core","owner:ai","risk:high","needs:human-review","P1","size:S"],"milestone":"M8 Launch readiness","depends":["P10-06"],"github":124} -->
+
+#### Context
+Since P10-06 (#119), a question whose moderation call fails twice isn't answered. The visitor
+reads "I couldn't run my safety check just now". But moderation also fails when OpenAI refuses the
+key itself (401, 403) or holds it back (429: too many requests, or no credit). Moderation is often
+the first call to reach OpenAI: always in the interview, and in Ask when there are no embeddings
+to search with. Then:
+
+- the visitor reads about a safety check instead of the key;
+- a visitor with their own key isn't told to check it;
+- the operator's log says `moderation unavailable (openai 401)` instead of the hint P10-08 adds.
+
+P10-08's route tests found this once rebased onto #119.
+
+#### Goal
+A refused or held-back key fails the question exactly as the answer call would, and
+`describeFailure` words it for whoever owns the key. Only an outage (5xx, a timeout, the network)
+gets the safety-check reply.
+
+#### Scope
+**In:** `moderationVerdict` returns the key's own error for 401, 403 and 429, without a second try
+(the SDK has already retried a 429). `composeAnswer` and the interview throw it, so it reaches
+`describeFailure`. The fail-mode row in `docs/ARCHITECTURE.md` and the SR-18 row are updated.
+
+**Out:**
+- What an outage does: unchanged, still fail-closed.
+- The wording of the messages (P10-08).
+
+#### Acceptance criteria
+- [ ] A 401, 403 or 429 from moderation means no second moderation call and no answer model call.
+  The original error reaches the caller, and nothing is answered (core unit tests for Ask and the
+  interview).
+- [ ] A 5xx still gets one retry and then the safety-check reply (existing tests).
+- [ ] `moderationVerdict` still never rejects (unit).
+- [ ] P10-08's route tests for a rejected operator key pass on top of this.
+
+#### Tests required
+As above.
+
+#### Security notes
+SR-18: still fail-closed, so nothing is answered without a verdict. SR-19: a problem with a
+visitor's own key is reported as theirs. No provider text is logged or shown, because
+`describeFailure` maps status codes to fixed messages.
+
+#### Skills to consult
+`dear-steven-security`, `dear-steven-architecture`.
+
+#### Human steps
+None.
+
+#### Dependencies
+P10-06. **Size:** S.
