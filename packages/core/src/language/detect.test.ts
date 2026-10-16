@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectLanguage } from './detect.ts';
+import { clearLanguage, detectLanguage } from './detect.ts';
 
 describe('detectLanguage', () => {
   it.each([
@@ -19,5 +19,35 @@ describe('detectLanguage', () => {
     expect(detectLanguage('Dana White')).toBe('en');
     expect(detectLanguage('Bitcoin?')).toBe('en');
     expect(detectLanguage('Was Adam Neumann a fraud?')).toBe('en');
+  });
+});
+
+describe('clearLanguage (P10-15)', () => {
+  it.each([
+    ['I started my company because I was tired of working for other people.', 'en'],
+    ['Ich habe mit meinem Bruder angefangen, und es war nicht leicht.', 'de'],
+    ['Wie fühlt sich das an?', 'de'],
+    ['¿Debería dejar mi trabajo para empezar mi propio negocio?', 'es'],
+    ['Почему я просыпаюсь уставшим?', 'ru'],
+  ])('%s → %s', (text, language) => expect(clearLanguage(text)).toBe(language));
+
+  it('says nothing when the words don’t settle it, where detectLanguage says English', () => {
+    for (const text of [
+      'Founder of a fintech startup',
+      'Ich bin Designer',
+      'Product Manager bei Zalando, vorher Consultant',
+      'Ich bin Product Manager bei einem Startup, and I love it',
+      'Dana White',
+      '',
+    ]) {
+      expect(clearLanguage(text), text).toBeNull();
+    }
+    expect(detectLanguage('Founder of a fintech startup')).toBe('en');
+    expect(detectLanguage('Ich bin Designer')).toBe('en');
+  });
+
+  it('asks for more words when told to', () => {
+    expect(clearLanguage('What made you start?')).toBe('en');
+    expect(clearLanguage('What made you start?', 3)).toBeNull();
   });
 });

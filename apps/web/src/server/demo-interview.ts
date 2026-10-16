@@ -4,8 +4,9 @@ import {
   checkDebrief,
   checkLearned,
   FALLBACK_QUESTIONS,
+  fixedLanguage,
+  interviewLanguage,
 } from '@dear-steven/core/interview';
-import { detectLanguage } from '@dear-steven/core/language';
 import { routeQuestion, safetyReply } from '@dear-steven/core/safety';
 import type {
   Debrief,
@@ -129,15 +130,8 @@ export function demoInterviewStep(request: InterviewRequest): InterviewReply {
     return { type: 'ended', reason: route.kind, blocks };
   }
 
-  const answers = request.turns.map((t) => t.answer).join(' ');
-  const language: 'en' | 'de' =
-    answers.length >= 20
-      ? detectLanguage(answers) === 'de'
-        ? 'de'
-        : 'en'
-      : request.uiLocale === 'de'
-        ? 'de'
-        : 'en';
+  // The live interview's rule (P10-15), in the two languages the demo lines are written in.
+  const language = fixedLanguage(interviewLanguage(request), request.uiLocale);
   const arc = arcFor(request.setup);
   if (request.action === 'finish' || request.turns.length >= arc.length) {
     if (request.setup.flavour === 'practice') {

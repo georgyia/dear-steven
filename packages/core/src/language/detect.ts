@@ -191,9 +191,8 @@ const LETTERS: [RegExp, string][] = [
   [/[çœ]|\bl'|\bd'/i, 'fr'],
 ];
 
-/** ISO 639-1 code; `en` unless another language is clearly more likely. */
-export function detectLanguage(text: string): string {
-  for (const [pattern, language] of SCRIPTS) if (pattern.test(text)) return language;
+/** Each Latin-script language by how many of its words and letters `text` has, most first. */
+function ranked(text: string): [string, number][] {
   const words =
     text
       .toLowerCase()
@@ -207,6 +206,30 @@ export function detectLanguage(text: string): string {
   ) as Record<string, number>;
   for (const [pattern, language] of LETTERS)
     if (pattern.test(text)) score[language] = (score[language] ?? 0) + 2;
-  const [best, bestScore] = Object.entries(score).sort((a, b) => b[1] - a[1])[0] ?? ['en', 0];
-  return best !== 'en' && bestScore >= 2 && bestScore > (score.en ?? 0) ? best : 'en';
+  return Object.entries(score).sort((a, b) => b[1] - a[1]);
+}
+
+const scriptOf = (text: string) => SCRIPTS.find(([pattern]) => pattern.test(text))?.[1];
+
+/** ISO 639-1 code; `en` unless another language is clearly more likely. */
+export function detectLanguage(text: string): string {
+  const script = scriptOf(text);
+  if (script) return script;
+  const scores = ranked(text);
+  const [best, bestScore] = scores[0] ?? ['en', 0];
+  const english = scores.find(([language]) => language === 'en')?.[1] ?? 0;
+  return best !== 'en' && bestScore >= 2 && bestScore > english ? best : 'en';
+}
+
+/**
+ * The language `text` is clearly in, or null when it doesn't say (P10-15). Unlike
+ * `detectLanguage`, English isn't the default: every language, English too, needs `min` of its
+ * words or letters, and twice as many as the next language.
+ */
+export function clearLanguage(text: string, min = 2): string | null {
+  const script = scriptOf(text);
+  if (script) return script;
+  const [first, second] = ranked(text);
+  if (!first || first[1] < min) return null;
+  return first[1] >= 2 * (second?.[1] ?? 0) ? first[0] : null;
 }
