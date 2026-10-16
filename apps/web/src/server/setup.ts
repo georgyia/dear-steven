@@ -236,14 +236,3 @@ export const NO_STORE = { 'Cache-Control': 'no-store' };
 
 /** What every setup route answers when setup isn't on, or the request isn't allowed to use it. */
 export const notFound = () => new Response('Not found', { status: 404, headers: NO_STORE });
-
-/** A small JSON body, or `undefined` when it is too long or isn't JSON. */
-export async function smallJson(req: Request, maxChars: number): Promise<unknown> {
-  const raw = await req.text();
-  if (raw.length > maxChars) return undefined;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return undefined;
-  }
-}

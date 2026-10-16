@@ -1,9 +1,13 @@
 import { readConfig } from '@dear-steven/core/config';
 import { accessCookie, codeMatches, issueAccessToken } from '@/server/access';
+import { parseJson, readBody } from '@/server/body';
 import { clientKey, EVERYONE, takeToken } from '@/server/rate-limit';
 import { jsonError } from '@/server/sse';
 
 export const dynamic = 'force-dynamic';
+
+/** A passcode is compared on its first 200 characters: room for those in any script, and more. */
+const MAX_BODY_BYTES = 4 * 1024;
 
 /**
  * POST { code } → 204 with the access cookie, or 401 (P6-08). Exists only while
@@ -20,7 +24,9 @@ export async function POST(req: Request) {
       'Retry-After': String(limit.retryAfter),
     });
   }
-  const body = (await req.json().catch(() => null)) as { code?: unknown } | null;
+  const raw = await readBody(req, MAX_BODY_BYTES);
+  if (raw === null) return jsonError(413, 'bad_request', 'Request too large.');
+  const body = parseJson(raw) as { code?: unknown } | null | undefined;
   const input = typeof body?.code === 'string' ? body.code.trim().slice(0, 200) : '';
   if (!input || !(await codeMatches(input, code))) {
     return jsonError(401, 'locked', 'That passcode isn’t right.');

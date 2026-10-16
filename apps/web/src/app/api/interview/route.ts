@@ -3,6 +3,7 @@ import { interviewStep, restingInterview } from '@dear-steven/core/interview';
 import { ModerationUnavailableError } from '@dear-steven/core/safety';
 import { InterviewRequestSchema } from '@dear-steven/core/schema';
 import { MESSAGES } from '@/i18n';
+import { readBody } from '@/server/body';
 import { demoInterviewStep } from '@/server/demo-interview';
 import { describeFailure, OPERATOR_HINT } from '@/server/errors';
 import {
@@ -35,8 +36,8 @@ const NO_STORE = { 'Cache-Control': 'no-store' };
  * ticket ran out) counts one and gets a ticket for the steps that follow.
  */
 export async function POST(req: Request) {
-  const raw = await req.text();
-  if (raw.length > MAX_BODY_BYTES) return jsonError(413, 'bad_request', 'Request too large.');
+  const raw = await readBody(req, MAX_BODY_BYTES);
+  if (raw === null) return jsonError(413, 'bad_request', 'Request too large.');
   let json: unknown;
   try {
     json = JSON.parse(raw);

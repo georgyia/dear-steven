@@ -66,6 +66,24 @@ test.describe('GET /api/passages/:id/related', () => {
   });
 });
 
+test.describe('request bodies (P10-04)', () => {
+  test('a body over its route’s limit gets 413, counted in bytes', async ({ request }) => {
+    // "é" is two bytes: each body is one byte over its limit, but half as many characters.
+    for (const [path, limit] of [
+      ['/api/ask', 64 * 1024],
+      ['/api/interview', 48 * 1024],
+      ['/api/share', 32 * 1024],
+    ] as const) {
+      const res = await request.post(path, {
+        headers: { 'content-type': 'application/json' },
+        data: `${'é'.repeat(limit / 2)}x`,
+      });
+      expect(res.status(), path).toBe(413);
+      expect(await res.json()).toMatchObject({ error: { code: 'bad_request' } });
+    }
+  });
+});
+
 test.describe('response headers', () => {
   const nonceOf = (csp: string) => /'nonce-([A-Za-z0-9+/=]+)'/.exec(csp)?.[1];
 
