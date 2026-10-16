@@ -104,7 +104,9 @@ export async function POST(req: Request) {
     }
     return Response.json(reply, { headers });
   } catch (error) {
-    if (free?.ok && cost === 0) free.giveBack();
+    // A step that failed on this server's or OpenAI's side is given back whatever it cost, so the
+    // next step counts instead (P10-05); one the visitor abandoned is not, if it was paid for.
+    if (free?.ok && (cost === 0 || !req.signal.aborted)) free.giveBack();
     if (error instanceof ModerationUnavailableError) {
       // No safety verdict, so no next step (P10-06); core has logged `moderation unavailable`.
       return jsonError(502, error.code, error.message, NO_STORE);

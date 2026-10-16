@@ -2,6 +2,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chunkSegments, contextPrefix } from '@dear-steven/core/ingest';
+import { MODELS } from '@dear-steven/core/models';
 import type { Segment } from '@dear-steven/core/schema';
 import { type EpisodeInput, episodeIdFor, KnowledgeStore } from '@dear-steven/core/store';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
@@ -330,5 +331,141 @@ describe('free questions need a daily cap (P8-09)', () => {
     vi.stubEnv('DEAR_STEVEN_DAILY_BUDGET_USD', '2');
     expect((await sam.ask('And on yours, now there is a cap?')).res.status).toBe(200);
     expect(await sam.status()).toMatchObject({ free: { limit: 3, used: 1, remaining: 2 } });
+  });
+});
+
+describe('a free question isn’t used up when OpenAI fails to answer it (P10-05)', () => {
+  beforeEach(() => {
+    // Embedded passages, so the question's embedding is paid for before the answer is asked.
+    const store = KnowledgeStore.open(join(dir, 'kb.db'));
+    const rows = store
+      .passagesNeedingEmbedding(MODELS.embedding, 1000)
+      .map((row) => ({ pk: row.pk, embedding: new Float32Array(1536).fill(0.02) }));
+    store.setEmbeddings(rows, MODELS.embedding);
+    store.close();
+  });
+
+  /** OpenAI as before, except the answer and interview calls, which `fail` decides. */
+  const responsesFail = (fail: (call: number, init?: RequestInit) => Promise<Response>) => {
+    const fake = network.getMockImplementation();
+    if (!fake) throw new Error('no fake OpenAI');
+    let calls = 0;
+    network.mockImplementation(async (input, init) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (!url.endsWith('/responses')) return fake(input, init);
+      calls += 1;
+      return fail(calls, init);
+    });
+    return { paidCalls: () => network.mock.calls.length };
+  };
+  /** An OpenAI error, with a retry hint short enough that the SDK's retries take no time. */
+  const openAIError = (status: number) =>
+    Response.json(
+      { error: { message: 'Fixture failure.', type: 'server_error' } },
+      { status, headers: { 'retry-after-ms': '1' } },
+    );
+  const embedded = () =>
+    network.mock.calls.some(([input]) => String(input).endsWith('/embeddings'));
+
+  it.each([500, 429])('gives the question back when the answer fails with %i', async (status) => {
+    const sam = browser();
+    responsesFail(async () => openAIError(status));
+    const { res, body } = await sam.ask('How do I start before I feel ready?');
+    expect(res.status).toBe(200);
+    expect(body).toContain('"type":"error"');
+    expect(embedded()).toBe(true);
+    expect(await sam.status()).toMatchObject({ free: { used: 0, remaining: 3 } });
+  });
+
+  it('gives the question back when the answer comes back malformed', async () => {
+    const sam = browser();
+    responsesFail(
+      async () =>
+        new Response(answerStream({ blocks: 'not a list of blocks' }), {
+          headers: { 'content-type': 'text/event-stream' },
+        }),
+    );
+    const { body } = await sam.ask('How do I start before I feel ready?');
+    expect(body).toContain('"type":"error"');
+    expect(body).not.toContain('"type":"final"');
+    expect(embedded()).toBe(true);
+    expect(await sam.status()).toMatchObject({ free: { used: 0, remaining: 3 } });
+  });
+
+  it('gives the question back when the safety check can’t run (P10-06)', async () => {
+    const sam = browser();
+    const fake = network.getMockImplementation();
+    if (!fake) throw new Error('no fake OpenAI');
+    network.mockImplementation(async (input, init) => {
+      const url = String(input instanceof Request ? input.url : input);
+      return url.endsWith('/moderations') ? openAIError(503) : fake(input, init);
+    });
+    const { body } = await sam.ask('How do I start before I feel ready?');
+    expect(body).toContain('"type":"error"');
+    expect(body).not.toContain('"type":"final"');
+    expect(embedded()).toBe(true);
+    expect(await sam.status()).toMatchObject({ free: { used: 0, remaining: 3 } });
+  });
+
+  it('still counts a complete answer', async () => {
+    const sam = browser();
+    const { body } = await sam.ask('How do I start before I feel ready?');
+    expect(body).toContain('"type":"final"');
+    expect(await sam.status()).toMatchObject({ free: { used: 1, remaining: 2 } });
+  });
+
+  it('still counts a question the visitor stopped after it was paid for', async () => {
+    const sam = browser();
+    // The answer never comes: it waits until the request is aborted.
+    responsesFail(
+      (_, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () =>
+            reject(new DOMException('The operation was aborted.', 'AbortError')),
+          );
+        }),
+    );
+    const stop = new AbortController();
+    const res = await ask(
+      new Request('http://localhost/api/ask', {
+        method: 'POST',
+        headers: sam.headers(),
+        body: JSON.stringify({ question: 'How do I start before I feel ready?', history: [] }),
+        signal: stop.signal,
+      }),
+    );
+    const reading = res.text().catch(() => '');
+    await vi.waitFor(() =>
+      expect(network.mock.calls.some(([input]) => String(input).endsWith('/responses'))).toBe(true),
+    );
+    expect(embedded()).toBe(true);
+    stop.abort();
+    await reading;
+    // The visitor cookie came with the response; carry it on as the browser would.
+    const cookie = res.headers.get('set-cookie')?.split(';')[0];
+    const after = await (
+      await status(
+        new Request('http://localhost/api/status', {
+          headers: sam.headers(cookie ? { cookie } : {}),
+        }),
+      )
+    ).json();
+    expect(after).toMatchObject({ free: { used: 1, remaining: 2 } });
+  });
+
+  it('gives an interview back when a paid step then fails', async () => {
+    const sam = browser();
+    // A failed step sets no visitor cookie, so the browser gets one first, from a question that
+    // costs nothing (a safety reply): the count below is then this visitor's.
+    await sam.ask('I want to kill myself');
+    expect(await sam.status()).toMatchObject({ free: { used: 0, remaining: 3 } });
+    // The first question comes back unusable, which is paid for; asking again fails.
+    responsesFail(async (call) =>
+      call === 1 ? Response.json(jsonReply({ not: 'a question' })) : openAIError(500),
+    );
+    const step = await sam.interview([]);
+    expect(step.res.status).toBe(502);
+    expect(step.ticket).toBeNull();
+    expect(await sam.status()).toMatchObject({ free: { used: 0, remaining: 3 } });
   });
 });
