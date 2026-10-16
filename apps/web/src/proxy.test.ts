@@ -114,18 +114,40 @@ describe('proxy — access gate (P6-08)', () => {
         '/api/speech',
         '/api/transcribe',
         '/api/access',
+        '/api/health',
       ]),
     );
   });
 
   it('refuses every API route without the cookie when a code is set', async () => {
     vi.stubEnv('DEAR_STEVEN_ACCESS_CODE', 'open sesame');
-    for (const path of routes.filter((p) => p !== '/api/access')) {
+    for (const path of routes.filter((p) => p !== '/api/access' && p !== '/api/health')) {
       const res = await proxy(request(path));
       expect(res.status, path).toBe(401);
       expect(await res.json()).toMatchObject({ error: { code: 'locked' } });
     }
     expect(passedOn(await proxy(request('/api/access')))).toBe(true);
+  });
+
+  it('never locks the health check, which platform checks call without a cookie (P10-02)', async () => {
+    vi.stubEnv('DEAR_STEVEN_ACCESS_CODE', 'open sesame');
+    const poll = new NextRequest('http://steven.example/api/health', {
+      headers: { host: 'steven.example' },
+    });
+    expect(passedOn(await proxy(poll))).toBe(true);
+    // A browser on another site may read it too: a GET is never refused as cross-site.
+    const read = new NextRequest('http://steven.example/api/health', {
+      headers: {
+        host: 'steven.example',
+        origin: 'https://attacker.example',
+        'sec-fetch-site': 'cross-site',
+      },
+    });
+    expect(passedOn(await proxy(read))).toBe(true);
+    // Only the exact path: nothing below it, or beside it, gets past the gate.
+    for (const path of ['/api/health/x', '/api/healthz', '/api/health.json']) {
+      expect((await proxy(request(path))).status, path).toBe(401);
+    }
   });
 
   it('lets a valid cookie through, and refuses a stale or forged one', async () => {
