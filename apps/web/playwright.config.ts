@@ -130,7 +130,9 @@ export default defineConfig({
         YOUTUBE_API_KEY: '',
         DEAR_STEVEN_DEMO: '',
         DEAR_STEVEN_DB_PATH: 'data/e2e-does-not-exist.db',
-        DEAR_STEVEN_DAILY_BUDGET_USD: '',
+        // A production server spends the operator's key only under a cap (P10-01); the fake
+        // OpenAI refuses every call, so nothing is ever spent against it.
+        DEAR_STEVEN_DAILY_BUDGET_USD: '5',
         DEAR_STEVEN_ENV_FILE: 'data/e2e-live-does-not-exist.env',
       },
     },

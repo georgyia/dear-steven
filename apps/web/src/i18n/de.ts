@@ -431,6 +431,8 @@ export const de: Messages = {
     openai: {
       title: 'OpenAI-API-Schlüssel',
       forced: 'Nicht genutzt: `DEAR_STEVEN_DEMO=1` erzwingt den Demo-Modus.',
+      noCap:
+        'Nicht genutzt: Ein Produktionsserver nutzt ihn nur mit einem Tageslimit, deshalb sind die Antworten Demo-Beispiele. Setze `DEAR_STEVEN_DAILY_BUDGET_USD` und starte neu, oder füg unten deinen eigenen Schlüssel ein.',
       found:
         'Auf dem Server gefunden. Er gelangt nie in den Browser. Du kannst stattdessen deinen eigenen Schlüssel nutzen.',
       missing:

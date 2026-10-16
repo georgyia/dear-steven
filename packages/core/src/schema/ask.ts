@@ -108,7 +108,8 @@ export type PassageCitation = Omit<Citation, 'id' | 'relevance' | 'quoteSpan'> &
 
 export const KnowledgeStatusSchema = z.object({
   mode: z.enum(['live', 'demo']),
-  demoReason: z.enum(['no_openai_key', 'forced']).nullable(),
+  /** `no_daily_cap`: a production server holding back the operator's key without a cap (P10-01). */
+  demoReason: z.enum(['no_openai_key', 'no_daily_cap', 'forced']).nullable(),
   episodes: z.number().int().nonnegative(),
   passages: z.number().int().nonnegative(),
   embeddedPassages: z.number().int().nonnegative(),
