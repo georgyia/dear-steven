@@ -16,6 +16,8 @@ export const de: Messages = {
     termsTitle: `${brand.name}: Nutzungsbedingungen, Haftungsausschluss und Datenschutz`,
     termsDescription:
       'Was Dear Steven ist und was nicht, die Bedingungen für die Nutzung und was mit deinen Daten passiert.',
+    legalTitle: `${brand.name}: Impressum`,
+    legalDescription: `Wer diese Kopie von ${brand.name} betreibt und wie du sie erreichst.`,
   },
   home: {
     intro:
@@ -168,6 +170,7 @@ export const de: Messages = {
     'Dear Steven ist eine inoffizielle KI-Persona, nicht Steven Bartlett, keine Fachberatung.',
   terms: {
     link: 'Bedingungen & Haftungsausschluss',
+    legalLink: 'Impressum',
     noticeLabel: 'Bevor du anfängst',
     notice:
       'Ich bin eine KI-Persona — nicht Steven Bartlett und nicht mit der Show verbunden. Ich antworte aus öffentlichen Interviews, ich kann mich irren, und nichts, was ich sage, ist medizinische, rechtliche oder finanzielle Beratung.',
@@ -420,7 +423,7 @@ export const de: Messages = {
     retryAudio: 'Podcast-Audio noch einmal versuchen',
     audioError: 'Der Podcast-Host hat das Audio gerade nicht geliefert.',
     audioNote:
-      'Wird vom Host des Podcasts gestreamt, sobald du auf Abspielen drückst. Werbung, die der Host einfügt, kann den Moment um ein paar Sekunden verschieben.',
+      'Wird gestreamt, sobald du auf Abspielen drückst: vom Host des Podcasts über die Werbemessdienste des Herausgebers. Werbung, die der Host einfügt, kann den Moment um ein paar Sekunden verschieben.',
   },
   setup: {
     eyebrow: 'Einrichtung',
@@ -632,8 +635,9 @@ export const de: Messages = {
     originalsHeading: 'Schau dir die Originale an',
     originals: `Alles hier stammt aus den Gesprächen von ${brand.show}, und die kannst du kostenlos auf YouTube ansehen. Das ist ein Fanprojekt, das Menschen zur Show schickt, kein Ersatz dafür: Wo eine Folge ihrem Video zugeordnet ist, verlinken ihre Quellen auf den Moment, aus dem sie stammen, und die ganzen Folgen anzusehen ist die beste Art, die Menschen zu unterstützen, die sie gemacht haben.`,
     dataHeading: 'Deine Daten',
-    data: 'Fragen werden an den Server und an OpenAI gesendet, um eine Antwort zu formulieren, und nicht gespeichert, es sei denn, wer diese Kopie betreibt, schaltet das Protokollieren von Antworten zur Auswertung ein. Das Mikrofon wird nur benutzt, solange du es gedrückt hältst oder einschaltest, oder in einem Gespräch, das du beginnst, solange du an der Reihe bist. Kurze Zitate mit Quellenangabe verweisen auf die Originalfolgen; vollständige Transkripte werden nie veröffentlicht. Videoplayer und Podcast-Audio laden erst dann von YouTube und vom Host des Podcasts, wenn du auf Abspielen drückst. Wenn du eine Sprache wählst, merkt sich ein kleines Cookie diese Wahl, damit die Seite in dieser Sprache öffnet. Wenn du deinen eigenen OpenAI-Schlüssel einfügst, bleibt er in diesem Tab (oder auf diesem Gerät, wenn du willst) und geht nur mit deinen Anfragen an diese Seite; der Server speichert oder protokolliert ihn nie. Ein geteilter Link trägt die Frage und die Antwort in sich selbst; auf dem Server wird dazu nichts gespeichert, und beim Öffnen prüft der Server nur, ob er diese Antwort geschrieben hat. Stimmeinstellungen — und, nur wenn du es einschaltest, das Gespräch selbst — bleiben ausschließlich in diesem Browser, bis du sie vergessen lässt.',
+    data: 'Fragen werden zusammen mit dem bisherigen Gespräch an den Server und an OpenAI gesendet, um eine Antwort zu formulieren. Dieser Server speichert sie nicht, es sei denn, wer diese Kopie betreibt, schaltet das Protokollieren von Antworten zur Auswertung ein; OpenAI kann, was es erhält, nach eigenen Bedingungen eine Zeit lang aufbewahren. Das Mikrofon wird nur benutzt, solange du es gedrückt hältst oder einschaltest, oder in einem Gespräch, das du beginnst, solange du an der Reihe bist. Kurze Zitate mit Quellenangabe verweisen auf die Originalfolgen; vollständige Transkripte werden nie veröffentlicht. Videoplayer und Podcast-Audio laden erst, wenn du auf Abspielen drückst: das Video von YouTube, das Audio vom Host des Podcasts über die Werbemessdienste des Herausgebers. Wenn du eine Sprache wählst, merkt sich ein kleines Cookie diese Wahl, damit die Seite in dieser Sprache öffnet. Wenn du deinen eigenen OpenAI-Schlüssel einfügst, bleibt er in diesem Tab (oder auf diesem Gerät, wenn du willst) und geht nur mit deinen Anfragen an diese Seite; der Server speichert oder protokolliert ihn nie. Ein geteilter Link trägt die Frage und die Antwort in sich selbst; auf dem Server wird dazu nichts gespeichert, und beim Öffnen prüft der Server nur, ob er diese Antwort geschrieben hat. Stimmeinstellungen — und, nur wenn du es einschaltest, das Gespräch selbst — bleiben ausschließlich in diesem Browser, bis du sie vergessen lässt.',
     fullVersion: 'Die vollständige Fassung, mit dem, was versprochen wird und was nicht:',
+    legal: 'Wer diese Kopie betreibt und wie du sie erreichst:',
   },
   voice: {
     eyebrow: 'Einstellungen',
@@ -699,6 +703,12 @@ export const de: Messages = {
       title: 'Bei mir ist etwas kaputtgegangen.',
       body: 'Es lag nicht an dir. Versuch es noch einmal, oder beginne ein neues Gespräch.',
     },
+  },
+  legalPage: {
+    title: 'Impressum',
+    operatorHeading: 'Wer diese Kopie betreibt',
+    email: 'E-Mail',
+    contactHeading: 'Löschanfragen und Datenschutz',
   },
   termsPage: {
     title: 'Nutzungsbedingungen, Haftungsausschluss und Datenschutz',

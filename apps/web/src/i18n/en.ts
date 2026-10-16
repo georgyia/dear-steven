@@ -18,6 +18,8 @@ export const en = {
     termsTitle: `${brand.name}: terms, disclaimer and privacy`,
     termsDescription:
       'What Dear Steven is and isn’t, the terms for using it, and what happens to your data.',
+    legalTitle: `${brand.name}: legal notice`,
+    legalDescription: `Who runs this copy of ${brand.name}, and how to reach them.`,
   },
   home: {
     intro:
@@ -165,6 +167,7 @@ export const en = {
     'Dear Steven is an unofficial AI persona, not Steven Bartlett, and not medical, legal or financial advice.',
   terms: {
     link: 'Terms & disclaimer',
+    legalLink: 'Legal notice',
     noticeLabel: 'Before you start',
     notice:
       'I’m an AI persona — not Steven Bartlett, and not affiliated with the show. I answer from public interviews, I can be wrong, and nothing I say is medical, legal or financial advice.',
@@ -410,7 +413,7 @@ export const en = {
     retryAudio: 'Try the podcast audio again',
     audioError: 'The podcast host didn’t send the audio just now.',
     audioNote:
-      'Streams from the podcast’s own host once you press play. Ads the host inserts can shift the moment by a few seconds.',
+      'Streams once you press play, from the podcast’s host by way of the publisher’s ad-measurement services. Ads the host inserts can shift the moment by a few seconds.',
   },
   setup: {
     eyebrow: 'Setup',
@@ -618,8 +621,9 @@ export const en = {
     originalsHeading: 'Watch the originals',
     originals: `Everything here comes from ${brand.show}’s conversations, and they are free to watch on YouTube. This is a fan project that sends people to the show, not a replacement for it: wherever an episode is matched to its video, its sources link to the moment they come from, and watching the full episodes is the best way to support the people who made them.`,
     dataHeading: 'Your data',
-    data: 'Questions are sent to the server and to OpenAI to compose an answer, and are not stored unless whoever runs this copy switches on answer logging for evaluation. The microphone is only used while you hold or toggle it, or, in a spoken conversation you start, while it’s your turn to speak. Short, attributed quotations link back to the original episodes; full transcripts are never published. The video player and the podcast audio load from YouTube and the podcast’s host only when you press play. If you pick a language, a small cookie remembers it so the page opens in that language. If you paste your own OpenAI key, it stays in this tab (or on this device, if you ask) and goes only to this site with your requests; the server never stores or logs it. A share link carries the question and the answer inside the link itself; nothing about it is stored on the server, and opening one only asks the server to check that it wrote that answer. Voice settings — and, only if you switch it on, the conversation itself — are kept in this browser only, until you forget them.',
+    data: 'Questions, with the conversation so far, are sent to the server and to OpenAI to compose an answer. This server doesn’t store them unless whoever runs this copy switches on answer logging for evaluation; OpenAI may keep what it receives for a while under its own terms. The microphone is only used while you hold or toggle it, or, in a spoken conversation you start, while it’s your turn to speak. Short, attributed quotations link back to the original episodes; full transcripts are never published. The video player and the podcast audio load only when you press play: the video from YouTube, the audio from the podcast’s host by way of the publisher’s ad-measurement services. If you pick a language, a small cookie remembers it so the page opens in that language. If you paste your own OpenAI key, it stays in this tab (or on this device, if you ask) and goes only to this site with your requests; the server never stores or logs it. A share link carries the question and the answer inside the link itself; nothing about it is stored on the server, and opening one only asks the server to check that it wrote that answer. Voice settings — and, only if you switch it on, the conversation itself — are kept in this browser only, until you forget them.',
     fullVersion: 'The full version, with what is and isn’t promised:',
+    legal: 'Who runs this copy, and how to reach them:',
   },
   voice: {
     eyebrow: 'Settings',
@@ -686,6 +690,12 @@ export const en = {
       title: 'Something broke on my end.',
       body: 'It wasn’t anything you did. Try again, or start a new conversation.',
     },
+  },
+  legalPage: {
+    title: 'Legal notice',
+    operatorHeading: 'Who runs this copy',
+    email: 'Email',
+    contactHeading: 'Takedown and privacy requests',
   },
   termsPage: {
     title: 'Terms, disclaimer and privacy',

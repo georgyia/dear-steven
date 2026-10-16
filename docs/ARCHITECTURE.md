@@ -11,7 +11,7 @@ Binding for agents. The reasoning behind each choice is in `plan/12-adr/`; the o
 
 ```
 apps/web/                     Next.js 16 app — thin server shell + one client "stage"
-  src/app/                    layout, page (server), api/{ask,interview,passages/[id],status,health,transcribe,speech}
+  src/app/                    layout, page (server), terms, legal, api/{ask,interview,passages/[id],status,health,transcribe,speech}
                               not-found, error, global-error: the 404 and crash pages (P10-09)
                               icon.svg, apple-icon, mark: the icon; layout: the link preview (P10-10)
   src/server/                 server-only: store/model handles, SSE, rate limits, demo stream, errors
@@ -140,7 +140,7 @@ line's evidence located in the visitor's own words). JSON in, JSON out; nothing 
 | Share link → page | A share token (P6-17) opens only through `POST /api/share`, and only if this deployment signed it (`server/share.ts`, HMAC under `data/share-secret`); the answer inside is then re-validated and re-linked like a stored one, and (unless it is a demo fixture) must still be sourced in the knowledge base as it is now (`stillSourced`). A link can't say anything this copy didn't write, nor outlive a takedown. |
 | Transcript text → model | Untrusted data: wrapped in `<sources>`, `<`/`>` neutralised, instructions say to ignore commands inside. |
 | Model → browser | Nothing passes without `validateBlock`; citation ids must be retrieved ids; quotes are re-derived from storage. |
-| Browser → YouTube / podcast host | Only after the user presses play: the youtube-nocookie player and the https RSS enclosure. CSP `frame-src` / `media-src` fence everything else. |
+| Browser → YouTube / podcast host | Only after the user presses play: the youtube-nocookie player and the https RSS enclosure, which passes through the publisher's ad-measurement redirects on its way to the host (said in the privacy notice, `content/policies.ts`). CSP `frame-src` / `media-src` fence everything else. |
 | CLI → network | Polite UA, timeouts, retries with backoff; RSS + VTT + YouTube Data API + OpenAI only. Paid stages require `--budget`. |
 | Setup panel → this machine | Guided local setup (P6-04) exists only on a server `pnpm dev:setup` started: bound to 127.0.0.1, with a one-time token from the terminal. `/api/setup*` answer 404 unless the Host is loopback, Origin and Fetch Metadata (when sent) say same-origin, every forwarding hop is loopback and the token matches (`server/setup.ts`). Keys go to the env file atomically (owner-only) and are never sent back; the stages run as the ingest CLI itself (`process.execPath packages/ingest/src/cli.ts …`), one at a time, so the web app decides nothing about ingestion. Embedding runs only under a budget its estimate fits, which the CLI enforces again (`index --budget`); paid diarization stays in the terminal. |
 
