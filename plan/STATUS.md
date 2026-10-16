@@ -8,28 +8,50 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 
 ## Now
 
-- **Phase:** M8 *Launch readiness* (`plan/04-issues/phase-10.md`), opened on 2026-10-16 after a
-  read-only launch audit of the whole repository. The owner asked to "fix what needs to be fixed
-  before launch". Every M8 PR merges once `pnpm check`, the build and `pnpm e2e` pass locally,
-  `risk:high` included, on the owner's instruction for this milestone. CI still isn't starting
-  (billing).
+- **Phase:** M8 *Launch readiness* (`plan/04-issues/phase-10.md`) merged to `main` on
+  2026-10-16. That's 13 issues: P10-01 to P10-12, plus P10-13, which merging found. Each PR merged on the
+  owner's instruction, without CI (billing), once the same checks passed locally on its exact head
+  commit (`--match-head-commit`):
+  - lint and typecheck of every package, one at a time;
+  - vitest: 820 tests at the end;
+  - dependency-cruiser;
+  - `playwright test --workers=2`: 247 passed at the end.
+
+  Every run had a memory guard, because the machine has 16 GB and two freezes this week came from
+  parallel builds. A run peaked at 2.5 GB. No real device tried yet.
+- **What M8 changed:**
+  - a production server won't spend the operator's key without a daily cap;
+  - `/api/health`;
+  - `fly.toml` and a deploy runbook;
+  - request bodies capped before they're read;
+  - free questions given back when OpenAI fails;
+  - no answer without the safety check, but a rejected key reported as such;
+  - crisis replies always give a helpline finder;
+  - visitor-worded errors;
+  - error and 404 pages;
+  - the icon and link preview;
+  - the AI disclosure in the interview;
+  - an accurate privacy notice and a legal notice page, waiting for the operator's details.
 - **Merged first (2026-10-16), on the owner's instruction, without CI:** the stack #96 → #104 (the
   security re-check, P8-08 and P8-09, the paid transcription fixes P8-10 to P8-12). The same tree
   passed `pnpm check` (653 tests) and `pnpm e2e` (201 passed, 12 skipped) locally.
-- **Next to pick:** P10-01 (#105) to P10-12 (#116), in order.
-- **Running:** the paid diarization batch, resumed 2026-10-16 from `main` (owner-approved, total
-  diarization within about $133): guest names from descriptions first, then up to 182 episodes
-  with no transcript, to reach 300. After it: `chunk`, `index`, `summarise`, `attribute`
-  (`plan/human/transcription-budget.md`).
+- **Next:** the paid diarization batch (owner-approved, total diarization within about $133).
+  - Done so far: 10 of the episodes diarized, $6.77 recorded.
+  - It stopped twice: once when the machine ran out of memory, once on a network outage.
+  - It resumes alone, never beside a build, to reach 300.
+  - After it: `chunk`, `index`, `summarise`, `attribute` (`plan/human/transcription-budget.md`).
+  - Guest names were filled in from descriptions on 2026-10-16.
 - **To switch on:** `DEAR_STEVEN_FREE_QUESTIONS=3` on a deployment (`docs/DEPLOY.md`), with
   `DEAR_STEVEN_DAILY_BUDGET_USD` set and the client address configured.
 - **Waiting on the owner, before a public launch:**
   - permission from, or a legal view on, using the podcast's transcripts and Steven Bartlett's
     name (none is recorded);
-  - the contact address and the operator's details for the legal notice;
+  - the contact address and the operator's details for the legal notice (`CONTACT` and
+    `OPERATOR` in `apps/web/src/content/policies.ts`);
   - a lawyer's review of the policies (P6-12);
   - H-11 (crisis copy and helplines; #35 needs it too);
-  - H-08 (hosting account and secrets);
+  - H-08 (hosting account and secrets; the runbook is `docs/DEPLOY.md`, with `fly.toml` committed);
+  - whether data-processing agreements with OpenAI and the host are in place;
   - GitHub billing, so CI runs again (then re-run it on `main`);
   - H-07 (five live answers) and H-10 (YouTube spot check);
   - spoken Talk and the interview on a real device in Chrome, Safari and Firefox.
@@ -243,15 +265,16 @@ merges after local checks on the owner's instruction (2026-10-16), `risk:high` i
 
 | Id | # | Issue | Pri | Risk | State | Depends on | Needs |
 |----|---|-------|-----|------|-------|------------|-------|
-| P10-01 | #105 | fix(security): a public deployment won't spend the operator's key without a daily cap | P0 | high | open | — | — |
-| P10-02 | #106 | feat(infra): a health check that fails when the site can't answer | P0 | medium | open | P10-01 | — |
-| P10-03 | #107 | chore(infra): Fly.io configuration and a runbook for the knowledge base | P0 | medium | open | P10-01, P10-02 | — |
-| P10-04 | #108 | fix(security): request bodies are capped before they are read | P1 | medium | open | — | — |
-| P10-05 | #109 | fix(security): a free question isn't used up when OpenAI fails to answer it | P1 | high | open | — | — |
-| P10-06 | #110 | fix(security): no question is answered without its safety check | P1 | high | open | — | — |
-| P10-07 | #111 | fix(security): a crisis reply always says how to find a helpline in any country | P1 | high | open | — | H-11 reviews the line |
-| P10-08 | #112 | fix(web): visitors see errors in their own words; the operator's details go to the log | P1 | low | open | — | — |
-| P10-09 | #113 | feat(web): an error page and a not-found page in Dear Steven's own design | P1 | low | open | — | — |
-| P10-10 | #114 | feat(web): an icon and a link preview that say it's an unofficial AI persona | P2 | low | open | — | — |
-| P10-11 | #115 | fix(web): the interview shows the AI disclosure too, and it says it isn't advice | P1 | low | open | — | — |
-| P10-12 | #116 | docs: a privacy notice that says where data goes, and a legal notice page | P0 | medium | open | — | owner's details, lawyer (P6-12) |
+| P10-01 | #105 | fix(security): a public deployment won't spend the operator's key without a daily cap | P0 | high | done, #121, merged on the owner's instruction without CI (2026-10-16) | — | — |
+| P10-02 | #106 | feat(infra): a health check that fails when the site can't answer | P0 | medium | done, #122, merged on the owner's instruction without CI (2026-10-16) | P10-01 | — |
+| P10-03 | #107 | chore(infra): Fly.io configuration and a runbook for the knowledge base | P0 | medium | done, #123, merged on the owner's instruction without CI (2026-10-16) | P10-01, P10-02 | — |
+| P10-04 | #108 | fix(security): request bodies are capped before they are read | P1 | medium | done, #126, merged on the owner's instruction without CI (2026-10-16) | — | — |
+| P10-05 | #109 | fix(security): a free question isn't used up when OpenAI fails to answer it | P1 | high | done, #127, merged on the owner's instruction without CI (2026-10-16) | — | — |
+| P10-06 | #110 | fix(security): no question is answered without its safety check | P1 | high | done, #119, merged on the owner's instruction without CI (2026-10-16) | — | — |
+| P10-07 | #111 | fix(security): a crisis reply always says how to find a helpline in any country | P1 | high | done, #120, merged on the owner's instruction without CI (2026-10-16) | — | H-11 reviews the line |
+| P10-08 | #112 | fix(web): visitors see errors in their own words; the operator's details go to the log | P1 | low | done, #118, merged on the owner's instruction without CI (2026-10-16) | — | — |
+| P10-09 | #113 | feat(web): an error page and a not-found page in Dear Steven's own design | P1 | low | done, #128, merged on the owner's instruction without CI (2026-10-16) | — | — |
+| P10-10 | #114 | feat(web): an icon and a link preview that say it's an unofficial AI persona | P2 | low | done, #129, merged on the owner's instruction without CI (2026-10-16) | — | — |
+| P10-11 | #115 | fix(web): the interview shows the AI disclosure too, and it says it isn't advice | P1 | low | done, #130, merged on the owner's instruction without CI (2026-10-16) | — | — |
+| P10-12 | #116 | docs: a privacy notice that says where data goes, and a legal notice page | P0 | medium | done, #131, merged on the owner's instruction without CI (2026-10-16) | — | operator's details and contact, lawyer (P6-12) |
+| P10-13 | #124 | fix(security): a rejected key is reported as such, not as a failed safety check | P1 | high | done, #125, merged on the owner's instruction without CI (2026-10-16); found while merging P10-08 onto P10-06 | P10-06 | — |
