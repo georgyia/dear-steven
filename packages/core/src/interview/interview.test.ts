@@ -135,6 +135,30 @@ describe('interviewStep: the next question (P7-06)', () => {
     expect(reply).toMatchObject({ language: 'de' });
     expect(seen[0]?.input[0]?.content).toContain('<language>de</language>');
   });
+
+  it('asks again when the question comes back in another language, then falls back to the chosen one (P10-15)', async () => {
+    const english = { question: 'What was the first real step you took?', stage: 'opening' };
+    const { model, seen } = scripted(english, english);
+    const reply = await interviewStep({ model, store: null }, request({ uiLocale: 'de' }), signal);
+    expect(seen).toHaveLength(2);
+    expect(seen[0]?.input[0]?.content).toContain('<language>de</language>');
+    expect(seen[1]?.input[0]?.content).toContain('It is in English; ask it in German.');
+    expect(reply).toMatchObject({
+      type: 'question',
+      question: FALLBACK_QUESTIONS.de.opening,
+      language: 'de',
+    });
+  });
+
+  it('keeps a question asked in the chosen language on the first try', async () => {
+    const { model, seen } = scripted({
+      question: 'Wie hat das alles angefangen?',
+      stage: 'opening',
+    });
+    const reply = await interviewStep({ model, store: null }, request({ uiLocale: 'de' }), signal);
+    expect(seen).toHaveLength(1);
+    expect(reply).toMatchObject({ question: 'Wie hat das alles angefangen?', language: 'de' });
+  });
 });
 
 describe('interviewStep: the safety rails see every answer (P7-06)', () => {
@@ -383,6 +407,18 @@ describe('questionProblems', () => {
       ]),
     ).toHaveLength(1);
   });
+
+  it('a question clearly in another language than the interview’s is a problem (P10-15)', () => {
+    expect(questionProblems('What was the first real step you took?', [], 'de')).toEqual([
+      'It is in English; ask it in German.',
+    ]);
+    expect(questionProblems('What was the first real step you took?', [], 'en')).toEqual([]);
+    expect(questionProblems('Was war dein erster echter Schritt?', [], 'de')).toEqual([]);
+    // An English word in a German question is fine.
+    expect(questionProblems('Was bedeutet Hustle für dich?', [], 'de')).toEqual([]);
+    // Without a language, as before.
+    expect(questionProblems('What was the first real step you took?')).toEqual([]);
+  });
 });
 
 describe('styleExamples', () => {
@@ -415,18 +451,36 @@ describe('styleExamples', () => {
   });
 });
 
-describe('interviewLanguage', () => {
-  it('follows what the visitor writes, else the interface', () => {
+describe('interviewLanguage (P10-15)', () => {
+  const answered = (answer: string, uiLocale: 'en' | 'de') =>
+    interviewLanguage(request({ setup: {}, turns: [turn(answer)], uiLocale }));
+
+  it('is the language you chose, whatever the setup says', () => {
     expect(interviewLanguage(request({ setup: {}, uiLocale: 'de' }))).toBe('de');
     expect(
       interviewLanguage(
         request({
-          setup: {},
-          turns: [turn('I build furniture for small flats in London.')],
+          setup: { about: 'Founder of a fintech startup and the host of a podcast about it' },
           uiLocale: 'de',
         }),
       ),
+    ).toBe('de');
+    expect(interviewLanguage(request({ setup: {} }))).toBe('en');
+  });
+
+  it('stays in it when an answer doesn’t clearly say otherwise', () => {
+    expect(answered('Ich bin Designer', 'de')).toBe('de');
+    expect(answered('Product Manager bei Zalando, vorher Consultant', 'de')).toBe('de');
+    expect(answered('I build furniture for small flats in London.', 'de')).toBe('de');
+  });
+
+  it('follows your answers when they are clearly in another language', () => {
+    expect(
+      answered('I started my company because I was tired of working for other people.', 'de'),
     ).toBe('en');
+    expect(answered('Ich habe mit meinem Bruder angefangen, und es war nicht leicht.', 'en')).toBe(
+      'de',
+    );
   });
 });
 

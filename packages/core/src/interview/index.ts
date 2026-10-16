@@ -3,6 +3,7 @@ export { FALLBACK_QUESTIONS } from './fallbacks.ts';
 export {
   checkDebrief,
   checkLearned,
+  fixedLanguage,
   type InterviewDeps,
   interviewLanguage,
   interviewStep,

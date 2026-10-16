@@ -1,6 +1,6 @@
 import type { AnswerModel } from '../answer/model.ts';
 import { locateQuote, normalise } from '../answer/quotes.ts';
-import { detectLanguage } from '../language/detect.ts';
+import { clearLanguage } from '../language/detect.ts';
 import { RESTING_REPLY } from '../persona/copy.ts';
 import { personaLint } from '../persona/persona.ts';
 import {
@@ -71,8 +71,23 @@ export function styleExamples(store: KnowledgeStore | null, count = 6): string[]
   return out;
 }
 
-/** What is wrong with a proposed question, if anything: one question, short, in voice, our own. */
-export function questionProblems(question: string, examples: string[] = []): string[] {
+function languageName(code: string): string {
+  try {
+    return new Intl.DisplayNames(['en'], { type: 'language' }).of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+/**
+ * What is wrong with a proposed question, if anything: one question, short, in voice, our own,
+ * and not clearly in another language than the interview's (P10-15).
+ */
+export function questionProblems(
+  question: string,
+  examples: string[] = [],
+  language?: string,
+): string[] {
   const q = question.trim();
   const problems: string[] = [];
   if (!q) return ['The question is empty.'];
@@ -84,6 +99,10 @@ export function questionProblems(question: string, examples: string[] = []): str
     problems.push('Ask exactly one question, ending with its question mark.');
   }
   for (const reason of personaLint(q)) problems.push(`It ${reason}.`);
+  const asked = language ? clearLanguage(q) : null;
+  if (language && asked && asked !== language) {
+    problems.push(`It is in ${languageName(asked)}; ask it in ${languageName(language)}.`);
+  }
   const mine = normalise(q).text;
   for (const example of examples) {
     const theirs = normalise(example).text;
@@ -208,17 +227,25 @@ export function checkDebrief(
   };
 }
 
-/** The interview's language: what the visitor writes in, once there is enough to tell. */
+/**
+ * The interview's language (P10-15): the one you chose, unless your last two answers are clearly in
+ * another. The setup doesn't count: a job title or a bio is often in English, whatever you speak.
+ */
 export function interviewLanguage(request: InterviewRequest): string {
-  const said = [
-    request.setup.about ?? '',
-    request.setup.expertise ?? '',
-    ...request.turns.map((t) => t.answer),
-  ]
-    .filter(Boolean)
+  const answers = request.turns
     .slice(-2)
+    .map((t) => t.answer)
     .join(' ');
-  return said.length >= 20 ? detectLanguage(said) : (request.uiLocale ?? 'en');
+  return clearLanguage(answers) ?? request.uiLocale ?? 'en';
+}
+
+/** The language of the fixed questions and demo lines, which are written in English and German. */
+export function fixedLanguage(
+  language: string,
+  uiLocale: InterviewRequest['uiLocale'],
+): 'en' | 'de' {
+  if (language === 'en' || language === 'de') return language;
+  return uiLocale ?? 'en';
 }
 
 const ENDINGS = new Set(['crisis', 'refuse']);
@@ -324,7 +351,7 @@ export async function interviewStep(
       problems = ['Return a JSON object with "question" and "stage".'];
       continue;
     }
-    problems = questionProblems(parsed.data.question, examples);
+    problems = questionProblems(parsed.data.question, examples, language);
     if (problems.length === 0) {
       const stage = parsed.data.stage === previous ? previous : planned;
       return {
@@ -338,14 +365,14 @@ export async function interviewStep(
       };
     }
   }
-  const fallback = FALLBACK_QUESTIONS[language === 'de' ? 'de' : 'en'];
+  const fixed = fixedLanguage(language, request.uiLocale);
   return {
     type: 'question',
-    question: fallback[planned],
+    question: FALLBACK_QUESTIONS[fixed][planned],
     stage: planned,
     index,
     total: arc.length,
-    language: language === 'de' ? 'de' : 'en',
+    language: fixed,
     demo: false,
   };
 }
