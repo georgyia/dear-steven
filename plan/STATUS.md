@@ -10,7 +10,8 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 
 - **Phase:** M8 *Launch readiness* (`plan/04-issues/phase-10.md`) merged to `main` on
   2026-10-16. That's 13 issues: P10-01 to P10-12, plus P10-13, which merging found. P10-14 to P10-16
-  came after: two from the owner trying voice and the interview, one from the diarization batch. Each PR merged on the
+  came after: two from the owner trying voice and the interview, one from the diarization batch;
+  all three merged the same day (#139, #137, #138). On the merged `main`, vitest has 850 tests. Each PR merged on the
   owner's instruction, without CI (billing), once the same checks passed locally on its exact head
   commit (`--match-head-commit`):
   - lint and typecheck of every package, one at a time;
@@ -279,6 +280,6 @@ merges after local checks on the owner's instruction (2026-10-16), `risk:high` i
 | P10-11 | #115 | fix(web): the interview shows the AI disclosure too, and it says it isn't advice | P1 | low | done, #130, merged on the owner's instruction without CI (2026-10-16) | — | — |
 | P10-12 | #116 | docs: a privacy notice that says where data goes, and a legal notice page | P0 | medium | done, #131, merged on the owner's instruction without CI (2026-10-16) | — | operator's details and contact, lawyer (P6-12) |
 | P10-13 | #124 | fix(security): a rejected key is reported as such, not as a failed safety check | P1 | high | done, #125, merged on the owner's instruction without CI (2026-10-16); found while merging P10-08 onto P10-06 | P10-06 | — |
-| P10-14 | #133 | fix(voice): you aren't cut off mid-thought: listening carries on when the browser stops | P1 | medium | open; found by the owner trying it (2026-10-16) | — | real-device check |
-| P10-15 | #134 | fix(core): the interview asks in the language you chose, unless you clearly answer in another | P1 | low | open; found by the owner trying it (2026-10-16) | — | — |
-| P10-16 | #135 | fix(ingest): a failed episode's paid audio counts toward the budget, and an outage stops the run | P1 | medium | open; found in the diarization batch (2026-10-16) | — | — |
+| P10-14 | #133 | fix(voice): you aren't cut off mid-thought: listening carries on when the browser stops | P1 | medium | done, #139, merged on the owner's instruction without CI (2026-10-16); found by the owner trying it | — | real-device check |
+| P10-15 | #134 | fix(core): the interview asks in the language you chose, unless you clearly answer in another | P1 | low | done, #137, merged on the owner's instruction without CI (2026-10-16); found by the owner trying it | — | — |
+| P10-16 | #135 | fix(ingest): a failed episode's paid audio counts toward the budget, and an outage stops the run | P1 | medium | done, #138, merged on the owner's instruction without CI (2026-10-16); found in the diarization batch | — | — |
