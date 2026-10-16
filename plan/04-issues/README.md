@@ -20,6 +20,7 @@ GitHub number is written back into the `github` field.
 | `phase-8.md` | M6 Summaries and open access | merged 2026-10-14 — key audit, three free questions, episode summaries; P8-05 waits on a decision; P8-08 to P8-12 merged 2026-10-16 (security re-check, paid transcription fixes) |
 | `phase-9.md` | M7 Spoken conversations | merged 2026-10-15 — streamed spoken replies, hands-free Talk, a spoken interview |
 | `phase-10.md` | M8 Launch readiness | merged 2026-10-16 — spend defaults, health check, Fly config, body limits, free questions on failure, safety fail-closed (and P10-13), helplines anywhere, visitor errors, error pages, icon and link preview, AI disclosure, privacy and legal notice |
+| `phase-11.md` | M9 Open to contributors | open (2026-10-17) — 21 issues, none needing a paid call: CI and supply chain, security and privacy, contributor docs, a safer knowledge base, free features, tests |
 
 Issues built in the first implementation pass (phases 0–4) are recorded briefly: what was in
 scope, how each criterion was verified, and where the work lives. Open issues are fully specified.
