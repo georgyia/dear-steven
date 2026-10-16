@@ -758,3 +758,173 @@ None.
 
 #### Dependencies
 P10-06. **Size:** S.
+
+## Found by trying it
+
+After M8 merged, on 2026-10-16: two problems the owner found by talking to it, and one from the diarization
+batch.
+
+### P10-14 — fix(voice): you aren't cut off mid-thought: listening carries on when the browser stops
+
+<!-- issue {"id":"P10-14","title":"fix(voice): you aren't cut off mid-thought: listening carries on when the browser stops","labels":["type:ui","stage:m8","track:voice","track:web","owner:ai","risk:medium","P1","size:S"],"milestone":"M8 Launch readiness","depends":[],"github":133} -->
+
+#### Context
+The owner tried the app and reported that speaking "interrupts after I said one sentence". The code
+has two causes:
+
+- The browser's speech recognition ends by itself after a sentence. Safari does this, and Android
+  Chrome always does, because it listens to one utterance at a time (`recognition.ts`). Talk and the
+  spoken interview take that end as the end of your turn (`listen.ts`). The mic button sends what
+  it has (`useVoice.ts`), though you are still talking.
+- In Talk, 0.9 s of quiet ends your turn (`TURN_TIMING.talk`). A breath between two sentences
+  takes about that long.
+
+#### Goal
+Your turn ends when you pause for real, or when you say so, never because the browser stopped
+listening by itself.
+
+#### Scope
+**In:**
+- `createRecognizer` gains `keepListening`. When the browser ends by itself after words were heard,
+  it starts again and keeps the words. A `no-speech` after words ends with those words, not with an
+  error. It allows at most two restarts in a row with nothing new and 50 in all, so a broken
+  recognizer can't loop.
+- Talk, the spoken interview (`listenForTurn`) and the mic button (`useVoice`) listen that way.
+- `TURN_TIMING`: Talk waits for 1.5 s of quiet, the interview for 2.5 s. "Send now" still ends a
+  turn at once.
+
+**Out:**
+- The recorder path's level gate, apart from the shared timing.
+- A voice-activity model.
+- Tuning on real devices, which stays a human step.
+
+#### Acceptance criteria
+- [ ] A recognizer that ends by itself after words starts again. The words from before and after
+  the restart arrive together, as one final transcript (unit, with a scripted recognizer).
+- [ ] `stop()` and `abort()` still end it at once, with no restart after either (unit).
+- [ ] A `no-speech` after words gives the words, not an error. Before any words it is still an
+  error (unit).
+- [ ] It stops restarting after two quiet restarts in a row (unit).
+- [ ] Talk ends a turn after 1.5 s of quiet but not after 1.2 s, and the interview after 2.5 s
+  (unit, `turnVerdict`).
+- [ ] The e2e conversation and voice suites pass unchanged.
+
+#### Tests required
+As above.
+
+#### Security notes
+The mic is never open while Dear Steven speaks. That is unchanged, and `conversation.spec.ts` still
+proves it. A restart happens only while you are listening, never after a stop, an abort, a pause or
+the end of the conversation.
+
+#### Skills to consult
+`dear-steven-architecture`, the testing skills, Playwright.
+
+#### Human steps
+Try it on a real phone with Android Chrome and iOS Safari. This is the existing human step for voice
+on devices.
+
+#### Dependencies
+None. **Size:** S.
+
+### P10-15 — fix(core): the interview asks in the language you chose, unless you clearly answer in another
+
+<!-- issue {"id":"P10-15","title":"fix(core): the interview asks in the language you chose, unless you clearly answer in another","labels":["type:core","stage:m8","track:core","track:conversation","owner:ai","risk:low","P1","size:S"],"milestone":"M8 Launch readiness","depends":[],"github":134} -->
+
+#### Context
+The owner chose German, and an interview question sometimes came in English. `interviewLanguage`
+guesses the language from the visitor's last two texts once there are 20 characters, and those texts
+include the setup's "about" and "expertise". The guess (`detectLanguage`) was built for search, where
+English is the safe default, so any text it can't place counts as English. "Founder of a fintech
+startup" counts as English, and so does "Ich bin Designer", because one German word isn't enough.
+Nothing checks that the model's question is in the language it was asked for, and the style examples
+it sees are in English.
+
+#### Goal
+The interview is in the language you chose. It changes only when your answers are clearly in another
+language. A question that comes back in the wrong language is asked again.
+
+#### Scope
+**In:**
+- `clearLanguage(text, min)` in `language/detect.ts` returns a language only when its words clearly
+  outnumber every other language's, English included. Otherwise it returns null.
+- `interviewLanguage` uses your last two answers when they are clearly in another language, and the
+  interface language otherwise. The setup fields no longer count, because job titles and bios are
+  often in English.
+- `questionProblems` takes the language. A question clearly in another language is a problem, so it
+  is asked again. If it fails again, the fixed question for that stage is used, in the right language.
+- The demo interview uses the same rule.
+
+**Out:**
+- The Ask flow, whose answers already follow the question's language.
+- More interface languages.
+
+#### Acceptance criteria
+- [ ] With the German interface and the setup "Founder of a fintech startup", the first question is
+  asked in German (unit).
+- [ ] With the German interface, a German answer with one German stop word still gets German (unit).
+- [ ] With the German interface, an answer clearly in English gets the next question in English
+  (unit).
+- [ ] A question in English when German was asked for is retried, then replaced by the German
+  fallback (unit).
+- [ ] The demo interview follows the same rule (unit).
+
+#### Tests required
+As above.
+
+#### Security notes
+None. No new input reaches the model, and the language code is still one of ours.
+
+#### Skills to consult
+`dear-steven-architecture`, `dear-steven-persona`, the TypeScript clean-code and testing skills.
+
+#### Human steps
+None.
+
+#### Dependencies
+None. **Size:** S.
+
+### P10-16 — fix(ingest): a failed episode's paid audio counts toward the budget, and an outage stops the run
+
+<!-- issue {"id":"P10-16","title":"fix(ingest): a failed episode's paid audio counts toward the budget, and an outage stops the run","labels":["type:service","stage:m8","track:ingest","owner:ai","risk:medium","P1","size:S"],"milestone":"M8 Launch readiness","depends":[],"github":135} -->
+
+#### Context
+The resumed diarization batch of 2026-10-16 lost its network for a while. One episode failed after
+16 of its 22 chunks had been transcribed and paid for, about $0.58. `transcribe --diarize` counted
+none of it in `spent` or in the run's meta, so both the `--budget` stop and the recorded spend come
+out short. The next 21 episodes then failed one after another within seconds, and each was marked
+failed.
+
+#### Goal
+A run counts everything it pays for, even when an episode fails. A run that keeps failing stops
+instead of working through the rest of the list.
+
+#### Scope
+**In:**
+- When an episode fails, the cost of its finished chunks (from `diarizeChunks`' `onChunk`) is added
+  to `spent` and recorded on the failed run, as `meta.costUsd` and `meta.chunksDone`.
+- After three failures in a row, the run stops and says why: most likely the network or the key.
+
+**Out:** reusing finished chunks on a retry. That can be a later issue if retries turn out to be
+common.
+
+#### Acceptance criteria
+- [ ] An episode that fails after k of n chunks adds the cost of k chunks to `spent` and to the
+  failed run's meta (unit).
+- [ ] The budget stop counts that cost (unit).
+- [ ] Three failures in a row stop the run, and a success in between resets the count (unit).
+
+#### Tests required
+As above.
+
+#### Security notes
+On spending, this makes `--budget` stricter, never looser.
+
+#### Skills to consult
+`dear-steven-security`, the testing skills.
+
+#### Human steps
+None.
+
+#### Dependencies
+None. **Size:** S.
