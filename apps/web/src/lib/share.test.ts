@@ -1,5 +1,7 @@
 import type { FinalAnswer } from '@dear-steven/core/schema';
 import { describe, expect, it } from 'vitest';
+import { de } from '@/i18n/de';
+import { en } from '@/i18n/en';
 import { conversationReducer, initialConversation } from './conversation';
 import { DEMO_ANSWERS } from './demo-fixtures';
 import { restoredTurns } from './memory';
@@ -77,6 +79,17 @@ describe('the image card', () => {
     const card = cardContent('Q', { ...answer, citations: [] });
     expect(card.quote).toBeNull();
     expect(card.sources).toEqual([]);
+  });
+
+  it('draws the whole disclosure on a card, never cut short (P10-11)', () => {
+    // The card's text is 904 px wide (1080 less 88 a side) at 24 px. Measured pessimistically at
+    // 0.62 em a character, both languages still fit the three lines the card gives it, uncut.
+    const measure = (s: string) => s.length * 24 * 0.62;
+    for (const disclosure of [en.disclosure, de.disclosure]) {
+      const lines = wrap(measure, disclosure, 904, 3);
+      expect(lines.join(' ')).toBe(disclosure);
+      expect(lines.at(-1)).not.toMatch(/…$/);
+    }
   });
 
   it('wraps to the width and marks what it had to cut', () => {

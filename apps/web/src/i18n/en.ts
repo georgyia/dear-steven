@@ -157,8 +157,12 @@ export const en = {
       ended: 'Conversation ended. The microphone is off.',
     },
   },
+  /**
+   * Under every composer, the interview's too (P6-12, P10-11): unofficial, an AI persona, not him,
+   * not advice. Two lines at most at 375 px, and three on a share card.
+   */
   disclosure:
-    'Dear Steven is an AI persona — not Steven Bartlett, and not affiliated with the show.',
+    'Dear Steven is an unofficial AI persona, not Steven Bartlett, and not medical, legal or financial advice.',
   terms: {
     link: 'Terms & disclaimer',
     noticeLabel: 'Before you start',

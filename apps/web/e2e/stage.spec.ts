@@ -1,3 +1,4 @@
+import { en } from '../src/i18n/en';
 import { expect, type Page, test } from './fixtures';
 
 const ask = async (page: Page, question: string) => {
@@ -41,7 +42,7 @@ test.describe('home, with no API keys', () => {
     await expect(page.getByText('Demo — not AI-generated or source-verified')).toHaveCount(0);
     await notice.getByRole('button', { name: 'Got it' }).click();
     await expect(page.getByText('Demo — not AI-generated or source-verified')).toBeVisible();
-    await expect(page.getByText(/AI persona — not Steven Bartlett/).first()).toBeVisible();
+    await expect(page.getByText(en.disclosure).first()).toBeVisible();
   });
 
   test('on a phone, nothing covers the first-visit notice', async ({ page }) => {

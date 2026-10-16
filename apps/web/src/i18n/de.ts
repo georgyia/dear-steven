@@ -165,7 +165,7 @@ export const de: Messages = {
     },
   },
   disclosure:
-    'Dear Steven ist eine KI-Persona — nicht Steven Bartlett und nicht mit der Show verbunden.',
+    'Dear Steven ist eine inoffizielle KI-Persona, nicht Steven Bartlett, keine Fachberatung.',
   terms: {
     link: 'Bedingungen & Haftungsausschluss',
     noticeLabel: 'Bevor du anfängst',

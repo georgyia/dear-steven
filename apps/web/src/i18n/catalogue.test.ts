@@ -161,3 +161,14 @@ describe('visitors read no operator steps (P10-08)', () => {
     expect(en.setup.kb.none).toMatch(/pnpm ingest/);
   });
 });
+
+describe('the disclosure (P10-11)', () => {
+  it('says unofficial, AI persona, not him and not advice, in both languages', () => {
+    expect(en.disclosure).toMatch(/unofficial AI persona/);
+    expect(en.disclosure).toMatch(/not Steven Bartlett/);
+    expect(en.disclosure).toMatch(/not medical, legal or financial advice/);
+    expect(de.disclosure).toMatch(/inoffizielle KI-Persona/);
+    expect(de.disclosure).toMatch(/nicht Steven Bartlett/);
+    expect(de.disclosure).toMatch(/keine Fachberatung/);
+  });
+});

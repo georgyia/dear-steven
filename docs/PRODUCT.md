@@ -82,5 +82,5 @@
   diarized). The setup panel says exactly what is configured.
 - Quotes on screen are stored transcript text. Timestamps are podcast-relative; video timestamps
   are marked `≈` when estimated and omitted when alignment is unknown.
-- A disclosure that Dear Steven is an AI persona — not Steven Bartlett, not affiliated with the
-  show — is visible on every screen.
+- A disclosure that Dear Steven is an unofficial AI persona — not Steven Bartlett, and not
+  medical, legal or financial advice — is visible on every screen, the interview included (P10-11).

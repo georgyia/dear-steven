@@ -1,4 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
+import { en } from '../src/i18n/en';
 import { expect, test } from './fixtures';
 import { E2E_ACCESS_CODE } from './gated';
 
@@ -29,7 +30,7 @@ test('the passcode screen: a wrong code is refused, the right one opens the stag
   await page.goto('/');
   await expect(page.getByText(/This copy of Dear Steven is private/)).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Ask Steven' })).toHaveCount(0);
-  await expect(page.getByText(/AI persona — not Steven Bartlett/)).toBeVisible();
+  await expect(page.getByText(en.disclosure)).toBeVisible();
 
   const field = page.getByLabel(/Enter the passcode/);
   await field.fill('open sesame');
