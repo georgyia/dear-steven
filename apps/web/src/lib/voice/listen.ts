@@ -101,7 +101,7 @@ function withRecognition(o: ListenOptions): TurnListener {
       },
       onFinal: (text) => {
         const said = (text || words).trim();
-        // Our stop, or the browser's own end of an utterance (Android ends after each one).
+        // Our stop, or the recognizer stopped carrying on after its own ends (P10-14).
         if (ending || said) settle(() => resolve(said));
         else again = true;
       },
@@ -119,7 +119,8 @@ function withRecognition(o: ListenOptions): TurnListener {
         rec?.start();
       },
     },
-    { lang: o.lang, processLocally: o.processLocally },
+    // The browser's own end after a sentence isn't the end of your turn; the pause is (P10-14).
+    { lang: o.lang, processLocally: o.processLocally, keepListening: true },
   );
   if (!rec) {
     reject(new ListenError('unsupported'));

@@ -51,8 +51,10 @@ async function stubVoice(page: Page, script: string[], sayMs = 300) {
           const said = script[line++] ?? '';
           this.timers.push(setTimeout(() => this.onaudiostart?.(), 20));
           if (!said) return;
-          // " | " is a pause of 1.2 s in the middle of what is said.
-          const words = said.split(' ');
+          // " | " is a pause of 1.2 s in the middle of what is said. A line ending " /" is one the
+          // browser ends by itself, as Safari does after a sentence (P10-14).
+          const endsBySelf = said.endsWith(' /');
+          const words = (endsBySelf ? said.slice(0, -2) : said).split(' ');
           const spoken = words.filter((w) => w !== '|');
           this.pending = spoken.join(' ');
           let at = 100;
@@ -66,6 +68,16 @@ async function stubVoice(page: Page, script: string[], sayMs = 300) {
             const text = spoken.slice(0, n).join(' ');
             this.timers.push(setTimeout(() => this.result(text, false), at));
             at += 80;
+          }
+          if (endsBySelf) {
+            this.timers.push(
+              setTimeout(() => {
+                log('ended by itself');
+                this.result(this.pending, true);
+                this.pending = '';
+                this.onend?.();
+              }, at + 200),
+            );
           }
         }
         stop() {
@@ -169,6 +181,25 @@ test.describe('talking out loud (P9-02)', () => {
     await expect(bar(page)).toHaveCount(0);
     expect((await events(page)).at(-1)).toBe('abort');
     await expect(page.getByRole('button', { name: en.conversation.start })).toBeFocused();
+  });
+
+  test('the browser stopping by itself after a sentence doesn’t end your turn (P10-14)', async ({
+    page,
+  }) => {
+    await stubVoice(page, ['Why do I keep putting things off /', 'even when they matter to me?']);
+    await startTalking(page);
+    await expect(
+      page.getByRole('article', {
+        name: 'Why do I keep putting things off even when they matter to me?',
+      }),
+    ).toBeVisible({ timeout: 15_000 });
+    // It listened on after the browser's own end, and the pause, not that end, closed your turn.
+    expect((await events(page)).slice(0, 4)).toEqual([
+      'listen',
+      'ended by itself',
+      'listen',
+      'stop',
+    ]);
   });
 
   test('Interrupt stops his voice at once and it’s your turn', async ({ page }) => {
