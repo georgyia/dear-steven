@@ -18,7 +18,7 @@
 | 7 Conversations | M5 | Talk mode, interviews and practice, design polish, the latest episodes | P7-* | open (`plan/04-issues/phase-7.md`) |
 | 8 Summaries and open access | M6 | Three free questions, then your own key kept safely; episode summaries | P8-* | merged 2026-10-14; P8-05 waits on a decision; P8-08 to P8-12 merged 2026-10-16 (`plan/04-issues/phase-8.md`) |
 | 9 Spoken conversations | M7 | Talk and interviews spoken hands-free; replies read aloud as soon as they are checked | P9-* | merged 2026-10-15; not yet tried on a real device (`plan/04-issues/phase-9.md`) |
-| 10 Launch readiness | M8 | A deployment that can't overspend and says when it can't answer; honest errors, previews, disclosure and privacy notice | P10-* | open (`plan/04-issues/phase-10.md`); the launch steps only a person can take are listed there |
+| 10 Launch readiness | M8 | A deployment that can't overspend and says when it can't answer; honest errors, previews, disclosure and privacy notice | P10-* | merged 2026-10-16 (`plan/04-issues/phase-10.md`); the launch steps only a person can take are on the board |
 
 A later-phase issue may be taken only when the current phase has nothing pickable.
 
