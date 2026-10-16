@@ -11,7 +11,8 @@ const dec = (x: number) =>
 export const de: Messages = {
   meta: {
     description:
-      'Eine KI-Persona von Steven Bartlett, die aus echten Gesprächen von The Diary Of A CEO antwortet — und dir genau zeigt, wo jede Idee gesagt wurde.',
+      'Eine inoffizielle KI-Persona von Steven Bartlett, die aus echten Gesprächen von The Diary Of A CEO antwortet — und dir genau zeigt, wo jede Idee gesagt wurde.',
+    previewTitle: `${brand.name}: eine inoffizielle KI-Persona`,
     termsTitle: `${brand.name}: Nutzungsbedingungen, Haftungsausschluss und Datenschutz`,
     termsDescription:
       'Was Dear Steven ist und was nicht, die Bedingungen für die Nutzung und was mit deinen Daten passiert.',

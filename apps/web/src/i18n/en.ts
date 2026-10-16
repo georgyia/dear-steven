@@ -12,7 +12,9 @@ const s = (x: number, one: string, other: string) => `${n(x)} ${x === 1 ? one : 
 export const en = {
   meta: {
     description:
-      'An AI persona of Steven Bartlett that answers from real Diary Of A CEO conversations — and shows you exactly where each idea was said.',
+      'An unofficial AI persona of Steven Bartlett that answers from real Diary Of A CEO conversations — and shows you exactly where each idea was said.',
+    /** The title a link preview shows (P10-10): what this is, before anything else. */
+    previewTitle: `${brand.name}: an unofficial AI persona`,
     termsTitle: `${brand.name}: terms, disclaimer and privacy`,
     termsDescription:
       'What Dear Steven is and isn’t, the terms for using it, and what happens to your data.',

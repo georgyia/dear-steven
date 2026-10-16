@@ -42,6 +42,22 @@ describe('readConfig', () => {
     expect(readConfig({ DEAR_STEVEN_DAILY_BUDGET_USD: '-1' }).dailyBudgetUsd).toBe(0);
   });
 
+  it('reads the public origin for link previews, and nothing that could mislead (P10-10)', () => {
+    const origin = (v?: string) =>
+      readConfig(v === undefined ? {} : { DEAR_STEVEN_PUBLIC_URL: v }).publicUrl;
+    expect(origin()).toBeNull();
+    expect(origin(' ')).toBeNull();
+    expect(origin('https://steven.example')).toBe('https://steven.example');
+    expect(origin('https://steven.example/some/path?q=1#x')).toBe('https://steven.example');
+    expect(origin('https://steven.example:8443/')).toBe('https://steven.example:8443');
+    expect(origin('http://localhost:3000')).toBe('http://localhost:3000');
+    expect(origin('http://127.0.0.1:3000')).toBe('http://127.0.0.1:3000');
+    expect(origin('http://steven.example')).toBeNull();
+    expect(origin('steven.example')).toBeNull();
+    expect(origin('javascript:alert(1)')).toBeNull();
+    expect(origin('ftp://steven.example')).toBeNull();
+  });
+
   it('reads the access code, ignoring placeholders', () => {
     expect(readConfig({ DEAR_STEVEN_ACCESS_CODE: ' open sesame ' }).accessCode).toBe('open sesame');
     expect(readConfig({ DEAR_STEVEN_ACCESS_CODE: 'changeme' }).accessCode).toBeNull();
