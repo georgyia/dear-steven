@@ -12,6 +12,7 @@ Binding for agents. The reasoning behind each choice is in `plan/12-adr/`; the o
 ```
 apps/web/                     Next.js 16 app — thin server shell + one client "stage"
   src/app/                    layout, page (server), api/{ask,interview,passages/[id],status,health,transcribe,speech}
+                              not-found, error, global-error: the 404 and crash pages (P10-09)
   src/server/                 server-only: store/model handles, SSE, rate limits, demo stream, errors
   src/components/             stage/ composer/ answer/ interview/ evidence/ voice/ ui/ vendor/react-bits/
   src/lib/                    stage-machine, conversation reducer, SSE parser, api client, voice/*

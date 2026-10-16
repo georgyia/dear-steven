@@ -667,6 +667,20 @@ export const en = {
     close: 'Close',
     notifications: 'Notifications',
   },
+  /** The pages for an unknown address and for a crash (P10-09). */
+  fallback: {
+    notFound: {
+      eyebrow: 'Page not found',
+      title: 'There’s nothing here.',
+      body: 'This address doesn’t lead anywhere I know. Head back and ask me something instead.',
+      home: 'Ask me something',
+    },
+    crash: {
+      eyebrow: 'Error',
+      title: 'Something broke on my end.',
+      body: 'It wasn’t anything you did. Try again, or start a new conversation.',
+    },
+  },
   termsPage: {
     title: 'Terms, disclaimer and privacy',
     onThisPage: 'On this page',

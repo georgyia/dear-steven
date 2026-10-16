@@ -686,6 +686,19 @@ export const de: Messages = {
     close: 'Schließen',
     notifications: 'Benachrichtigungen',
   },
+  fallback: {
+    notFound: {
+      eyebrow: 'Seite nicht gefunden',
+      title: 'Hier ist nichts.',
+      body: 'Diese Adresse führt nirgendwohin, das ich kenne. Geh zurück und frag mich stattdessen etwas.',
+      home: 'Frag mich etwas',
+    },
+    crash: {
+      eyebrow: 'Fehler',
+      title: 'Bei mir ist etwas kaputtgegangen.',
+      body: 'Es lag nicht an dir. Versuch es noch einmal, oder beginne ein neues Gespräch.',
+    },
+  },
   termsPage: {
     title: 'Nutzungsbedingungen, Haftungsausschluss und Datenschutz',
     onThisPage: 'Auf dieser Seite',
