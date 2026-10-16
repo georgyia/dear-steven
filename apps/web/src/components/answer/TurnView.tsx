@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useI18n } from '@/i18n/I18nProvider';
+import { canRetry } from '@/lib/api';
 import type { Turn } from '@/lib/conversation';
 import { AnswerBlocks } from './AnswerBlocks';
 import { EpisodeCards } from './EpisodeCards';
@@ -27,6 +28,7 @@ const ERROR_KEY = {
   internal: 'generic',
   locked: 'locked',
   needs_key: 'needsKey',
+  cross_site: 'crossSite',
 } as const;
 
 /** One exchange: the question as an editorial heading, the thinking, then the answer. */
@@ -123,7 +125,10 @@ export function TurnView({
   );
 }
 
-/** How a turn ended when it didn't end well, with a retry; and "Answer complete." when it did. */
+/**
+ * How a turn ended when it didn't end well, with a retry where asking again could help; and
+ * "Answer complete." when it did.
+ */
 export function TurnProblems({
   turn,
   onRetry,
@@ -159,13 +164,15 @@ export function TurnProblems({
               {t.free.useOwnKey}
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={() => onRetry(turn.question)}
-            className="rounded-full border border-oxblood-1/50 px-3 py-1 text-[13px] text-ivory-0 transition-colors hover:bg-oxblood/30"
-          >
-            {t.turn.retry}
-          </button>
+          {canRetry(turn.error.code) ? (
+            <button
+              type="button"
+              onClick={() => onRetry(turn.question)}
+              className="rounded-full border border-oxblood-1/50 px-3 py-1 text-[13px] text-ivory-0 transition-colors hover:bg-oxblood/30"
+            >
+              {t.turn.retry}
+            </button>
+          ) : null}
         </div>
       ) : null}
 

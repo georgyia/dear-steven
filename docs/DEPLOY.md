@@ -261,3 +261,6 @@ To go back before that last step, swap `dear-steven.db.prev` in the same way.
   condensation call for follow-ups, and occasionally one repair call.
 - **Logs** contain no questions, keys or provider error text. Answer logging is opt-in
   (`DEAR_STEVEN_LOG_ANSWERS=1`).
+  When your key is rejected or rate-limited, or the knowledge base can't be opened, visitors
+  are told in their own words and the log line says what to fix (P10-08): look for `[ask]` and
+  `[interview]`.

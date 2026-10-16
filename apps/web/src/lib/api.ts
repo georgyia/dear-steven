@@ -20,26 +20,40 @@ import { keyHeaders } from './visitor-key';
 /** Mirrors `server/free-questions.ts`: a free interview's ticket. */
 const TICKET_HEADER = 'x-interview-ticket';
 
+/**
+ * Why a request failed, as the page tells it: the server's codes, `network` when it never got an
+ * answer, and `cross_site` when `src/proxy.ts` refused it as coming from another site (P8-08).
+ */
+export type ClientErrorCode = AskErrorCode | 'network' | 'cross_site';
+
 export class AskError extends Error {
-  readonly code: AskErrorCode | 'network';
-  constructor(code: AskErrorCode | 'network', message: string) {
+  readonly code: ClientErrorCode;
+  constructor(code: ClientErrorCode, message: string) {
     super(message);
     this.code = code;
   }
 }
 
-const errorCode = (status: number): AskErrorCode =>
-  status === 401
-    ? 'locked'
-    : status === 402
-      ? 'needs_key'
-      : status === 429
-        ? 'rate_limited'
-        : status === 400 || status === 413
-          ? 'bad_request'
-          : status === 503
-            ? 'not_configured'
-            : 'upstream';
+/** Whether asking again could help (P10-08): not with no free questions left, nor from another site. */
+export const canRetry = (code: ClientErrorCode | null): boolean =>
+  code !== 'needs_key' && code !== 'cross_site';
+
+type ErrorBody = { error?: { code?: unknown; message?: string } } | null;
+
+const errorCode = (status: number, body: ErrorBody): ClientErrorCode =>
+  status === 403 && body?.error?.code === 'cross_site'
+    ? 'cross_site'
+    : status === 401
+      ? 'locked'
+      : status === 402
+        ? 'needs_key'
+        : status === 429
+          ? 'rate_limited'
+          : status === 400 || status === 413
+            ? 'bad_request'
+            : status === 503
+              ? 'not_configured'
+              : 'upstream';
 
 /** Streams `/api/ask` as typed events. Throws `AskError` for transport-level failures. */
 export async function* askStream(
@@ -63,8 +77,8 @@ export async function* askStream(
     throw new AskError('network', error instanceof Error ? error.message : 'Network error');
   }
   if (!res.ok || !res.body) {
-    const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-    throw new AskError(errorCode(res.status), body?.error?.message ?? res.statusText);
+    const body = (await res.json().catch(() => null)) as ErrorBody;
+    throw new AskError(errorCode(res.status, body), body?.error?.message ?? res.statusText);
   }
   yield* readEvents(res.body);
 }
@@ -151,8 +165,9 @@ export async function openShared(token: string, signal?: AbortSignal): Promise<S
   } catch (error) {
     throw new AskError('network', error instanceof Error ? error.message : 'Network error');
   }
-  const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-  if (!res.ok) throw new AskError(errorCode(res.status), body?.error?.message ?? res.statusText);
+  const body = (await res.json().catch(() => null)) as ErrorBody;
+  if (!res.ok)
+    throw new AskError(errorCode(res.status, body), body?.error?.message ?? res.statusText);
   const shared = SharedAnswerSchema.safeParse(body);
   if (!shared.success) throw new AskError('upstream', res.statusText);
   return shared.data;
@@ -184,8 +199,9 @@ export async function interviewStep(
     if (signal?.aborted) throw error;
     throw new AskError('network', error instanceof Error ? error.message : 'Network error');
   }
-  const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-  if (!res.ok) throw new AskError(errorCode(res.status), body?.error?.message ?? res.statusText);
+  const body = (await res.json().catch(() => null)) as ErrorBody;
+  if (!res.ok)
+    throw new AskError(errorCode(res.status, body), body?.error?.message ?? res.statusText);
   const reply = InterviewReplySchema.safeParse(body);
   if (!reply.success) throw new AskError('upstream', res.statusText);
   return { reply: reply.data, ticket: res.headers.get(TICKET_HEADER) ?? ticket };

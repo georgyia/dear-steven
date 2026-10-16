@@ -2,7 +2,7 @@
 
 import { detectLanguage } from '@dear-steven/core/language';
 import { LIMITS } from '@dear-steven/core/limits';
-import type { AskErrorCode, Citation, KnowledgeStatus, SetupState } from '@dear-steven/core/schema';
+import type { Citation, KnowledgeStatus, SetupState } from '@dear-steven/core/schema';
 import { speakable } from '@dear-steven/core/speech';
 import { InformationCircleIcon, VoiceIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -19,7 +19,7 @@ import { ConversationBar, StartTalking } from '@/components/voice/ConversationBa
 import { VoiceControl } from '@/components/voice/VoiceControl';
 import { VoiceSettings } from '@/components/voice/VoiceSettings';
 import { useI18n } from '@/i18n/I18nProvider';
-import { AskError, askStream, fetchStatus, openShared } from '@/lib/api';
+import { AskError, askStream, type ClientErrorCode, fetchStatus, openShared } from '@/lib/api';
 import {
   citationOrder,
   conversationReducer,
@@ -61,7 +61,7 @@ import { SetupDialog } from './SetupDialog';
 import { StatusPill } from './StatusPill';
 import { CompactWordmark } from './Wordmark';
 
-const STAGE_ERROR: Record<AskErrorCode | 'network', StageErrorKind> = {
+const STAGE_ERROR: Record<ClientErrorCode, StageErrorKind> = {
   network: 'network',
   rate_limited: 'rateLimited',
   upstream: 'upstream',
@@ -70,6 +70,7 @@ const STAGE_ERROR: Record<AskErrorCode | 'network', StageErrorKind> = {
   internal: 'generic',
   locked: 'generic',
   needs_key: 'generic',
+  cross_site: 'generic',
 };
 
 export function Stage({ initialStatus }: { initialStatus: KnowledgeStatus }) {
@@ -224,7 +225,7 @@ function StageInner({ initialStatus }: { initialStatus: KnowledgeStatus }) {
         askAloud(next.current);
         return 'next';
       }
-      if (next.phase === 'error') return next.needsKey ? 'end' : 'pause';
+      if (next.phase === 'error') return next.errorCode === 'needs_key' ? 'end' : 'pause';
       return 'end';
     },
     [askAloud],

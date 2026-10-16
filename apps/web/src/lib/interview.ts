@@ -8,6 +8,7 @@ import {
   type LearnedLine,
   type ResolvedBlock,
 } from '@dear-steven/core/schema';
+import type { ClientErrorCode } from './api';
 
 /**
  * Interview mode on the page (P7-06). The interview lives here and only here: every step sends it
@@ -38,8 +39,11 @@ export interface InterviewState {
   retake: number | null;
   ended: { reason: 'crisis' | 'refuse' | 'resting'; blocks: ResolvedBlock[] } | null;
   error: string | null;
-  /** The step failed because the free questions are used up (P8-02): a key of their own is needed. */
-  needsKey: boolean;
+  /**
+   * Why the step failed, when the page knows: `needs_key` when the free questions are used up
+   * (P8-02) and a key of their own is needed, `cross_site` when it came from another site (P10-08).
+   */
+  errorCode: ClientErrorCode | null;
   /** What the step in flight (or the failed one, for a retry) asks for. */
   action: InterviewRequest['action'];
 }
@@ -50,7 +54,7 @@ export type InterviewAction =
   | { type: 'skip' }
   | { type: 'finish' }
   | { type: 'reply'; reply: InterviewReply }
-  | { type: 'failed'; message: string; needsKey?: boolean }
+  | { type: 'failed'; message: string; code?: ClientErrorCode }
   | { type: 'retry' }
   /** Practice: answer the weakest question again, then get a fresh debrief. */
   | { type: 'retake' }
@@ -66,7 +70,7 @@ export const initialInterview: InterviewState = {
   retake: null,
   ended: null,
   error: null,
-  needsKey: false,
+  errorCode: null,
   action: 'next',
 };
 
@@ -133,7 +137,7 @@ export function interviewReducer(state: InterviewState, action: InterviewAction)
         ...state,
         phase: 'error',
         error: action.message,
-        needsKey: action.needsKey ?? false,
+        errorCode: action.code ?? null,
       };
     case 'retake': {
       const weakest = state.debrief?.debrief.weakest ?? null;
@@ -149,7 +153,7 @@ export function interviewReducer(state: InterviewState, action: InterviewAction)
     }
     case 'retry':
       if (state.phase !== 'error') return state;
-      return { ...state, phase: 'waiting', error: null, needsKey: false };
+      return { ...state, phase: 'waiting', error: null, errorCode: null };
   }
 }
 

@@ -1,6 +1,5 @@
 import { LIMITS } from '@dear-steven/core/limits';
 import type {
-  AskErrorCode,
   AskEvent,
   AskMode,
   AskStep,
@@ -9,6 +8,7 @@ import type {
   HistoryTurn,
   ResolvedBlock,
 } from '@dear-steven/core/schema';
+import type { ClientErrorCode } from './api';
 
 export type TurnStatus = 'streaming' | 'done' | 'stopped' | 'error';
 
@@ -23,7 +23,7 @@ export interface Turn {
   blocks: ResolvedBlock[];
   citations: Record<string, Citation>;
   final: FinalAnswer | null;
-  error: { code: AskErrorCode | 'network'; message: string } | null;
+  error: { code: ClientErrorCode; message: string } | null;
   startedAt: number;
   elapsedMs: number | null;
   /** Opened from a share link (P6-17) rather than asked here. */
@@ -40,7 +40,7 @@ export type ConversationAction =
   | { type: 'turn.start'; id: string; question: string; at: number; mode?: AskMode }
   | { type: 'turn.event'; id: string; event: AskEvent; at: number }
   | { type: 'turn.stopped'; id: string; at: number }
-  | { type: 'turn.failed'; id: string; code: AskErrorCode | 'network'; message: string; at: number }
+  | { type: 'turn.failed'; id: string; code: ClientErrorCode; message: string; at: number }
   | { type: 'reset' }
   /** A remembered conversation (P5-11). Ignored once the user has started a new one. */
   | { type: 'restore'; turns: Turn[] }

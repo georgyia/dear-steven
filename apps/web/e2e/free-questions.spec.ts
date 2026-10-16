@@ -62,9 +62,11 @@ test.describe('a visitor', () => {
     await expect(page.getByText(en.setup.ownKey.using(false))).toBeVisible();
     await page.getByRole('button', { name: en.ui.close }).click();
 
-    // Asked again, on their own key: answered, and nothing is counted any more.
+    // No "Try again" while it could only fail the same way (P10-08). Asked again, on their own
+    // key: answered, and nothing is counted any more.
+    await expect(alert.getByRole('button', { name: en.turn.retry })).toHaveCount(0);
     const sent = page.waitForRequest((r) => r.url().endsWith('/api/ask'));
-    await alert.getByRole('button', { name: en.turn.retry }).click();
+    await ask(page, en, 'One more?');
     expect((await sent).headers()['x-openai-key']).toBe(E2E_FREE_VISITOR_KEY);
     await expect(page.getByText(en.turn.complete)).toHaveCount(4, { timeout: 15_000 });
     const status = await (
