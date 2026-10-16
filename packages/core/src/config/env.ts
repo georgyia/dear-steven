@@ -39,6 +39,11 @@ export interface AppConfig {
   envFile: string;
   /** `DEAR_STEVEN_FEED_URL`: the podcast feed to discover, instead of looking it up (a mirror, tests). */
   feedUrl: string | null;
+  /**
+   * `DEAR_STEVEN_PUBLIC_URL`: the deployment's public origin, for absolute links in link previews
+   * (P10-10). Only an https origin, or http on localhost; anything else counts as unset.
+   */
+  publicUrl: string | null;
 }
 
 export type KeySource = 'operator' | 'visitor';
@@ -102,7 +107,24 @@ export function readConfig(env: Env = process.env, cwd: string = process.cwd()):
     accessCode: accessCodeFrom(env),
     envFile: inRoot(clean(env.DEAR_STEVEN_ENV_FILE), '.env'),
     feedUrl: clean(env.DEAR_STEVEN_FEED_URL),
+    publicUrl: publicOrigin(env.DEAR_STEVEN_PUBLIC_URL),
   };
+}
+
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+/** The origin of an https URL (or http on this machine), else `null`: never a path or a typo. */
+function publicOrigin(value: string | undefined): string | null {
+  const v = clean(value);
+  if (!v) return null;
+  let url: URL;
+  try {
+    url = new URL(v);
+  } catch {
+    return null;
+  }
+  const local = url.protocol === 'http:' && LOCAL_HOSTS.has(url.hostname);
+  return url.protocol === 'https:' || local ? url.origin : null;
 }
 
 function allowance(value: string | undefined): number | null {

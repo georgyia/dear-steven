@@ -71,6 +71,7 @@ marked below.
 | `DEAR_STEVEN_SETUP_TOKEN`, `DEAR_STEVEN_SETUP_HOST` | Guided local setup (P6-04). | **Never set** (below). |
 | `DEAR_STEVEN_ENV_FILE` | Another file to read keys from instead of `.env`. | Not needed: use secrets. |
 | `DEAR_STEVEN_FEED_URL` | The feed `pnpm ingest discover` reads (the CLI's). | Not needed. |
+| `DEAR_STEVEN_PUBLIC_URL` | The site's public address, so link previews can use absolute links (P10-10). Only an `https` origin counts (or `http` on localhost); anything else is ignored. | Optional: `https://<app>.fly.dev` or your domain. |
 | `NODE_ENV`, `PORT`, `HOSTNAME` | Set by the image: `production`, `3000`, `0.0.0.0`. | Leave them: `fly.toml`'s port is the image's. |
 
 ## Fly.io, from an empty account to a live site
@@ -216,6 +217,10 @@ To go back before that last step, swap `dear-steven.db.prev` in the same way.
   setup panel and `/api/status` show today's spend. Also set a hard limit in the OpenAI dashboard:
   this cap is an estimate. A production server doesn't use your key at all without it (above);
   `0` is a cap that spends nothing, and an unreadable value counts as `0`.
+- **Link previews and search engines** (P10-10): a shared link previews as "Dear Steven: an
+  unofficial AI persona", with the icon and no image. Every page tells search engines to stay out
+  (`noindex, nofollow` in `apps/web/src/app/layout.tsx`): letting them in is the owner's call, once
+  the policies are final. Set `DEAR_STEVEN_PUBLIC_URL` if you want absolute links in previews.
 - **Share links** (P6-17): the server signs every answer it writes with a secret it creates on
   first use at `/data/share-secret` (owner-only). Keep it on the volume: deleting it, or running
   without a writable `/data`, makes every link shared so far stop opening. Several instances behind
