@@ -1,5 +1,6 @@
 import { transcriptionCostUsd } from '@dear-steven/core/models';
 import { transcribeSpeech } from '@dear-steven/core/openai';
+import { readBytes } from '@/server/body';
 import { describeFailure } from '@/server/errors';
 import { freeLimitApplies } from '@/server/free-questions';
 import { getOpenAI } from '@/server/knowledge';
@@ -12,6 +13,8 @@ export const dynamic = 'force-dynamic';
 
 /** 60 s of compressed speech is well under 1 MB; 8 MB leaves room for uncompressed WAV. */
 const MAX_AUDIO_BYTES = 8 * 1024 * 1024;
+/** The recording, and room for the form around it. */
+const MAX_BODY_BYTES = MAX_AUDIO_BYTES + 64 * 1024;
 const AUDIO_TYPES = /^audio\/(webm|mp4|m4a|x-m4a|mpeg|mp3|ogg|wav|x-wav)(;|$)/;
 
 /**
@@ -51,13 +54,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const length = Number(req.headers.get('content-length') ?? 0);
-  if (length > MAX_AUDIO_BYTES + 64 * 1024)
-    return jsonError(413, 'bad_request', 'Recording too long.');
+  const body = await readBytes(req, MAX_BODY_BYTES);
+  if (body === null) return jsonError(413, 'bad_request', 'Recording too long.');
 
   let audio: File | null = null;
   try {
-    const form = await req.formData();
+    const type = req.headers.get('content-type') ?? '';
+    const form = await new Response(body, { headers: { 'content-type': type } }).formData();
     const value = form.get('audio');
     audio = value instanceof File ? value : null;
   } catch {

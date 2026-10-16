@@ -3,6 +3,7 @@ import { uiLocaleFrom } from '@dear-steven/core/copy';
 import { routeQuestion, safetyReply } from '@dear-steven/core/safety';
 import { AskRequestSchema } from '@dear-steven/core/schema';
 import { MESSAGES } from '@/i18n';
+import { readBody } from '@/server/body';
 import { streamDemoAnswer } from '@/server/demo';
 import { OPERATOR_HINT } from '@/server/errors';
 import { type FreeQuestion, freeLimitApplies, takeFreeQuestion } from '@/server/free-questions';
@@ -32,8 +33,8 @@ const MAX_BODY_BYTES = 64 * 1024;
  * costs nothing.
  */
 export async function POST(req: Request) {
-  const raw = await req.text();
-  if (raw.length > MAX_BODY_BYTES) return jsonError(413, 'bad_request', 'Request too large.');
+  const raw = await readBody(req, MAX_BODY_BYTES);
+  if (raw === null) return jsonError(413, 'bad_request', 'Request too large.');
   let json: unknown;
   try {
     json = JSON.parse(raw);

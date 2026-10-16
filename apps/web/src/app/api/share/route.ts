@@ -1,6 +1,7 @@
 import { readConfig } from '@dear-steven/core/config';
 import { ShareRequestSchema } from '@dear-steven/core/schema';
 import { MESSAGES } from '@/i18n';
+import { readBody } from '@/server/body';
 import { requestUiLocale } from '@/server/locale';
 import { clientKey, takeToken } from '@/server/rate-limit';
 import { openSharedAnswer } from '@/server/share';
@@ -20,8 +21,8 @@ export async function POST(req: Request) {
   if (!takeToken('share', clientKey(req)).ok) {
     return jsonError(429, 'rate_limited', copy.shareSlow);
   }
-  const raw = await req.text();
-  if (raw.length > MAX_BODY_BYTES) return jsonError(413, 'bad_request', copy.shareBroken);
+  const raw = await readBody(req, MAX_BODY_BYTES);
+  if (raw === null) return jsonError(413, 'bad_request', copy.shareBroken);
   let body: unknown;
   try {
     body = JSON.parse(raw);

@@ -1,7 +1,8 @@
 import { SetupKeysSchema } from '@dear-steven/core/schema';
 import { MESSAGES } from '@/i18n';
+import { parseJson, readBody } from '@/server/body';
 import { requestUiLocale } from '@/server/locale';
-import { NO_STORE, notFound, saveKeys, setupAllowed, setupState, smallJson } from '@/server/setup';
+import { NO_STORE, notFound, saveKeys, setupAllowed, setupState } from '@/server/setup';
 import { jsonError } from '@/server/sse';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +14,9 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   if (!setupAllowed(req)) return notFound();
   const copy = MESSAGES[await requestUiLocale()].serverErrors;
-  const keys = SetupKeysSchema.safeParse(await smallJson(req, 4096));
+  const raw = await readBody(req, 4096);
+  if (raw === null) return jsonError(413, 'bad_request', copy.setupKeysInvalid, NO_STORE);
+  const keys = SetupKeysSchema.safeParse(parseJson(raw));
   if (!keys.success) return jsonError(400, 'bad_request', copy.setupKeysInvalid, NO_STORE);
   try {
     saveKeys(keys.data);

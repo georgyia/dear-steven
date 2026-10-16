@@ -1,6 +1,7 @@
 import { readConfig } from '@dear-steven/core/config';
 import { SetupRunSchema } from '@dear-steven/core/schema';
 import { MESSAGES } from '@/i18n';
+import { parseJson, readBody } from '@/server/body';
 import { requestUiLocale } from '@/server/locale';
 import {
   NO_STORE,
@@ -8,7 +9,6 @@ import {
   runningStage,
   setupAllowed,
   setupState,
-  smallJson,
   stageResponse,
 } from '@/server/setup';
 import { jsonError } from '@/server/sse';
@@ -24,7 +24,9 @@ const usd = (x: number) => `$${x.toFixed(x < 1 ? 3 : 2)}`;
 export async function POST(req: Request) {
   if (!setupAllowed(req)) return notFound();
   const copy = MESSAGES[await requestUiLocale()].serverErrors;
-  const run = SetupRunSchema.safeParse(await smallJson(req, 1024));
+  const raw = await readBody(req, 1024);
+  if (raw === null) return jsonError(413, 'bad_request', copy.setupBadStage, NO_STORE);
+  const run = SetupRunSchema.safeParse(parseJson(raw));
   if (!run.success) return jsonError(400, 'bad_request', copy.setupBadStage, NO_STORE);
   if (runningStage()) return jsonError(409, 'bad_request', copy.setupBusy, NO_STORE);
 

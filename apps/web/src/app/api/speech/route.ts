@@ -2,6 +2,7 @@ import { speechCostUsd } from '@dear-steven/core/models';
 import { synthesizeSpeech } from '@dear-steven/core/openai';
 import { SpeechRequestSchema } from '@dear-steven/core/schema';
 import { SPEECH_CONTENT_TYPE } from '@dear-steven/core/speech';
+import { parseJson, readBody } from '@/server/body';
 import { describeFailure } from '@/server/errors';
 import { freeLimitApplies } from '@/server/free-questions';
 import { getOpenAI } from '@/server/knowledge';
@@ -11,6 +12,9 @@ import { overBudget, recordSpend } from '@/server/spend';
 import { jsonError } from '@/server/sse';
 
 export const dynamic = 'force-dynamic';
+
+/** 1,200 characters of text, even with every one escaped, and room to spare. */
+const MAX_BODY_BYTES = 16 * 1024;
 
 /**
  * Spoken replies (POST { text } → 24 kHz PCM, streamed as it is synthesised, P9-01). The client
@@ -33,7 +37,9 @@ export async function POST(req: Request) {
     });
   }
 
-  const parsed = SpeechRequestSchema.safeParse(await req.json().catch(() => null));
+  const raw = await readBody(req, MAX_BODY_BYTES);
+  if (raw === null) return jsonError(413, 'bad_request', 'Request too large.');
+  const parsed = SpeechRequestSchema.safeParse(parseJson(raw));
   if (!parsed.success) return jsonError(400, 'bad_request', 'Nothing to say.');
   // The browser reads the reply in its own voice instead (it falls back on any error).
   if (overBudget(config))
