@@ -257,6 +257,29 @@ describe('interviewStep: no step without moderation’s verdict (P10-06)', () =>
     expect(moderator.calls.n).toBe(0);
     expect(seen).toHaveLength(0);
   });
+
+  it.each([401, 403, 429])(
+    '%i from moderation fails the step as the model call would, asked once (P10-13)',
+    async (status) => {
+      const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const refused = Object.assign(new Error(`${status} from OpenAI`), { status });
+      let asked = 0;
+      const moderate = async () => {
+        asked += 1;
+        throw refused;
+      };
+      const { model, seen } = scripted();
+      const step = interviewStep(
+        { model, store: null, moderate },
+        request({ turns: answered }),
+        signal,
+      );
+      await expect(step).rejects.toBe(refused);
+      expect(asked).toBe(1);
+      expect(seen).toHaveLength(0);
+      expect(log).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe('what I learned about you (P7-06)', () => {

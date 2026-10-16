@@ -4,6 +4,7 @@ import { detectLanguage } from '../language/detect.ts';
 import { RESTING_REPLY } from '../persona/copy.ts';
 import { personaLint } from '../persona/persona.ts';
 import {
+  KeyRefused,
   ModerationUnavailableError,
   type Moderator,
   moderationVerdict,
@@ -235,6 +236,8 @@ async function ended(
   if (!ENDINGS.has(route.kind) && deps.moderate) {
     const verdict = await moderationVerdict(deps.moderate, said, signal);
     if (verdict === UNAVAILABLE) throw new ModerationUnavailableError(request.uiLocale);
+    // A refused or held-back key fails as the model call would (P10-13).
+    if (verdict instanceof KeyRefused) throw verdict.error;
     route = routeQuestion(said, verdict);
   }
   if (route.kind !== 'crisis' && route.kind !== 'refuse') return null;

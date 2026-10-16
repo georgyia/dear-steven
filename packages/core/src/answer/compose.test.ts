@@ -479,6 +479,28 @@ describe('composeAnswer — safety rails (P6-11)', () => {
     });
   });
 
+  describe('when OpenAI refuses or holds back the key itself (P10-13)', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it.each([401, 403, 429])(
+      'moderation’s %i fails the question as the answer call would: asked once, no answer',
+      async (status) => {
+        const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const refused = Object.assign(new Error(`${status} from OpenAI`), { status });
+        let asked = 0;
+        const moderate = async () => {
+          asked += 1;
+          throw refused;
+        };
+        const { model, calls } = scripted(good);
+        await expect(compose(model, 'Why do I procrastinate?', { moderate })).rejects.toBe(refused);
+        expect(asked).toBe(1);
+        expect(calls).toEqual({ stream: 0, repair: 0, condense: 0 });
+        expect(log).not.toHaveBeenCalled();
+      },
+    );
+  });
+
   it('declines to put words in Steven’s mouth, without asking the model', async () => {
     const { final, record } = await compose(
       untouchable,

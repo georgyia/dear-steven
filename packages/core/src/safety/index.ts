@@ -9,6 +9,7 @@ export {
 export { type CrisisResources, countryOf, crisisResources } from './resources.ts';
 export { type ModerationResult, routeQuestion, type SafetyRoute, type Stakes } from './route.ts';
 export {
+  KeyRefused,
   ModerationUnavailableError,
   type Moderator,
   moderationVerdict,

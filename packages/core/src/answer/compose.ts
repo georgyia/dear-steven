@@ -11,6 +11,7 @@ import {
 } from '../persona/copy.ts';
 import { hybridSearch } from '../retrieval/index.ts';
 import {
+  KeyRefused,
   type Moderator,
   moderationVerdict,
   routeQuestion,
@@ -120,6 +121,8 @@ export async function* composeAnswer(
     signal,
   );
   const verdict = await moderation;
+  // A refused or held-back key fails as the answer call would, worded for its owner (P10-13).
+  if (verdict instanceof KeyRefused) throw verdict.error;
   if (verdict === UNAVAILABLE) {
     yield {
       type: 'error',
