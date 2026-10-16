@@ -4,7 +4,8 @@ import { DEFAULT_UI_LOCALE, LOCALE_TAG, type UiLocale } from '@dear-steven/core/
 
 /**
  * A thin wrapper over the Web Speech API (`SpeechRecognition` / `webkitSpeechRecognition`):
- * one utterance per press, interim text while speaking, the final transcript on end.
+ * one listening per press, interim text while speaking, the final transcript on end. With
+ * `keepListening`, one listening spans the browser's own ends (P10-14).
  */
 
 export type RecognitionError = 'denied' | 'no-speech' | 'network' | 'aborted' | 'other';
@@ -119,9 +120,25 @@ const ERRORS: Record<string, RecognitionError> = {
   aborted: 'aborted',
 };
 
+export interface RecognizerOptions {
+  lang?: string;
+  processLocally?: boolean;
+  /**
+   * Carry on when the browser ends by itself after words were heard: Safari does after a
+   * sentence, Android Chrome after every utterance (P10-14). The words so far are kept, and the
+   * end comes from `stop()`, `abort()`, or the browser ending again and again with nothing new.
+   */
+  keepListening?: boolean;
+}
+
+/** Restarts in a row with nothing new heard, before an end by itself is taken as the end. */
+export const QUIET_RESTARTS = 2;
+/** Restarts in all, so a recognizer that keeps ending can't loop for ever. */
+export const MAX_RESTARTS = 50;
+
 export function createRecognizer(
   handlers: RecognitionHandlers,
-  options: { lang?: string; processLocally?: boolean } = {},
+  options: RecognizerOptions = {},
 ): Recognizer | null {
   const Impl = recognitionImpl();
   if (!Impl) return null;
@@ -138,8 +155,19 @@ export function createRecognizer(
   let finalText = '';
   let interim = '';
   let failed = false;
+  /** `stop()` or `abort()` was called, or it fell quiet after words: the next end is the last. */
+  let stopping = false;
+  /** The mic opened in this listening, so a restart doesn't announce it again. */
+  let opened = false;
+  let restarts = 0;
+  let quietRestarts = 0;
+  const said = () => `${finalText}${interim}`.replace(/\s+/g, ' ').trim();
 
-  rec.onaudiostart = () => handlers.onAudioStart();
+  rec.onaudiostart = () => {
+    if (opened) return;
+    opened = true;
+    handlers.onAudioStart();
+  };
   rec.onresult = (e) => {
     interim = '';
     for (let i = e.resultIndex; i < e.results.length; i += 1) {
@@ -148,16 +176,42 @@ export function createRecognizer(
       if (r.isFinal) finalText += `${r[0].transcript} `;
       else interim += r[0].transcript;
     }
-    handlers.onPartial(`${finalText}${interim}`.replace(/\s+/g, ' ').trim());
+    quietRestarts = 0;
+    handlers.onPartial(said());
   };
   rec.onerror = (e) => {
     const kind = ERRORS[e.error] ?? 'other';
     if (kind === 'aborted') return;
+    // Quiet after words isn't a failure: what was said is the result.
+    if (kind === 'no-speech' && said()) {
+      stopping = true;
+      return;
+    }
     failed = true;
     handlers.onError(kind);
   };
   rec.onend = () => {
-    if (!failed) handlers.onFinal(`${finalText}${interim}`.replace(/\s+/g, ' ').trim());
+    const text = said();
+    const carryOn =
+      options.keepListening &&
+      !failed &&
+      !stopping &&
+      text !== '' &&
+      quietRestarts < QUIET_RESTARTS &&
+      restarts < MAX_RESTARTS;
+    if (carryOn) {
+      finalText = `${text} `;
+      interim = '';
+      restarts += 1;
+      quietRestarts += 1;
+      try {
+        rec.start();
+        return;
+      } catch {
+        // It won't start again: end here with what was said.
+      }
+    }
+    if (!failed) handlers.onFinal(text);
     handlers.onEnded?.();
   };
 
@@ -166,15 +220,23 @@ export function createRecognizer(
       finalText = '';
       interim = '';
       failed = false;
+      stopping = false;
+      opened = false;
+      restarts = 0;
+      quietRestarts = 0;
       try {
         rec.start();
       } catch {
         // Already started (Safari can throw on quick double presses).
       }
     },
-    stop: () => rec.stop(),
+    stop: () => {
+      stopping = true;
+      rec.stop();
+    },
     abort: () => {
       failed = true;
+      stopping = true;
       rec.abort();
     },
   };

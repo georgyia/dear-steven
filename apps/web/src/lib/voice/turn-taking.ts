@@ -14,10 +14,13 @@ export interface TurnTiming {
 }
 
 export const TURN_TIMING = {
-  /** A back-and-forth: a short pause is the end of what you wanted to say. */
-  talk: { pauseMs: 900, idleMs: 30_000, maxMs: 60_000 },
+  /**
+   * A back-and-forth: a pause longer than a breath between two sentences is the end of what you
+   * wanted to say. At 0.9 s a breath cut people off (P10-14); "Send now" is there to be quicker.
+   */
+  talk: { pauseMs: 1_500, idleMs: 30_000, maxMs: 60_000 },
   /** An answer: people stop to think in the middle of one (P9-03). */
-  interview: { pauseMs: 2_000, idleMs: 30_000, maxMs: 60_000 },
+  interview: { pauseMs: 2_500, idleMs: 30_000, maxMs: 60_000 },
 } satisfies Record<string, TurnTiming>;
 
 /** What has been heard so far in this turn, and when. */

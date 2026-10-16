@@ -210,7 +210,8 @@ export function useVoice({
             }
           },
         },
-        { lang: listenFor, processLocally },
+        // Until you let go or tap again, however often the browser stops by itself (P10-14).
+        { lang: listenFor, processLocally, keepListening: true },
       );
       if (!recognizer) return fail('micUnsupported');
       session.current = { kind: 'browser', recognizer };

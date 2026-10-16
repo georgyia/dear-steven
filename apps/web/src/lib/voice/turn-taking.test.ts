@@ -39,13 +39,16 @@ describe('when your turn ends (P9-02)', () => {
     expect(turnVerdict(h, 1_000 + talk.maxMs, talk)).toBe('ended');
   });
 
-  it('gives an interview answer room to think: a 1.2 s pause doesn’t end it (P9-03)', () => {
+  it('a breath between two sentences doesn’t end a turn in Talk: 1.2 s does not, 1.5 s does (P10-14)', () => {
     const h = heard({ firstSpeechAt: 1_000, lastSpeechAt: 5_000 });
-    expect(turnVerdict(h, 6_200, TURN_TIMING.talk)).toBe('ended');
-    expect(turnVerdict(h, 6_200, TURN_TIMING.interview)).toBe('listening');
-    expect(turnVerdict(h, 5_000 + TURN_TIMING.interview.pauseMs, TURN_TIMING.interview)).toBe(
-      'ended',
-    );
+    expect(turnVerdict(h, 6_200, TURN_TIMING.talk)).toBe('listening');
+    expect(turnVerdict(h, 6_500, TURN_TIMING.talk)).toBe('ended');
+  });
+
+  it('gives an interview answer room to think: 2 s doesn’t end it, 2.5 s does (P9-03, P10-14)', () => {
+    const h = heard({ firstSpeechAt: 1_000, lastSpeechAt: 5_000 });
+    expect(turnVerdict(h, 7_000, TURN_TIMING.interview)).toBe('listening');
+    expect(turnVerdict(h, 7_500, TURN_TIMING.interview)).toBe('ended');
   });
 });
 
@@ -65,7 +68,7 @@ describe('speech from the microphone’s level', () => {
     expect(gate.firstSpeechAt).toBeGreaterThanOrEqual(1_000 + SPEECH_ONSET_MS);
     expect(gate.firstSpeechAt).toBeLessThan(1_000 + SPEECH_ONSET_MS + 40);
     expect(gate.lastSpeechAt).toBe(1_580);
-    expect(turnVerdict(gate, 3_000, TURN_TIMING.talk)).toBe('ended');
+    expect(turnVerdict(gate, 1_580 + TURN_TIMING.talk.pauseMs, TURN_TIMING.talk)).toBe('ended');
   });
 
   it('a click or a cough is not speech', () => {
