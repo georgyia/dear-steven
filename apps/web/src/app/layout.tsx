@@ -1,26 +1,11 @@
 import type { Metadata, Viewport } from 'next';
-import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { brand } from '@/brand';
 import { MESSAGES } from '@/i18n';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import { requestUiLocale } from '@/server/locale';
+import { fontVariables } from './fonts';
 import '@/styles/globals.css';
-
-const fraunces = Fraunces({
-  subsets: ['latin'],
-  axes: ['opsz', 'SOFT'],
-  style: ['normal', 'italic'],
-  variable: '--font-fraunces',
-  display: 'swap',
-});
-
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans', display: 'swap' });
-const geistMono = Geist_Mono({
-  subsets: ['latin'],
-  variable: '--font-geist-mono',
-  display: 'swap',
-});
 
 // Every page, the 404 included, is rendered per request: its scripts need that response's CSP
 // nonce (src/proxy.ts, P6-09). A prerendered page would carry none and its scripts would be refused.
@@ -49,11 +34,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // <body> before React hydrates. suppressHydrationWarning covers these two elements' own
   // attributes only, so a real mismatch anywhere inside the page is still reported (P7-01).
   return (
-    <html
-      lang={locale}
-      className={`${fraunces.variable} ${geist.variable} ${geistMono.variable}`}
-      suppressHydrationWarning
-    >
+    <html lang={locale} className={fontVariables} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <I18nProvider initialLocale={locale}>{children}</I18nProvider>
       </body>
