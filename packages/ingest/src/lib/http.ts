@@ -52,21 +52,31 @@ export async function fetchJson<T>(url: string, timeoutMs = 30_000): Promise<T> 
   return JSON.parse(await fetchText(url, timeoutMs)) as T;
 }
 
-/** Runs `fn` over `items` with at most `limit` in flight, preserving result order. */
+/**
+ * Runs `fn` over `items` with at most `limit` in flight, preserving result order. After a failure
+ * nothing new starts, and the first failure is thrown once those in flight have settled, so no
+ * paid call goes on unseen behind it (P10-16).
+ */
 export async function mapLimit<T, R>(
   items: T[],
   limit: number,
   fn: (item: T, index: number) => Promise<R>,
 ): Promise<R[]> {
   const results: R[] = new Array(items.length);
+  const failures: unknown[] = [];
   let next = 0;
   const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (next < items.length) {
+    while (next < items.length && failures.length === 0) {
       const i = next;
       next += 1;
-      results[i] = await fn(items[i] as T, i);
+      try {
+        results[i] = await fn(items[i] as T, i);
+      } catch (error) {
+        failures.push(error);
+      }
     }
   });
   await Promise.all(workers);
+  if (failures.length > 0) throw failures[0];
   return results;
 }
