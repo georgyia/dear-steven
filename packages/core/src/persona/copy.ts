@@ -110,3 +110,12 @@ export const MALFORMED_ANSWER: Record<UiLocale, string> = {
   en: 'The answer came back malformed. Nothing was shown that wasn’t checked.',
   de: 'Die Antwort kam fehlerhaft zurück. Es wurde nichts Ungeprüftes angezeigt.',
 };
+
+/**
+ * When the safety check (moderation) gave no verdict, even on a second try (P10-06): nothing was
+ * answered. Shown under the persona's error sentence in Ask, and on its own in the interview.
+ */
+export const MODERATION_UNAVAILABLE: Record<UiLocale, string> = {
+  en: 'I couldn’t run my safety check just now, so I haven’t replied.',
+  de: 'Ich konnte meine Sicherheitsprüfung gerade nicht durchführen, deshalb habe ich nicht geantwortet.',
+};

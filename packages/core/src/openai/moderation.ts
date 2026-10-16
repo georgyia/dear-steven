@@ -4,8 +4,8 @@ import type { ModerationResult } from '../safety/route.ts';
 
 /**
  * OpenAI's moderation model on a question (P6-11). Free to call; the safety routing reads its
- * self-harm and severe-harm categories. Never throws past the caller's catch: no result just means
- * the phrase rules decide alone.
+ * self-harm and severe-harm categories. Throws the provider's error; `moderationVerdict` (safety)
+ * asks once more, and a question with no verdict is not answered (P10-06).
  */
 export async function moderate(
   client: OpenAI,

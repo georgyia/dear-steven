@@ -4,18 +4,21 @@ import {
   DEFAULT_UI_LOCALE,
   EMPTY_KNOWLEDGE_REPLY,
   MALFORMED_ANSWER,
+  MODERATION_UNAVAILABLE,
   RESTING_REPLY,
   THINKING_COPY,
   type UiLocale,
 } from '../persona/copy.ts';
 import { hybridSearch } from '../retrieval/index.ts';
 import {
-  type ModerationResult,
+  type Moderator,
+  moderationVerdict,
   routeQuestion,
   type SafetyRoute,
   safetyReply,
   sensitivePreface,
   stakesGuidance,
+  UNAVAILABLE,
 } from '../safety/index.ts';
 import type {
   AskEvent,
@@ -62,8 +65,11 @@ export interface ComposeDeps {
   now?: () => number;
   /** Called once with everything that happened, for the eval harness and optional logging. */
   onComplete?: (record: AnswerRecord) => void;
-  /** Moderation of the question (P6-11). Without it, the phrase rules decide alone. */
-  moderate?: (text: string, signal: AbortSignal) => Promise<ModerationResult>;
+  /**
+   * Moderation of the question (P6-11). Without it (demo mode), the phrase rules decide alone; with
+   * it, a question it gives no verdict on is not answered (P10-06).
+   */
+  moderate?: Moderator;
 }
 
 const MALFORMED: Omit<Violation, 'blockIndex'> = {
@@ -92,15 +98,13 @@ export async function* composeAnswer(
   }
 
   // Safety rails (P6-11): the phrase rules decide at once; moderation runs alongside retrieval,
-  // and its verdict is in before anything the model writes is shown.
+  // and its verdict is in before the model is asked to write. No verdict, no answer (P10-06).
   const early = routeQuestion(request.question, null);
   if (early.kind !== 'answer') {
     yield* safetyAnswer(deps, request, early, started, now);
     return;
   }
-  const moderation = deps.moderate
-    ? deps.moderate(request.question, signal).catch(() => null)
-    : Promise.resolve(null);
+  const moderation = moderationVerdict(deps.moderate, request.question, signal);
 
   const thinking = THINKING_COPY[request.uiLocale ?? DEFAULT_UI_LOCALE];
   yield { type: 'status', step: 'searching', message: thinking.searching(stats.episodes) };
@@ -115,7 +119,16 @@ export async function* composeAnswer(
     language === 'en' ? {} : { alsoSemantic: [request.question] },
     signal,
   );
-  const route = routeQuestion(request.question, await moderation);
+  const verdict = await moderation;
+  if (verdict === UNAVAILABLE) {
+    yield {
+      type: 'error',
+      code: 'upstream',
+      message: MODERATION_UNAVAILABLE[request.uiLocale ?? DEFAULT_UI_LOCALE],
+    };
+    return;
+  }
+  const route = routeQuestion(request.question, verdict);
   if (route.kind !== 'answer') {
     yield* safetyAnswer(deps, request, route, started, now);
     return;

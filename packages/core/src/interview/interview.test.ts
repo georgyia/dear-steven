@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AnswerModel, ModelRequest } from '../answer/model.ts';
+import { MODERATION_UNAVAILABLE } from '../persona/copy.ts';
+import { ModerationUnavailableError } from '../safety/index.ts';
 import type { InterviewRequest, InterviewTurn } from '../schema/index.ts';
 import { InterviewRequestSchema } from '../schema/index.ts';
 import { seedEpisode, tempStore } from '../test/fixtures.ts';
@@ -167,6 +169,92 @@ describe('interviewStep: the safety rails see every answer (P7-06)', () => {
       signal,
     );
     expect(flagged).toMatchObject({ type: 'ended', reason: 'crisis' });
+    expect(seen).toHaveLength(0);
+  });
+});
+
+describe('interviewStep: no step without moderation’s verdict (P10-06)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  /** A moderator that fails `failures` times (a 503), then finds nothing; it counts its calls. */
+  const flaky = (failures: number) => {
+    const calls = { n: 0 };
+    const moderate = async () => {
+      calls.n += 1;
+      if (calls.n <= failures)
+        throw Object.assign(new Error('Service Unavailable'), { status: 503 });
+      return { flagged: false, categories: {}, scores: {} };
+    };
+    return { moderate, calls };
+  };
+  const PRACTICE = { flavour: 'practice', expertise: 'pricing for small agencies' } as const;
+  const answered = [
+    turn('I run a small design studio and we mostly make brands for food start-ups.'),
+  ];
+
+  it.each([
+    ['the interview’s next question', request({ turns: answered })],
+    ['what I learned', request({ turns: answered, action: 'finish' })],
+    ['practice’s next question', request({ setup: PRACTICE, turns: answered })],
+    ['the practice debrief', request({ setup: PRACTICE, turns: answered, action: 'finish' })],
+  ])('fails twice before %s: an upstream error, no model call, one log line', async (_, req) => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { model, seen } = scripted();
+    const moderator = flaky(Number.POSITIVE_INFINITY);
+    const step = interviewStep(
+      { model, store: null, moderate: moderator.moderate },
+      { ...req, uiLocale: 'de' },
+      signal,
+    );
+    await expect(step).rejects.toBeInstanceOf(ModerationUnavailableError);
+    await expect(step).rejects.toMatchObject({
+      code: 'upstream',
+      message: MODERATION_UNAVAILABLE.de,
+    });
+    expect(moderator.calls.n).toBe(2);
+    expect(seen).toHaveLength(0);
+    expect(log).toHaveBeenCalledTimes(1);
+    expect(String(log.mock.calls[0]?.[0])).toContain('moderation unavailable');
+  });
+
+  it.each([
+    ['interview', request({ turns: answered })],
+    ['practice', request({ setup: PRACTICE, turns: answered })],
+  ])(
+    '%s: fails once, then gives a verdict, and the next question comes as normal',
+    async (_, req) => {
+      const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { model, seen } = scripted({
+        question: 'What made you start the studio rather than join one?',
+        stage: 'story',
+      });
+      const moderator = flaky(1);
+      const reply = await interviewStep(
+        { model, store: null, moderate: moderator.moderate },
+        req,
+        signal,
+      );
+      expect(reply).toMatchObject({ type: 'question', index: 1 });
+      expect(moderator.calls.n).toBe(2);
+      expect(seen).toHaveLength(1);
+      expect(log).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ['interview', request({ turns: [turn('Honestly, I want to kill myself most days.')] })],
+    ['practice', request({ setup: PRACTICE, turns: [turn('I want to end my life.')] })],
+  ])('%s: moderation down, a crisis phrase still ends with the crisis reply', async (_, req) => {
+    const { model, seen } = scripted();
+    const moderator = flaky(Number.POSITIVE_INFINITY);
+    const reply = await interviewStep(
+      { model, store: null, moderate: moderator.moderate },
+      { ...req, locale: 'en-GB' },
+      signal,
+    );
+    expect(reply).toMatchObject({ type: 'ended', reason: 'crisis' });
+    expect(JSON.stringify(reply)).toMatch(/116 123/);
+    expect(moderator.calls.n).toBe(0);
     expect(seen).toHaveLength(0);
   });
 });

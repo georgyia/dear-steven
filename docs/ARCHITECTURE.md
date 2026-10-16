@@ -175,6 +175,7 @@ signed with, created on first use, owner-only).
 | Database unreadable | Status pill "Knowledge base unavailable", setup panel shows the error. |
 | No embeddings yet | Keyword-only search; status "embeddings pending". |
 | OpenAI 401 / 429 / 5xx | `error` event with an actionable message; nothing unvalidated shown. |
+| Moderation fails, and fails again (P10-06) | Not answered: an `upstream` error saying the safety check couldn't run (an interview step: `502`), no answer model call, one log line `moderation unavailable`. A phrase-rule match still gets its fixed reply. With no moderator at all (demo), the phrase rules decide alone. |
 | Model output malformed | `error` event; blocks already shown were validated. |
 | Repair call fails | Deterministic downgrade still applies. |
 | Mic denied / unsupported | Explained in a toast; typing unaffected; retry works. A spoken conversation ends. |
