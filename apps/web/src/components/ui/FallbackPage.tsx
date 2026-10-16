@@ -58,6 +58,12 @@ export function FallbackPage({ t, eyebrow, title, body, children }: FallbackPage
           className="text-ivory-1 underline decoration-ink-4 underline-offset-2 hover:text-ivory-0 hover:decoration-ember-0"
         >
           {t.terms.link}
+        </a>{' '}
+        <a
+          href="/legal"
+          className="ml-2 text-ivory-1 underline decoration-ink-4 underline-offset-2 hover:text-ivory-0 hover:decoration-ember-0"
+        >
+          {t.terms.legalLink}
         </a>
       </footer>
     </div>

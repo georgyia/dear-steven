@@ -91,6 +91,12 @@ export default async function TermsPage() {
             {p.title}
           </a>
         ))}
+        <a
+          href="/legal"
+          className="rounded-full border border-ink-3 px-3 py-1 font-mono text-[11px] text-ivory-1 hover:border-ink-4 hover:text-ivory-0"
+        >
+          {t.terms.legalLink}
+        </a>
       </nav>
       {POLICIES.map((policy) => (
         <section key={policy.file} id={anchor(policy.file)} lang="en" className="mt-12 scroll-mt-8">
@@ -109,9 +115,17 @@ export default async function TermsPage() {
           ))}
         </section>
       ))}
-      <p className="mt-12 border-t border-ink-3 pt-4 text-[13px] text-ivory-2">
-        {copy.updated(formatDate(POLICIES_UPDATED, locale))}
-      </p>
+      <div className="mt-12 border-t border-ink-3 pt-4 text-[13px] text-ivory-2">
+        <p>{copy.updated(formatDate(POLICIES_UPDATED, locale))}</p>
+        <p className="mt-2">
+          <a
+            href="/legal"
+            className="text-ivory-0 underline decoration-ink-4 underline-offset-2 hover:decoration-ember-0"
+          >
+            {t.terms.legalLink}
+          </a>
+        </p>
+      </div>
     </main>
   );
 }

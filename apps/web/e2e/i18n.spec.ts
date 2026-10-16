@@ -122,6 +122,14 @@ test.describe('in a German browser (P6-02)', () => {
     await noEnglish(page, 'the terms page');
   });
 
+  test('the legal notice is German, apart from the details still to come', async ({ page }) => {
+    await page.goto('/legal');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+    await expect(page.getByRole('heading', { level: 1, name: de.legalPage.title })).toBeVisible();
+    await expect(page.getByRole('link', { name: de.termsPage.title })).toBeVisible();
+    await noEnglish(page, 'the legal notice');
+  });
+
   test('an English question still gets an English answer, in a German interface', async ({
     page,
   }) => {

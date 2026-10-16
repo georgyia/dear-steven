@@ -93,6 +93,16 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
             </a>
             .
           </p>
+          <p className="mt-2">
+            {copy.legal}{' '}
+            <a
+              href="/legal"
+              className="text-ivory-0 underline decoration-ink-4 underline-offset-2 hover:decoration-ember-0"
+            >
+              {t.terms.legalLink}
+            </a>
+            .
+          </p>
         </section>
       </div>
     </Dialog>

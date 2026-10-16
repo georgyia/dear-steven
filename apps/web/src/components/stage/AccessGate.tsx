@@ -74,7 +74,7 @@ export function AccessGate() {
           {message}
         </p>
       </form>
-      <Disclosure className="max-w-sm text-[13px] leading-relaxed text-ivory-2" />
+      <Disclosure legal className="max-w-sm text-[13px] leading-relaxed text-ivory-2" />
     </main>
   );
 }

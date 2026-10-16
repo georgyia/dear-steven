@@ -58,6 +58,16 @@ test('the passcode screen: a wrong code is refused, the right one opens the stag
   await expect(page.getByText('Answer complete.')).toBeAttached({ timeout: 15_000 });
 });
 
+test('the terms and the legal notice open without the passcode (#116)', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText(/This copy of Dear Steven is private/)).toBeVisible();
+  await page.getByRole('link', { name: 'Legal notice' }).click();
+  await expect(page).toHaveURL(/\/legal$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Legal notice' })).toBeVisible();
+  await page.getByRole('link', { name: 'Terms, disclaimer and privacy' }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Privacy' })).toBeVisible();
+});
+
 test('guessing is slowed down after five tries', async ({ page }) => {
   await page.goto('/');
   const field = page.getByLabel(/Enter the passcode/);
