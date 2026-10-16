@@ -1,7 +1,7 @@
 import { composeAnswer, emptyKnowledgeAnswer, restingAnswer } from '@dear-steven/core/answer';
 import { uiLocaleFrom } from '@dear-steven/core/copy';
 import { routeQuestion, safetyReply } from '@dear-steven/core/safety';
-import { AskRequestSchema } from '@dear-steven/core/schema';
+import { type AskEvent, AskRequestSchema } from '@dear-steven/core/schema';
 import { MESSAGES } from '@/i18n';
 import { readBody } from '@/server/body';
 import { streamDemoAnswer } from '@/server/demo';
@@ -30,7 +30,7 @@ const MAX_BODY_BYTES = 64 * 1024;
  * Validates input, rate-limits live answers, and hands everything else to packages/core. Runs on the
  * visitor's own OpenAI key when they sent one (`requestConfig`, P6-03). On the operator's key with a
  * limit set, each question counts as one of the visitor's free questions (P8-02), given back if it
- * costs nothing.
+ * costs nothing or fails on this server's or OpenAI's side (P10-05).
  */
 export async function POST(req: Request) {
   const raw = await readBody(req, MAX_BODY_BYTES);
@@ -142,10 +142,11 @@ export async function POST(req: Request) {
   };
   const res = sseResponse(
     (signal) =>
-      countedOnlyIfPaid(
+      countedUnlessFailed(
         withShareToken(composeAnswer(deps, request, signal), config, request.question),
         () => cost,
         giveBack,
+        signal,
       ),
     req.signal,
     uiLocale,
@@ -157,16 +158,31 @@ export async function POST(req: Request) {
 
 const NO_STORE = { 'Cache-Control': 'no-store' };
 
-/** Passes the events on; when they end, a question that cost nothing (a safety reply) is given back. */
-async function* countedOnlyIfPaid<T>(
-  events: AsyncIterable<T>,
+/**
+ * Passes the events on. When they end, the free question is given back if it cost nothing (a safety
+ * reply), or if the answer failed on this server's or OpenAI's side before it was complete (P10-05):
+ * a thrown error or an `error` event, before `final`. A visitor who stops an answer keeps it
+ * counted: their abort is never such a failure, so stopping a paid answer can't win the question back.
+ */
+async function* countedUnlessFailed(
+  events: AsyncIterable<AskEvent>,
   cost: () => number,
   giveBack: () => void,
-): AsyncIterable<T> {
+  signal: AbortSignal,
+): AsyncIterable<AskEvent> {
+  let failed = false;
+  let complete = false;
   try {
-    yield* events;
+    for await (const event of events) {
+      if (event.type === 'final') complete = true;
+      else if (event.type === 'error') failed = true;
+      yield event;
+    }
+  } catch (error) {
+    failed = true;
+    throw error;
   } finally {
-    if (cost() === 0) giveBack();
+    if (cost() === 0 || (failed && !complete && !signal.aborted)) giveBack();
   }
 }
 

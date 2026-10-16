@@ -183,7 +183,7 @@ export class FreeLedger {
     return true;
   }
 
-  /** Gives a counted question back: it cost nothing after all. */
+  /** Gives a counted question back: it cost nothing after all, or failed on our side (P10-05). */
   giveBack(visitor: Visitor) {
     for (const [map, key] of [
       [this.visitors, visitor.key],
