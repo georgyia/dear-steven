@@ -104,10 +104,14 @@ async function fromVtt(ctx: Context, opts: TranscribeOptions) {
   console.log(c.dim('Next: pnpm ingest chunk'));
 }
 
+/** Episodes failing one after another mean the network or the key, not the episodes (P10-16). */
+export const FAILURES_IN_A_ROW = 3;
+
 /**
  * Stage 3b (paid, human-approved): OpenAI diarized transcription of the RSS audio with the host's
  * voice enrolled, so passages carry verified speakers. Refuses to start without --budget, and stops
- * before an episode that would take the run over it.
+ * before an episode that would take the run over it, counting what failed episodes paid for, or
+ * after `FAILURES_IN_A_ROW` failures.
  */
 async function diarize(ctx: Context, opts: TranscribeOptions) {
   if (opts.budget === undefined || !(opts.budget > 0)) {
@@ -136,6 +140,7 @@ async function diarize(ctx: Context, opts: TranscribeOptions) {
   );
 
   let spent = 0;
+  let failedInARow = 0;
   for (const e of episodes) {
     const estimate = diarizationCostUsd(e.durationMs ?? 0);
     if (spent + estimate > opts.budget) {
@@ -149,13 +154,20 @@ async function diarize(ctx: Context, opts: TranscribeOptions) {
     const run = ctx.store.startRun(e.id, 'transcribe', { mode: 'diarize', estimateUsd: estimate });
     const audio = join(cacheDir, `${e.id}.mp3`);
     const work = join(cacheDir, `${e.id}.chunks`);
+    /** The audio OpenAI has transcribed for this episode so far: paid for, whatever happens next. */
+    let paidMs = 0;
+    let chunksDone = 0;
     try {
       console.log(`${c.bold(e.title)} ${c.dim(`~${usd(estimate)}`)}`);
       await download(e.audioUrl as string, audio);
       const chunks = splitAudio(audio, work, DIARIZE_CHUNK_SECONDS);
       const durationMs = chunks.reduce((n, ch) => n + ch.durationMs, 0);
       const bar = progress(chunks.length, 'audio chunks');
-      const diarized = await diarizeChunks(client, chunks, reference, () => bar.tick(e.title));
+      const diarized = await diarizeChunks(client, chunks, reference, (i) => {
+        paidMs += chunks[i]?.durationMs ?? 0;
+        chunksDone += 1;
+        bar.tick(e.title);
+      });
       bar.end();
       const { segments, droppedMs } = withoutInsertedAds(
         mapDiarizedSegments(diarized, e.guestNames),
@@ -166,6 +178,7 @@ async function diarize(ctx: Context, opts: TranscribeOptions) {
       ctx.store.replaceTranscript(e.id, segments, 'openai-diarize');
       const cost = diarizationCostUsd(durationMs);
       spent += cost;
+      failedInARow = 0;
       const hostShare = segments.filter((s) => s.speaker === 'host').length / segments.length;
       ctx.store.finishRun(run, 'done', {
         meta: {
@@ -182,10 +195,24 @@ async function diarize(ctx: Context, opts: TranscribeOptions) {
         ),
       );
     } catch (error) {
+      // The chunks it finished were paid for, though the episode failed (P10-16).
+      const cost = diarizationCostUsd(paidMs);
+      spent += cost;
       ctx.store.finishRun(run, 'failed', {
         error: error instanceof Error ? error.message : String(error),
+        meta: { costUsd: cost, chunksDone },
       });
-      console.log(c.red(`  failed: ${error instanceof Error ? error.message : error}`));
+      const paid = cost > 0 ? `, after ${chunksDone} chunks (${usd(cost)})` : '';
+      console.log(c.red(`  failed${paid}: ${error instanceof Error ? error.message : error}`));
+      failedInARow += 1;
+      if (failedInARow >= FAILURES_IN_A_ROW) {
+        console.log(
+          c.yellow(
+            `Stopping: ${failedInARow} episodes failed in a row. Check the network and the key, then run it again.`,
+          ),
+        );
+        break;
+      }
     } finally {
       // An episode's audio is about a megabyte a minute: kept, a batch would fill the disk.
       rmSync(work, { recursive: true, force: true });

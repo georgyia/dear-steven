@@ -17,6 +17,8 @@ import type { Context } from '../context.ts';
 const audio = vi.hoisted(() => ({
   downloaded: [] as string[],
   fail: new Set<string>(),
+  /** Episodes that fail after this many of their chunks were transcribed (and paid for). */
+  partial: new Map<string, number>(),
   chunkSeconds: [] as (number | undefined)[],
 }));
 
@@ -30,17 +32,26 @@ vi.mock('../lib/ffmpeg.ts', async (actual) => ({
   },
   splitAudio: (input: string, _out: string, seconds?: number) => {
     audio.chunkSeconds.push(seconds);
-    return [{ path: input, offsetMs: 0, durationMs: 3_600_000 }];
+    // An hour in four quarter-hour chunks.
+    return [0, 1, 2, 3].map((k) => ({ path: input, offsetMs: k * 900_000, durationMs: 900_000 }));
   },
 }));
 
 vi.mock('../sources/openai-transcribe.ts', async (actual) => ({
   ...(await actual<typeof import('../sources/openai-transcribe.ts')>()),
   hostReference: () => 'data:audio/wav;base64,AAAA',
-  diarizeChunks: async (_client: unknown, chunks: { path: string }[]) => {
-    if (chunks.some((c) => [...audio.fail].some((id) => c.path.includes(id)))) {
-      throw new Error('OpenAI said no');
-    }
+  diarizeChunks: async (
+    _client: unknown,
+    chunks: { path: string }[],
+    _reference: string,
+    onChunk?: (i: number) => void,
+  ) => {
+    const failing = [...audio.fail, ...audio.partial.keys()].find((id) =>
+      chunks.some((c) => c.path.includes(id)),
+    );
+    const finished = failing === undefined ? chunks.length : (audio.partial.get(failing) ?? 0);
+    for (let i = 0; i < finished; i += 1) onChunk?.(i);
+    if (failing !== undefined) throw new Error('OpenAI said no');
     return [
       {
         offsetMs: 0,
@@ -53,7 +64,7 @@ vi.mock('../sources/openai-transcribe.ts', async (actual) => ({
   },
 }));
 
-const { diarizable, transcribe } = await import('./transcribe.ts');
+const { diarizable, FAILURES_IN_A_ROW, transcribe } = await import('./transcribe.ts');
 const { download } = await vi.importActual<typeof import('../lib/ffmpeg.ts')>('../lib/ffmpeg.ts');
 
 const DAY = 86_400_000;
@@ -127,6 +138,7 @@ const byGuid = (ctx: Context, guid: string) =>
 beforeEach(() => {
   audio.downloaded.length = 0;
   audio.fail.clear();
+  audio.partial.clear();
   audio.chunkSeconds.length = 0;
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
@@ -201,6 +213,59 @@ describe('a batch of paid transcription (H-05)', () => {
     expect(lines[0]).toMatch(/^2 episodes, about \$0\.720 of audio; this run stops at \$0\.500\.$/);
     expect(lines.some((line) => line.includes('Stopping:'))).toBe(true);
     expect(byGuid(ctx, 'missing-old').transcriptStatus).toBe('none');
+  });
+});
+
+describe('what a failed episode paid for (P10-16)', () => {
+  const transcribeRun = (ctx: Context, guid: string) =>
+    ctx.store
+      .latestRuns()
+      .find((r) => r.episodeId === episodeIdFor(guid) && r.stage === 'transcribe');
+  const said = () => vi.mocked(console.log).mock.calls.map((call) => String(call[0]));
+
+  it('counts its finished chunks: in the budget, and on its run', async () => {
+    const ctx = context();
+    // Half of the hour is transcribed before it fails: two quarter-hours, $0.18.
+    audio.partial.set(episodeIdFor('missing-new'), 2);
+    await run(ctx, { missing: true, budget: 0.5 });
+    const failed = transcribeRun(ctx, 'missing-new');
+    expect(failed).toMatchObject({ status: 'failed', meta: { chunksDone: 2 } });
+    expect(failed?.meta.costUsd).toBeCloseTo(0.18, 6);
+    // With $0.18 spent, the next hour (~$0.36) would take the run past $0.50.
+    expect(byGuid(ctx, 'missing-old').transcriptStatus).toBe('none');
+    expect(said().some((line) => line.includes('Stopping:') && line.includes('budget'))).toBe(true);
+    expect(said().some((line) => line.includes('failed, after 2 chunks ($0.180)'))).toBe(true);
+  });
+
+  it('a failure before any chunk costs nothing', async () => {
+    const ctx = context();
+    audio.fail.add(episodeIdFor('missing-new'));
+    await run(ctx, { missing: true, budget: 0.5 });
+    expect(transcribeRun(ctx, 'missing-new')?.meta).toMatchObject({ costUsd: 0, chunksDone: 0 });
+    expect(byGuid(ctx, 'missing-old').transcriptSource).toBe('openai-diarize');
+  });
+
+  it(`stops after ${FAILURES_IN_A_ROW} failures in a row: the network or the key, not the episodes`, async () => {
+    const ctx = context();
+    ctx.store.upsertEpisodes([episode('m3', 5), episode('m4', 6)]);
+    for (const guid of ['missing-new', 'missing-old', 'm3']) audio.fail.add(episodeIdFor(guid));
+    await run(ctx, { missing: true });
+    expect(audio.downloaded).toHaveLength(FAILURES_IN_A_ROW);
+    expect(transcribeRun(ctx, 'm4')).toBeUndefined();
+    expect(
+      said().some((line) => line.includes(`${FAILURES_IN_A_ROW} episodes failed in a row`)),
+    ).toBe(true);
+  });
+
+  it('a success in between starts the count again', async () => {
+    const ctx = context();
+    ctx.store.upsertEpisodes([episode('m3', 5), episode('m4', 6), episode('m5', 7)]);
+    for (const guid of ['missing-new', 'missing-old', 'm4', 'm5'])
+      audio.fail.add(episodeIdFor(guid));
+    await run(ctx, { missing: true });
+    expect(audio.downloaded).toHaveLength(5);
+    expect(byGuid(ctx, 'm3').transcriptSource).toBe('openai-diarize');
+    expect(said().some((line) => line.includes('in a row'))).toBe(false);
   });
 });
 
