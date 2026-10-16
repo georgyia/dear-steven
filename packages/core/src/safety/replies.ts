@@ -1,5 +1,5 @@
 import type { AnswerMode, AskEvent, ResolvedBlock } from '../schema/index.ts';
-import { crisisResources } from './resources.ts';
+import { type CrisisResources, crisisResources } from './resources.ts';
 import type { SafetyRoute } from './route.ts';
 
 /**
@@ -12,6 +12,10 @@ const paragraph = (...texts: string[]): ResolvedBlock => ({
   kind: 'paragraph',
   segments: texts.map((text) => ({ text, attribution: 'synthesis', citationIds: [] })),
 });
+
+/** A country's helpline line, then how to find one anywhere else when there is one (P10-07). */
+const thenAnywhere = (text: string, r: CrisisResources) =>
+  r.anywhere ? `${text} ${r.anywhere}` : text;
 
 function* fixedAnswer(
   blocks: ResolvedBlock[],
@@ -50,13 +54,16 @@ export function crisisAnswer(
     [
       paragraph(
         'I’m really glad you said something. Please talk to someone who can help right now.',
-        `${r.helpline} If you are in danger right now, call ${r.emergencyNumber}.`,
+        thenAnywhere(`${r.helpline} If you are in danger right now, call ${r.emergencyNumber}.`, r),
       ),
       paragraph(
         'You deserve a real person for this, not an AI. If calling feels like too much, telling one person you trust how you’re feeling is a good first step.',
       ),
     ],
-    `I’m really glad you said something. Please talk to someone who can help right now. ${r.helpline} If you are in danger, call ${r.emergencyNumber}.`,
+    thenAnywhere(
+      `I’m really glad you said something. Please talk to someone who can help right now. ${r.helpline} If you are in danger, call ${r.emergencyNumber}.`,
+      r,
+    ),
     'conversational',
     started,
     now,
@@ -67,7 +74,10 @@ export function crisisAnswer(
 export function sensitivePreface(locale: string | null | undefined): ResolvedBlock {
   const r = crisisResources(locale);
   return paragraph(
-    `If this is close to home, please talk to someone now. ${r.helpline} If anyone is in danger right now, call ${r.emergencyNumber}.`,
+    thenAnywhere(
+      `If this is close to home, please talk to someone now. ${r.helpline} If anyone is in danger right now, call ${r.emergencyNumber}.`,
+      r,
+    ),
   );
 }
 

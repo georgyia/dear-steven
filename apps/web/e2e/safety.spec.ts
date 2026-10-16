@@ -15,6 +15,8 @@ test.describe('safety rails, even in demo mode (P6-11)', () => {
     await ask(page, 'I don’t want to be alive anymore');
     await expect(page.getByText(/Samaritans are there day and night on 116 123/)).toBeVisible();
     await expect(page.getByText(/call 999/)).toBeVisible();
+    // A browser's language isn't where someone is: the way to find help anywhere follows (P10-07).
+    await expect(page.getByText(/Wherever you are, .* at findahelpline\.com/)).toBeVisible();
     await expect(page.locator('[data-citation]')).toHaveCount(0);
     await expect(page.getByRole('region', { name: 'Conversations cited' })).toHaveCount(0);
     // The demo fixtures are all about procrastination and starting things; none of that shows.

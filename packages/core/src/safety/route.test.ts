@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { countryOf, crisisResources } from './resources.ts';
+import { BY_COUNTRY, countryOf, crisisResources } from './resources.ts';
 import { type ModerationResult, routeQuestion } from './route.ts';
 
 const kind = (q: string, m: ModerationResult | null = null) => routeQuestion(q, m).kind;
@@ -90,5 +90,70 @@ describe('crisis resources', () => {
     expect(crisisResources('de-DE').helpline).toMatch(/0800 111 0 111/);
     expect(crisisResources('ja-JP').helpline).toMatch(/findahelpline\.com/);
     expect(crisisResources(null).emergencyNumber).toBe('your local emergency number');
+  });
+
+  it('follows a country’s own helpline with the international directory, and only then (P10-07)', () => {
+    for (const country of Object.keys(BY_COUNTRY)) {
+      expect(crisisResources(`en-${country}`).anywhere).toMatch(/findahelpline\.com/);
+    }
+    expect(crisisResources('ja-JP').anywhere).toBeNull();
+    expect(crisisResources(null).anywhere).toBeNull();
+  });
+
+  // Real phone numbers, checked by a person (H-11): a change here must be a change on purpose.
+  it('keeps every country’s numbers, and the international line, as reviewed', () => {
+    expect({ ...BY_COUNTRY, international: crisisResources(null) }).toMatchInlineSnapshot(`
+      {
+        "AT": {
+          "emergencyNumber": "112",
+          "helpline": "TelefonSeelsorge is there day and night on 142.",
+        },
+        "AU": {
+          "emergencyNumber": "000",
+          "helpline": "Lifeline is there day and night on 13 11 14.",
+        },
+        "CA": {
+          "emergencyNumber": "911",
+          "helpline": "9-8-8, the Suicide Crisis Helpline, is there day and night: call or text 988.",
+        },
+        "CH": {
+          "emergencyNumber": "112",
+          "helpline": "Die Dargebotene Hand is there day and night on 143.",
+        },
+        "DE": {
+          "emergencyNumber": "112",
+          "helpline": "TelefonSeelsorge is there day and night, free, on 0800 111 0 111 or 0800 111 0 222.",
+        },
+        "ES": {
+          "emergencyNumber": "112",
+          "helpline": "The suicide prevention line is there day and night on 024 (free).",
+        },
+        "FR": {
+          "emergencyNumber": "112",
+          "helpline": "The national suicide prevention line is there day and night on 3114 (free).",
+        },
+        "GB": {
+          "emergencyNumber": "999",
+          "helpline": "Samaritans are there day and night on 116 123 (free), or you can text SHOUT to 85258.",
+        },
+        "IE": {
+          "emergencyNumber": "112",
+          "helpline": "Samaritans are there day and night on 116 123 (free).",
+        },
+        "NZ": {
+          "emergencyNumber": "111",
+          "helpline": "You can call or text 1737 any time to talk to a trained counsellor (free).",
+        },
+        "US": {
+          "emergencyNumber": "911",
+          "helpline": "The 988 Suicide & Crisis Lifeline is there day and night: call or text 988.",
+        },
+        "international": {
+          "anywhere": null,
+          "emergencyNumber": "your local emergency number",
+          "helpline": "You can find a free, confidential helpline in your country at findahelpline.com.",
+        },
+      }
+    `);
   });
 });

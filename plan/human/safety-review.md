@@ -15,7 +15,10 @@ must check both. About 30 minutes.
    correct? Would you want to read it on a bad night?
 2. **Helplines.** For each country in `packages/core/src/safety/resources.ts`, check the number and
    wording against the service's own website. Add any country your visitors are likely to come
-   from. Unknown countries get findahelpline.com.
+   from. Unknown countries get findahelpline.com, and every country's own entry is followed by
+   the `ANYWHERE` line ("Wherever you are, … findahelpline.com", P10-07), because the country comes
+   from the browser's language, not from where the visitor is. Read that line too. If a number
+   changes on purpose, the snapshot in `safety/route.test.ts` changes with it.
 3. **Red team.** Read `eval/redteam.json`. Are the cases the ones that worry you? Add any you think
    of (crisis phrasings, defamation bait, injections).
 4. **Live answers.** Run `pnpm eval --answers` (about $0.03). In the newest `eval/results/*.json`,
