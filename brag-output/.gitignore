@@ -1,0 +1,11 @@
+# Rebuilt from the scripts: recordings, renders, mixes, probes. The video itself is a release asset.
+work2/frames/
+work2/render*/
+work2/qa3/
+work2/*.wav
+work2/*.out
+work2/*.log
+work2/dev.pid
+work2/yt-segment.mp4
+composition-v2/
+*.mp4
