@@ -110,11 +110,11 @@ const frameCount = (scene) => (clips[scene] ? clips[scene].frames : 1);
 const frameUrl = (scene, n) => `../work2/frames/${scene}/f${String(n).padStart(5, '0')}.jpg`;
 
 // ---------------------------------------------------------------- music grid (vol-12, 110 BPM: a bar is 2.1818 s)
-const CUE = { build: 8.74, drop: 17.47, third: 26.2, play: 28.36, explorer: 33.29, talk: 39.83, practice: 44.19, debrief: 50.18, endcard: 55.11, end: 63.83 };
+const CUE = { build: 8.74, drop: 17.47, third: 26.2, play: 28.36, explorer: 33.29, talk: 39.83, practice: 46.37, debrief: 52.36, endcard: 57.29, end: 66.01 };
 
 // ---------------------------------------------------------------- shots: which recording, when
 // Each shot remaps composition time to clip time through anchors [{t, c}] (seconds), linearly.
-const A = { sent: mk('ask', 'sent', 6), glide: mk('ask', 'glide', 2.6), focus: mk('ask', 'focus', 3.5), typed: mk('ask', 'typed', 5.4), answered: mk('ask', 'answered', 10), hover: mk('ask', 'hover', 12), inspector: mk('ask', 'inspector', 13.5), context: mk('ask', 'context', 17.2), next: mk('ask', 'next', 20.4) };
+const A = { sent: mk('ask', 'sent', 6), glide: mk('ask', 'glide', 2.6), focus: mk('ask', 'focus', 3.5), typed: mk('ask', 'typed', 5.4), answered: mk('ask', 'answered', 10), hover: mk('ask', 'hover', 12), inspector: mk('ask', 'inspector', 13.5), context: mk('ask', 'context', 17.2), video: mk('ask', 'video', 24.2) };
 const B = { open: mk('about', 'open', 2.5), kindsScroll: mk('about', 'kinds-scroll', 4.7), kinds: mk('about', 'kinds', 5.8), checkedScroll: mk('about', 'checked-scroll', 8.8), checked: mk('about', 'checked', 9.9) };
 const T = { talk: mk('talk', 'talk', 2.6), listening: mk('talk', 'listening', 4.3), reply: mk('talk', 'reply', 12), end: mk('talk', 'end', 17.5) };
 const S = { search: mk('sources', 'search', 6.8), matches: mk('sources', 'matches', 6), summary: mk('sources', 'summary', 8), ready: mk('sources', 'summary-ready', 9), moments: mk('sources', 'moments', 12), inspector: mk('sources', 'inspector', 14), video: mk('sources', 'video', 17), play: mk('sources', 'play', 20), loading: mk('sources', 'loading', 20.5), paused: mk('sources', 'paused', 22), end: mk('sources', 'end', 25) };
@@ -125,19 +125,24 @@ const P = { mode: mk('practice', 'mode', 2.2), practice: mk('practice', 'practic
 // The ask take is retimed so Enter lands on the build and the chip click on the drop. Only static
 // holds are stretched; typing, streaming and the inspector play at (or near) real speed.
 const ASK_START = CUE.build - (A.sent - 0.05);
-const T_VIDEO = 26.55;      // the click on the Video tab
-const T_PLAY = CUE.play;    // the click on Play
+const T_VIDEO = CUE.third - 0.02; // the press on the Video tab (demo take); the live take's Video tab dissolves in
+const T_PLAY = CUE.play;          // the click on Play
 const T_SWITCH = T_PLAY + (S.loading - S.play); // the frame-exact take hands over to the real-time one
-const T_PLAYING = T_PLAY + 0.31; // the player starts (its loading is cut short)
-const T_SUMMARY = CUE.explorer + (S.summary - S.matches - 0.3); // the click on Summary, at real speed
-const T_MOMENT = CUE.talk - 0.08;  // the click on the 30:24 moment ends the browser beat
-const T_TALK = CUE.talk + 0.6;     // the click on Talk
-const T_MIC = T_TALK + (T.listening - T.talk); // the click on the microphone
-const TALK_CUT = 43.0;             // listening → the reply
-const T_MODE = CUE.practice + 0.6; // the click on Interview me
-const T_PRACTICE = T_MODE + (P.practice - P.mode); // the click on "Practise presenting my expertise"
-const PRACTICE_CUT = T_PRACTICE + 0.81; // the form → the filled form and the click on Start
-const Q_CUT = PRACTICE_CUT + 0.9;  // the click on Start → question 3
+const T_PLAYING = T_PLAY + 0.31;  // the player starts (its loading is cut short)
+// the browser: "Huberman" typed at real speed, the two matches, Summary, the moments, one pressed
+const T_RESULTS = CUE.explorer + (S.matches - (S.search - 0.2));
+const T_TYPED = T_RESULTS + 0.3;
+const T_SUMMARY = T_TYPED + (S.summary - S.matches - 0.3);
+const T_MOMENT = CUE.talk - 0.08;
+// Talk: the click, the microphone, the whole question heard, then the reply dissolves in
+const T_TALK = CUE.talk + 0.6;
+const T_MIC = T_TALK + 1.07;
+const T_SENT = T_MIC + 2.4;
+// Interview me: the click, the form settling, the practice form, the filled form, Start, question 3
+const T_MODE = CUE.practice + 0.6;
+const T_PRACTICE = T_MODE + 0.01 + (P.practice - (P.mode + 0.9));
+const PRACTICE_CUT = T_PRACTICE + 0.81;
+const Q_CUT = PRACTICE_CUT + 0.9;
 const SHOTS = [
   { scene: 'ask', from: 2.9, to: CUE.third, anchors: [
     { t: ASK_START, c: 0 },
@@ -146,12 +151,11 @@ const SHOTS = [
     { t: 15.3, c: A.hover },
     { t: CUE.drop, c: A.inspector },
     { t: 22.37, c: A.context },
-    { t: CUE.third, c: A.next - 0.45 },
+    { t: T_VIDEO, c: A.video - 0.04 },
   ] },
   // the Video tab of a real moment, then Play
   { scene: 'sources', from: CUE.third, to: T_SWITCH, anchors: [
-    { t: CUE.third, c: S.video - 0.35 },
-    { t: T_VIDEO, c: S.video },
+    { t: CUE.third, c: S.video + 0.05 },
     { t: T_PLAY, c: S.play },
   ] },
   // the player, in real time: a breath of loading, then it plays
@@ -160,37 +164,53 @@ const SHOTS = [
     { t: T_PLAYING - 0.01, c: T_PLAYING - 0.01 - T_SWITCH },
     { t: T_PLAYING, c: Math.max(T_PLAYING - T_SWITCH, Y.playing - 0.25) },
   ] },
-  // the knowledge base: the two matches, Summary clicked, the moments, one of them clicked.
-  // Clicks and scrolls play at real speed; only the still holds are stretched.
+  // the knowledge base, at real speed except the still holds
   { scene: 'sources', from: CUE.explorer, to: CUE.talk, anchors: [
-    { t: CUE.explorer, c: S.matches + 0.3 },
-    { t: T_SUMMARY, c: S.summary },
-    { t: T_SUMMARY + 0.07, c: S.ready + 0.3 },
-    { t: T_SUMMARY + 0.57, c: S.ready + 0.5 },
-    { t: T_SUMMARY + 1.87, c: S.moments },
+    { t: CUE.explorer, c: S.search - 0.2 },
+    { t: T_SUMMARY, c: S.summary - 0.04 },
+    { t: T_SUMMARY + 0.01, c: S.ready + 0.3 },
+    { t: T_SUMMARY + 0.51, c: S.ready + 0.5 },
+    { t: T_SUMMARY + 1.81, c: S.moments },
     { t: T_MOMENT - 1.1, c: S.moments + 1.0 },
     // the beat ends on the press itself: the frame after it already has the dialog closed
     { t: T_MOMENT, c: S.inspector - 0.04 },
     { t: CUE.talk, c: S.inspector - 0.04 },
   ] },
-  // Talk: the click on Talk, the microphone, the question heard, then the reply
+  // Talk: the click on Talk, the microphone, the question heard in full, then the reply
   { scene: 'talk', from: CUE.talk, to: CUE.practice, anchors: [
     { t: CUE.talk, c: T.talk - 0.6 },
+    { t: T_TALK, c: T.talk },
     { t: T_MIC, c: T.listening },
-    { t: TALK_CUT - 0.01, c: T.listening + (TALK_CUT - 0.01 - T_MIC) },
-    { t: TALK_CUT, c: T.reply + 2.6 },
+    { t: T_SENT, c: T.listening + (T_SENT - T_MIC) },
+    { t: T_SENT + 0.01, c: T.reply + 2.4 },
   ] },
-  // Interview me: the click on the mode, the form, "Practise presenting my expertise", Start,
-  // question 3 typed, then the debrief
+  // Interview me: the click, the form (its dock's flight dissolved over), the practice form,
+  // the filled form and Start, question 3 typed, then the debrief
   { scene: 'practice', from: CUE.practice, to: CUE.endcard, anchors: [
     { t: CUE.practice, c: P.mode - 0.6 },
-    { t: PRACTICE_CUT - 0.01, c: P.mode - 0.6 + (PRACTICE_CUT - 0.01 - CUE.practice) },
+    { t: T_MODE, c: P.mode - 0.04 },
+    { t: T_MODE + 0.01, c: P.mode + 0.9 },
+    { t: T_PRACTICE, c: P.practice - 0.04 },
+    { t: T_PRACTICE + 0.01, c: P.practice + 0.2 },
+    { t: PRACTICE_CUT - 0.01, c: P.practice + 0.2 + (PRACTICE_CUT - 0.02 - T_PRACTICE) },
     { t: PRACTICE_CUT, c: P.start - 0.9 },
-    { t: Q_CUT, c: P.start },
+    { t: Q_CUT, c: P.start - 0.04 },
     { t: Q_CUT + 0.01, c: P.q3 + 0.2 },
     { t: CUE.debrief - 0.01, c: P.q3 + 0.2 + (CUE.debrief - 0.02 - Q_CUT) },
     { t: CUE.debrief, c: P.debrief + 0.3 },
   ] },
+];
+// Cross-dissolves: at t the frame just before it stays underneath and fades out over d seconds.
+const DISSOLVES = [
+  { t: CUE.third, d: 0.45 },
+  { t: T_RESULTS, d: 0.35 },
+  { t: T_SUMMARY + 0.01, d: 0.4 },
+  { t: T_SENT + 0.01, d: 0.5 },
+  { t: T_MODE + 0.01, d: 0.5 },
+  { t: T_PRACTICE + 0.01, d: 0.3 },
+  { t: PRACTICE_CUT, d: 0.4 },
+  { t: Q_CUT + 0.01, d: 0.4 },
+  { t: CUE.debrief, d: 0.4 },
 ];
 
 function clipFrameAt(t) {
@@ -229,27 +249,29 @@ const CAM = [
   { t: 22.2, rect: [862, 0, 418, 560], s: 1.62, cx: 1316, cy: 540, bar: 0 },
   { t: 23.1, rect: [862, 168, 418, 470], s: 1.74, cx: 1316, cy: 540, bar: 0 },
   { t: CUE.third - 0.01, rect: [862, 168, 418, 470], s: 1.78, cx: 1316, cy: 540, bar: 0 },
-  // the Video tab of a real moment: the player loads, then plays
-  { t: CUE.third, rect: [862, 150, 418, 450], s: 1.74, cx: 1316, cy: 540, bar: 0, cut: true },
+  // the Video tab: the panel eases to its size as the live take dissolves in, then in on the player
+  { t: CUE.third + 0.5, rect: [862, 150, 418, 450], s: 1.74, cx: 1316, cy: 540, bar: 0 },
   { t: T_PLAY, rect: [862, 150, 418, 450], s: 1.76, cx: 1316, cy: 540, bar: 0 },
   { t: T_PLAYING + 1.0, rect: [862, 200, 418, 380], s: 2.08, cx: 1316, cy: 540, bar: 0 },
   { t: CUE.explorer - 0.01, rect: [862, 200, 418, 380], s: 2.14, cx: 1316, cy: 540, bar: 0 },
-  // the knowledge base: in on the two matches, out again for the summary and its moments
-  { t: CUE.explorer, rect: [295, 150, 690, 520], s: 1.34, cx: 1316, cy: 540, bar: 0, cut: true },
+  // the knowledge base: the list while "Huberman" is typed, in on the two matches, out for the summary
+  { t: CUE.explorer, rect: [295, 36, 690, 730], s: 1.14, cx: 1316, cy: 540, bar: 0, cut: true },
+  { t: T_RESULTS + 0.1, rect: [295, 36, 690, 730], s: 1.15, cx: 1316, cy: 540, bar: 0 },
+  { t: T_RESULTS + 0.9, rect: [295, 150, 690, 520], s: 1.34, cx: 1316, cy: 540, bar: 0 },
   { t: T_SUMMARY, rect: [295, 150, 690, 520], s: 1.38, cx: 1316, cy: 540, bar: 0 },
   { t: T_SUMMARY + 0.9, rect: [295, 36, 690, 730], s: 1.14, cx: 1316, cy: 540, bar: 0 },
   { t: CUE.talk - 0.01, rect: [295, 36, 690, 730], s: 1.2, cx: 1316, cy: 540, bar: 0 },
-  // Talk: the home screen, the click on Talk and the microphone, then the reply
+  // Talk: the home screen, the clicks, the question heard; the camera eases to the reply as it dissolves in
   { t: CUE.talk, rect: [300, 60, 680, 380], s: 1.42, cx: 1316, cy: 540, bar: 0, cut: true },
-  { t: TALK_CUT - 0.01, rect: [300, 60, 680, 380], s: 1.48, cx: 1316, cy: 540, bar: 0 },
-  { t: TALK_CUT, rect: [290, 90, 720, 690], s: 1.22, cx: 1316, cy: 540, bar: 0, cut: true },
+  { t: T_SENT - 0.3, rect: [300, 60, 680, 380], s: 1.48, cx: 1316, cy: 540, bar: 0 },
+  { t: T_SENT + 0.6, rect: [290, 90, 720, 690], s: 1.22, cx: 1316, cy: 540, bar: 0 },
   { t: CUE.practice - 0.01, rect: [290, 90, 720, 690], s: 1.26, cx: 1316, cy: 540, bar: 0 },
-  // Interview me: the click on the mode, the form, a question, then the debrief (the page scrolls)
+  // Interview me: the click on the mode, the forms, then question 3 and the debrief, eased
   { t: CUE.practice, rect: [280, 100, 720, 620], s: 1.26, cx: 1316, cy: 540, bar: 0, cut: true },
-  { t: Q_CUT, rect: [280, 100, 720, 620], s: 1.3, cx: 1316, cy: 540, bar: 0 },
-  { t: Q_CUT + 0.01, rect: [280, 160, 720, 630], s: 1.24, cx: 1316, cy: 540, bar: 0, cut: true },
+  { t: Q_CUT - 0.01, rect: [280, 100, 720, 620], s: 1.3, cx: 1316, cy: 540, bar: 0 },
+  { t: Q_CUT + 0.5, rect: [280, 160, 720, 630], s: 1.24, cx: 1316, cy: 540, bar: 0 },
   { t: CUE.debrief - 0.01, rect: [280, 160, 720, 630], s: 1.28, cx: 1316, cy: 540, bar: 0 },
-  { t: CUE.debrief, rect: [280, 95, 720, 620], s: 1.26, cx: 1316, cy: 540, bar: 0, cut: true },
+  { t: CUE.debrief + 0.5, rect: [280, 95, 720, 620], s: 1.26, cx: 1316, cy: 540, bar: 0 },
   { t: CUE.endcard, rect: [280, 95, 720, 620], s: 1.32, cx: 1316, cy: 540, bar: 0 },
 ];
 function camAt(t) {
@@ -364,6 +386,13 @@ for (let n = 0; n < 6; n++) {
 // ---------------------------------------------------------------- frame
 const imgA = $('imgA'), imgB = $('imgB'), playEl = $('play');
 let shownSrc = '';
+let shownOut = '';
+async function setOutgoing(src) {
+  if (src === shownOut) return;
+  imgB.src = src;
+  try { await imgB.decode(); } catch {}
+  shownOut = src;
+}
 // The player shot: the frame-exact take's last frame stays underneath (crisp, 2x), and the
 // real-time screencast (1x) is laid over just the player's rectangle.
 const PLAYER_RECT = [883, 275, 376, 212];
@@ -376,8 +405,6 @@ async function setOverlay(src) {
 }
 async function setImage(src) {
   if (src === shownSrc) return;
-  imgB.src = src;
-  try { await imgB.decode(); } catch {}
   imgA.src = src;
   try { await imgA.decode(); } catch {}
   shownSrc = src;
@@ -408,6 +435,10 @@ window.__seek = async (t) => {
     const playing = f.scene === 'play' && clips.sources;
     await setImage(playing ? frameUrl('sources', Math.min(clips.sources.marks.loading, frameCount('sources') - 1)) : frameUrl(f.scene, f.n));
     if (playing) await setOverlay(frameUrl('play', f.n));
+    // a dissolve: the frame from just before it stays on top and fades out
+    const dz = DISSOLVES.find((d) => t >= d.t && t < d.t + d.d);
+    const outF = dz ? clipFrameAt(dz.t - 0.02) : null;
+    if (outF) await setOutgoing(frameUrl(outF.scene, outF.n));
     const c = camAt(t);
     const pk = punch(t);
     const s = c.s * (1 + pk * 0.025);
@@ -431,7 +462,8 @@ window.__seek = async (t) => {
     const r = c.bar > 0.5 ? `0 0 ${radius}px ${radius}px` : `${radius}px`;
     card.style.borderRadius = r;
     for (const im of [imgA, imgB, playEl]) { im.style.width = `${1280 * s}px`; im.style.height = `${800 * s}px`; im.style.transform = `translate(${-rx * s}px, ${-ry * s}px)`; }
-    imgB.style.visibility = 'hidden';
+    imgB.style.visibility = outF ? 'visible' : 'hidden';
+    imgB.style.opacity = outF ? String(1 - inOut(clamp((t - dz.t) / dz.d))) : '0';
     playEl.style.visibility = playing ? 'visible' : 'hidden';
     if (playing) {
       const [px, py, pw, ph] = PLAYER_RECT;
@@ -444,7 +476,7 @@ window.__seek = async (t) => {
   // product shots carry a label: demo fixtures, or the live knowledge base
   const live = f && (f.scene === 'sources' || f.scene === 'play');
   const tagOn = showWin ? Math.min(prog(t, 4.0, 0.6), 1 - prog(t, CUE.endcard - 0.4, 0.4)) * 0.9 : 0;
-  $('demoTag').style.opacity = String(live ? 0 : tagOn);
+  $('demoTag').style.opacity = '0';
   $('liveTag').style.opacity = String(live ? tagOn * prog(t, CUE.third, 0.4) : 0);
 
   renderBlocks(t);
@@ -467,11 +499,11 @@ const sfx = [];
   sfx.push({ t: CUE.drop + 0.08, file: 'impact_impactSoft_medium_001.ogg', gain: 0.55 });
   sfx.push({ t: 22.37 - 0.03, file: 'interface_click_003.ogg', gain: 0.4 });
   // the Video tab, then Play
-  sfx.push({ t: CUE.third, file: 'impact_impactSoft_medium_004.ogg', gain: 0.4 });
   sfx.push({ t: T_VIDEO - 0.03, file: 'interface_click_003.ogg', gain: 0.45 });
   sfx.push({ t: T_PLAY - 0.03, file: 'interface_click_003.ogg', gain: 0.5 });
-  // the knowledge base
+  // the knowledge base: "Huberman" typed, Summary, the moment
   sfx.push({ t: CUE.explorer, file: 'casino_card-slide-1.ogg', gain: 0.22 });
+  for (let i = 0; i < 8; i++) sfx.push({ t: +(CUE.explorer + 0.2 + i / 14).toFixed(3), file: KEYS[(i + 1) % KEYS.length], gain: 0.13 });
   sfx.push({ t: T_SUMMARY - 0.03, file: 'interface_click_003.ogg', gain: 0.4 });
   sfx.push({ t: T_MOMENT - 0.03, file: 'interface_click_003.ogg', gain: 0.45 });
   // talk, practise, the debrief

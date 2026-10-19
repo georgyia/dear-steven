@@ -4,7 +4,7 @@ Written for: the owner, and whoever re-cuts the video later.
 
 | File | What it is |
 |------|------------|
-| `dear-steven-promo.mp4` | The promo for X: 1920x1080, 60 fps, 63.8 s, -14 LUFS. Frame 0 is the poster. |
+| `dear-steven-promo.mp4` | The promo for X: 1920x1080, 60 fps, 66.0 s, -14 LUFS. Frame 0 is the poster. |
 | `dear-steven-promo.jpg` | The poster frame, for platforms that take a custom thumbnail. |
 | `share-copy.txt`, `share-copy-variants.md` | The post, a shorter post, the reply with credit and disclosure, a German version, and the list of machine-writing signs the copy avoids. |
 | `brag-plan.md` | The script, shot by shot, and where every claim comes from. |
@@ -35,7 +35,9 @@ Only the sources are committed: the recordings, renders, mixes, the superseded `
      browser, one summary, one moment, the Video tab and the player. No model is called.
    - Marks land in `work2/frames/<scene>.json`.
 2. **Compose.** `composition-v3/index.html` shows the frames in a window and moves a camera over
-   them; captions and cuts are keyed to the music's bar lines and the recordings' marks.
+   them; captions and cuts are keyed to the music's bar lines and the recordings' marks. Cuts
+   inside a flow are cross-dissolves (`DISSOLVES`): the frame before the cut fades out over the
+   one after it while the camera eases.
 3. **Render.** `node work2/render2.mjs work2/render3` (60 fps), which also exports `audio.json`.
    `--stills 10,20.5` renders single frames for a check.
 4. **Sound.** `python3 -I work2/mix.py work2/render3/audio.json work2/soundtrack3.wav`. The music

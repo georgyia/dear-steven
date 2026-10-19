@@ -416,10 +416,12 @@ const SCENES = {
     await rec.click();
     rec.mark('context');
     await rec.hold(2.6);
-    await rec.glideTo(inspector.getByRole('button', { name: 'Next source ( ] )' }), 0.7);
+    // on to the Video tab: the cut dissolves from this press into the live take's Video tab
+    await rec.glideTo(inspector.getByRole('radio', { name: 'Video' }), 0.8);
+    await rec.hold(0.2);
     await rec.click();
-    rec.mark('next');
-    await rec.hold(2.0);
+    rec.mark('video');
+    await rec.hold(0.6);
   },
 
   async about(page, rec) {
