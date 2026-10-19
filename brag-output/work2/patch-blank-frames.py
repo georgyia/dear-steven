@@ -23,9 +23,17 @@ def lum(n):
     s = im.width / 2560
     return statistics.fmean(im.crop(tuple(int(v * s) for v in box)).get_flattened_data() if hasattr(im, 'get_flattened_data') else im.crop(tuple(int(v * s) for v in box)).getdata())
 
+# two tells: the whole dock region dark (the dock gone), or its left border missing (the dock
+# drawn shifted to the right, with the typed text out of its box)
+strip = (box[0] - 10, box[1] + 10, box[0] + 30, box[3] - 10)
+def lum_strip(n):
+    im = Image.open(os.path.join(d, f'f{n:05d}.jpg')).convert('L')
+    return statistics.fmean(im.crop(strip).getdata())
 vals = {n: lum(n) for n in range(first, last)}
+strips = {n: lum_strip(n) for n in range(first, last)}
 med = statistics.median(vals.values())
-blank = [n for n, v in vals.items() if v < med * 0.6]
+med_strip = statistics.median(strips.values())
+blank = sorted(n for n in vals if vals[n] < med * 0.6 or strips[n] < med_strip * 0.75)
 replaced = 0
 for n in blank:
     src = n - 1
@@ -34,4 +42,4 @@ for n in blank:
     shutil.move(os.path.join(d, f'f{n:05d}.jpg'), os.path.join(backup, f'f{n:05d}.jpg'))
     shutil.copyfile(os.path.join(d, f'f{src:05d}.jpg'), os.path.join(d, f'f{n:05d}.jpg'))
     replaced += 1
-print(f'{scene}: {len(vals)} frames checked, median {med:.1f}, {replaced} blank frames replaced: {blank}')
+print(f'{scene}: {len(vals)} frames checked, medians {med:.1f}/{med_strip:.1f}, {replaced} frames replaced: {blank}')
