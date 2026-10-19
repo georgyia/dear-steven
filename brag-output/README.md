@@ -34,6 +34,10 @@ Only the sources are committed: the recordings, renders, mixes, the superseded `
      (`DEAR_STEVEN_DAILY_BUDGET_USD=0 next dev -p 3100`): `sources`. It opens the episode
      browser, one summary, one moment, the Video tab and the player. No model is called.
    - Marks land in `work2/frames/<scene>.json`.
+   - While an answer is typed in the interview, the composer dock vanishes for single frames (a
+     layout-animation hiccup of the app under the virtual clock). `work2/patch-blank-frames.py`
+     finds those frames by the dock's brightness and replaces each with the frame before it:
+     `python3 -I work2/patch-blank-frames.py practice 580 1470 2000 1580 q-1 debrief`.
 2. **Compose.** `composition-v3/index.html` shows the frames in a window and moves a camera over
    them; captions and cuts are keyed to the music's bar lines and the recordings' marks. Cuts
    inside a flow are cross-dissolves (`DISSOLVES`): the frame before the cut fades out over the
