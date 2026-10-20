@@ -28,6 +28,9 @@ eval/results/
 *.plan.md
 agent-engineering-kit/
 
+# local media work, never committed
+brag-output/
+
 # tooling
 .DS_Store
 *.log
