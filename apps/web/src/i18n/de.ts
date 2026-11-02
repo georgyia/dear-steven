@@ -169,7 +169,9 @@ export const de: Messages = {
   disclosure:
     'Dear Steven ist eine inoffizielle KI-Persona, nicht Steven Bartlett, keine Fachberatung.',
   terms: {
-    link: 'Bedingungen & Haftungsausschluss',
+    // The first word of the terms page's title. "Bedingungen & Haftungsausschluss" put the
+    // disclosure on three lines at 375 px in Chromium on Linux (P10-11 wants two at most).
+    link: 'Nutzungsbedingungen',
     legalLink: 'Impressum',
     noticeLabel: 'Bevor du anfängst',
     notice:
