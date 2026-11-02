@@ -69,9 +69,11 @@ export function HomeView({ composer, footerStart, footerEnd, notice, onExample }
           ))}
         </motion.ul>
 
+        {/* 11.5 px, as under the composer: at 12 px the disclosure took three lines at 375 px
+            in Chromium on Linux (P10-11 wants two at most). */}
         <motion.div
           {...rise(1.1)}
-          className="mt-8 flex max-w-[30rem] flex-col items-center gap-1.5 text-[12px] leading-relaxed text-ivory-2 [text-shadow:0_0_14px_var(--ink-0),0_0_4px_var(--ink-0)]"
+          className="mt-8 flex max-w-[30rem] flex-col items-center gap-1.5 text-[11.5px] leading-relaxed text-ivory-2 [text-shadow:0_0_14px_var(--ink-0),0_0_4px_var(--ink-0)]"
         >
           <FirstVisitDisclosure notice={notice} />
           <ul
