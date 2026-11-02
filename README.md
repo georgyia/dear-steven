@@ -4,6 +4,16 @@
 
 Dear Steven is an AI persona inspired by Steven Bartlett's interview style on *The Diary Of A CEO*. It answers in the first person, but its knowledge is a local index of real episode transcripts, and every claim it attributes to anyone links to the passage it came from. It is an independent, non-commercial fan project. It is **not** Steven Bartlett and is not affiliated with the show.
 
+## Demo
+
+[![Play the 66-second demo video](docs/assets/demo-poster.jpg)](docs/assets/demo.mp4)
+
+**[Watch the demo (66 seconds, with sound)](docs/assets/demo.mp4)**: ask a question, click a chip to see who said it and when, jump to that second on YouTube, browse the episodes, talk it through out loud, and practise in an interview with a debrief.
+
+<sub>The answers, the talk and the interview run in demo mode, where every answer is a labelled fixture. The episode browser and the YouTube player show a real episode, playing a few seconds of The Diary Of A CEO's own upload inside the app's embedded player. Music: "Happy Beats / Business Moves Vol. 12" by Sascha Ende (ende.app), licensed under CC BY 4.0.</sub>
+
+## Screenshots
+
 ![The home stage](docs/assets/home.jpg)
 
 ![An answer with its evidence inspector open](docs/assets/answer-and-evidence.jpg)
@@ -112,7 +122,7 @@ conversations on [The Diary Of A CEO's YouTube channel](https://www.youtube.com/
 and support the show. The details: [`DISCLAIMER.md`](DISCLAIMER.md), [`TERMS.md`](TERMS.md) and
 [`PRIVACY.md`](PRIVACY.md), also shown in the app at `/terms`.
 
-- No transcripts, audio or embeddings are in this repository. Each installation builds its own knowledge base from the publisher's public RSS feed.
+- No transcripts, audio or embeddings are in this repository. The only exception is the demo video, which shows a few seconds of one episode playing in the YouTube player. Each installation builds its own knowledge base from the publisher's public RSS feed.
 - The app shows short, attributed quotations with links to the original episode. It never publishes a transcript.
 - Questions are not stored. Answer logging is off unless you set `DEAR_STEVEN_LOG_ANSWERS=1`.
 - **Takedown requests:** if you hold the rights to an episode, appear in one, or have another good reason to want something removed, ask and it will be removed. Contact: **TODO (owner) — a contact address will be published here** (see [`TERMS.md`](TERMS.md)).
