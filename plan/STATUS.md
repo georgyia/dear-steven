@@ -37,12 +37,16 @@ Updated **in the same PR** as the work it describes (`plan/README.md` §6).
 - **Merged first (2026-10-16), on the owner's instruction, without CI:** the stack #96 → #104 (the
   security re-check, P8-08 and P8-09, the paid transcription fixes P8-10 to P8-12). The same tree
   passed `pnpm check` (653 tests) and `pnpm e2e` (201 passed, 12 skipped) locally.
-- **Next:** the paid diarization batch (owner-approved, total diarization within about $133).
-  - Done so far: 10 of the episodes diarized, $6.77 recorded.
-  - It stopped twice: once when the machine ran out of memory, once on a network outage.
-  - It resumes alone, never beside a build, to reach 300.
-  - After it: `chunk`, `index`, `summarise`, `attribute` (`plan/human/transcription-budget.md`).
-  - Guest names were filled in from descriptions on 2026-10-16.
+- **Paid data, stopped (2026-10-16):** the diarization batch ended when OpenAI refused with the
+  account's spend limit, and the owner chose not to spend more for now.
+  - 100 conversations are diarized ($73.11 recorded), and 114 have the publisher's transcripts.
+    All 214 are chunked, so keyword search covers them.
+  - Embeddings (about $0.07) and summaries (about $0.70) for the new ones wait for that decision.
+  - `attribute`: 89 ok; 10 have several guests, so guest speech stays unattributed; one host-only
+    episode.
+- **Next:** M9 *Open to contributors* (`plan/04-issues/phase-11.md`): 21 issues, and none needs a
+  paid call. Start with P11-01, the runner pin, before `ubuntu-latest` starts moving on
+  2026-10-19.
 - **To switch on:** `DEAR_STEVEN_FREE_QUESTIONS=3` on a deployment (`docs/DEPLOY.md`), with
   `DEAR_STEVEN_DAILY_BUDGET_USD` set and the client address configured.
 - **Waiting on the owner, before a public launch:**
@@ -283,3 +287,36 @@ merges after local checks on the owner's instruction (2026-10-16), `risk:high` i
 | P10-14 | #133 | fix(voice): you aren't cut off mid-thought: listening carries on when the browser stops | P1 | medium | done, #139, merged on the owner's instruction without CI (2026-10-16); found by the owner trying it | — | real-device check |
 | P10-15 | #134 | fix(core): the interview asks in the language you chose, unless you clearly answer in another | P1 | low | done, #137, merged on the owner's instruction without CI (2026-10-16); found by the owner trying it | — | — |
 | P10-16 | #135 | fix(ingest): a failed episode's paid audio counts toward the budget, and an outage stops the run | P1 | medium | done, #138, merged on the owner's instruction without CI (2026-10-16); found in the diarization batch | — | — |
+
+### M9 Open to contributors
+
+Categories are labels: CI and supply chain `track:infra` (P11-01, P11-05, P11-19, P11-20), security
+and privacy `track:security` (P11-02, P11-04, P11-10, P11-11), contributors `track:docs` (P11-03,
+P11-12, P11-18, P11-21), knowledge base `track:ingest` (P11-06, P11-07, P11-14, P11-15), free
+features `track:web` / `track:core` (P11-08, P11-09, P11-13), tests (P11-16, P11-17). Written on
+the owner's request (2026-10-17); nothing here needs a paid call. Normal merge policy: no
+`risk:high` among them.
+
+| Id | # | Issue | Pri | Risk | State | Depends on | Needs |
+|----|---|-------|-----|------|-------|------------|-------|
+| P11-01 | #141 | ci: pin the runner to Ubuntu 24.04 before ubuntu-latest moves to 26.04 | P0 | low | open; good first issue | — | — |
+| P11-02 | #145 | docs(security): SECURITY.md for private reports, and a checklist for going public | P1 | medium | open | — | owner: the settings (H-12) |
+| P11-03 | #149 | docs: CONTRIBUTING.md, a code of conduct, and issue forms for people | P1 | low | open; good first issue | P11-02 | — |
+| P11-04 | #146 | fix(security): cross-origin isolation headers and a deny-by-default Permissions-Policy | P1 | medium | open | — | — |
+| P11-05 | #142 | ci(security): the container's base image pinned by digest, kept current, and scanned | P1 | medium | open | — | GitHub billing to run in CI |
+| P11-06 | #153 | feat(ingest): correct an episode's guest names by hand, and re-check its speaker labels | P1 | medium | open | — | — |
+| P11-07 | #154 | feat(ingest): backup and restore commands that check what they copy | P1 | medium | open | — | — |
+| P11-08 | #157 | feat(web): find the moment — search what was said across every conversation | P1 | medium | open; help wanted | — | — |
+| P11-09 | #158 | feat(core): quotes-only replies when no answer model is available | P1 | medium | open | — | — |
+| P11-10 | #147 | fix(security): the answer log is owner-only, rotated daily and kept 30 days at most | P2 | medium | open | — | — |
+| P11-11 | #148 | chore(infra): structured server logs with a request id, and proof nothing personal is logged | P2 | medium | open | — | — |
+| P11-12 | #150 | chore(repo): checks that fit a 16 GB laptop, one step at a time | P2 | low | open; good first issue | — | — |
+| P11-13 | #159 | feat(web): export a conversation as Markdown, every citation a link to its moment | P2 | low | open; good first issue, help wanted | — | — |
+| P11-14 | #155 | feat(ingest): a retried diarization reuses the chunks it already paid for | P2 | medium | open | P10-16 | — |
+| P11-15 | #156 | chore(ingest): spike — free semantic search with a local embedding model | P2 | medium | open; help wanted | — | — |
+| P11-16 | #160 | test(web): visual regression screenshots of the main screens | P2 | low | open; help wanted | — | — |
+| P11-17 | #161 | test(core): property-based tests for quote matching and the search query builder | P2 | low | open; good first issue | — | — |
+| P11-18 | #151 | docs: a guide to adding an interface language, and catalogue tests for any number of them | P2 | low | open; good first issue, help wanted | — | — |
+| P11-19 | #143 | chore(deps): move to the OpenAI SDK v7, every call path checked | P2 | medium | open | — | optional: a few cents for a live smoke run |
+| P11-20 | #144 | chore(deps): move to motion 14, with reduced motion unchanged | P2 | low | open | — | — |
+| P11-21 | #152 | docs: research — what it would take to run this for another show | P2 | medium | open | — | owner decision |

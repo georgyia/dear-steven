@@ -102,6 +102,11 @@
       "description": "Milestone M8: launch readiness"
     },
     {
+      "name": "stage:m9",
+      "color": "f9d0c4",
+      "description": "Milestone M9: open to contributors"
+    },
+    {
       "name": "stage:research",
       "color": "d4c5f9",
       "description": "Research brief"
