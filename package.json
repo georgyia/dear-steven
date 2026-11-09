@@ -29,12 +29,12 @@
     "policies": "node scripts/write-policies.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.15",
-    "@commitlint/cli": "21.2.3",
-    "@commitlint/config-conventional": "21.2.3",
+    "@biomejs/biome": "2.6.5",
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
     "@types/node": "22.20.5",
-    "dependency-cruiser": "18.5.0",
+    "dependency-cruiser": "18.7.2",
     "typescript": "6.0.3",
-    "vitest": "5.0.3"
+    "vitest": "5.1.0"
   }
 }
