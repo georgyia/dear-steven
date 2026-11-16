@@ -29,7 +29,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "better-sqlite3": "13.0.3",
+    "better-sqlite3": "13.1.1",
     "openai": "6.49.0",
     "partial-json": "0.1.7",
     "sqlite-vec": "0.1.9",
